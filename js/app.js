@@ -1,14 +1,12 @@
 /**
- * CHARTORA.IN — V4 Production Master 3D Trading Engine & SPA Application
+ * CHARTORA.IN — V5 Master Production & Mobile-First SPA Application Engine
  * 
- * Key Features:
- * 1. 3D Trading Workflow Visualization (Meaningful Candlesticks & Scanner Panels)
- * 2. Fully Functional Interactive Risk Calculator Engine (/risk-calculator)
- * 3. Fully Functional Interactive Local Storage Trade Journal (/journal)
- * 4. Context-Aware Persistent Floating CTA
- * 5. Category Pricing + Custom Services Starting From Pricing ($149-$999)
- * 6. Completely Stripped "Intelligence Reports" Mentions
- * 7. Human Natural Writing (No AI Buzzwords / Unnecessary Hyphens)
+ * Features:
+ * 1. Mobile-First Drawer Navigation (☰ -> ✕) with Backdrop & Keyboard Handlers
+ * 2. 6-Field Contact Form with Strict Validation & Confirmation State
+ * 3. Functional Risk Calculator & Local Storage Trade Journal
+ * 4. 3D Trading Workflow Scene with Lightweight Mobile Fallback
+ * 5. Category Pricing & Custom Build Services
  */
 
 // Global State
@@ -16,6 +14,7 @@ let currentRoute = 'home';
 let activeCourseId = 'market-foundations';
 let activeChapterId = 1;
 let current3DStage = 1;
+const TELEGRAM_URL = 'https://t.me/chartora_official';
 
 // Trade Journal State (Local Storage persistent)
 let tradeJournalData = JSON.parse(localStorage.getItem('chartora_journal') || '[]');
@@ -33,10 +32,10 @@ document.addEventListener('DOMContentLoaded', () => {
     initRouter();
     startToastSimulator();
     start3DStageLoop();
-    updateFloatingCTA();
+    initMobileMenuHandlers();
 });
 
-// 2. 3D TRADING WORKFLOW SCENE (MEANINGFUL OBJECTS)
+// 2. LIGHTWEIGHT 3D TRADING WORKFLOW SCENE (WITH MOBILE FALLBACK)
 function init3DTradingWorkflowScene() {
     const canvas = document.getElementById('bg-3d-canvas');
     if (!canvas || typeof Three === 'undefined' && typeof THREE === 'undefined') return;
@@ -44,15 +43,19 @@ function init3DTradingWorkflowScene() {
     const threeEngine = window.THREE || window.Three;
     if (!threeEngine) return;
 
+    // Check prefers-reduced-motion
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
     const scene = new threeEngine.Scene();
     const camera = new threeEngine.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
     const renderer = new threeEngine.WebGLRenderer({ canvas: canvas, alpha: true, antialias: true });
 
+    const isMobile = window.innerWidth <= 768;
     renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, isMobile ? 1 : 2));
 
-    // Digital Data Stream Particles (Institutional Grid)
-    const particleCount = 400;
+    // Digital Data Stream Particles
+    const particleCount = isMobile ? 120 : 350;
     const geometry = new threeEngine.BufferGeometry();
     const positions = new Float32Array(particleCount * 3);
 
@@ -62,38 +65,39 @@ function init3DTradingWorkflowScene() {
 
     geometry.setAttribute('position', new threeEngine.BufferAttribute(positions, 3));
     const material = new threeEngine.PointsMaterial({
-        size: 0.035,
+        size: isMobile ? 0.04 : 0.035,
         color: 0x00B074,
         transparent: true,
-        opacity: 0.5
+        opacity: 0.45
     });
 
     const particles = new threeEngine.Points(geometry, material);
     scene.add(particles);
 
-    // 3D Animated Candlestick Chart Group
+    // 3D Candlestick Group (Hidden on low mobile to save GPU battery)
     const chartGroup = new threeEngine.Group();
-    const candleCount = 18;
+    if (!isMobile) {
+        const candleCount = 14;
+        for (let i = 0; i < candleCount; i++) {
+            const isGreen = i % 3 !== 0;
+            const height = Math.random() * 1.2 + 0.4;
+            const candleGeo = new threeEngine.BoxGeometry(0.12, height, 0.12);
+            const candleMat = new threeEngine.MeshBasicMaterial({
+                color: isGreen ? 0x00B074 : 0xFF2E63,
+                wireframe: true,
+                transparent: true,
+                opacity: 0.75
+            });
 
-    for (let i = 0; i < candleCount; i++) {
-        const isGreen = i % 3 !== 0;
-        const height = Math.random() * 1.2 + 0.4;
-        const candleGeo = new threeEngine.BoxGeometry(0.12, height, 0.12);
-        const candleMat = new threeEngine.MeshBasicMaterial({
-            color: isGreen ? 0x00B074 : 0xFF2E63,
-            wireframe: true,
-            transparent: true,
-            opacity: 0.8
-        });
-
-        const candle = new threeEngine.Mesh(candleGeo, candleMat);
-        candle.position.x = (i - candleCount / 2) * 0.45;
-        candle.position.y = Math.sin(i * 0.4) * 0.8;
-        candle.position.z = -1.5;
-        chartGroup.add(candle);
+            const candle = new threeEngine.Mesh(candleGeo, candleMat);
+            candle.position.x = (i - candleCount / 2) * 0.45;
+            candle.position.y = Math.sin(i * 0.4) * 0.8;
+            candle.position.z = -1.5;
+            chartGroup.add(candle);
+        }
+        scene.add(chartGroup);
     }
 
-    scene.add(chartGroup);
     camera.position.z = 4.8;
 
     // Mouse Parallax
@@ -103,16 +107,17 @@ function init3DTradingWorkflowScene() {
         mouseY = (e.clientY / window.innerHeight) - 0.5;
     });
 
-    // Render Animation Loop
     function animate() {
         requestAnimationFrame(animate);
 
-        particles.rotation.y += 0.0005;
-        chartGroup.rotation.y = Math.sin(Date.now() * 0.0005) * 0.15;
-        chartGroup.position.y = Math.sin(Date.now() * 0.001) * 0.1;
+        particles.rotation.y += 0.0004;
+        if (!isMobile) {
+            chartGroup.rotation.y = Math.sin(Date.now() * 0.0005) * 0.12;
+            chartGroup.position.y = Math.sin(Date.now() * 0.001) * 0.08;
+        }
 
-        camera.position.x += (mouseX * 0.5 - camera.position.x) * 0.05;
-        camera.position.y += (-mouseY * 0.5 - camera.position.y) * 0.05;
+        camera.position.x += (mouseX * 0.4 - camera.position.x) * 0.05;
+        camera.position.y += (-mouseY * 0.4 - camera.position.y) * 0.05;
         camera.lookAt(scene.position);
 
         renderer.render(scene, camera);
@@ -127,7 +132,7 @@ function init3DTradingWorkflowScene() {
     });
 }
 
-// 10-STAGE WORKFLOW ANIMATION LOOP
+// 10-STAGE STORYTELLING LOOP
 function start3DStageLoop() {
     const stageNames = [
         "STAGE 1 — SCANNING (100+ Markets Monitored)",
@@ -149,7 +154,6 @@ function start3DStageLoop() {
             stageEl.innerText = stageNames[current3DStage - 1];
         }
 
-        // Highlight active workflow card on home view
         document.querySelectorAll('.wf-card-v4').forEach((card, idx) => {
             if (idx === current3DStage - 1) {
                 card.classList.add('active-pulse');
@@ -175,7 +179,7 @@ function handleRoute() {
     const hash = window.location.hash.replace('#', '') || 'home';
     currentRoute = hash;
 
-    // Update active navbar link
+    // Highlight navbar link
     document.querySelectorAll('.nav-links a').forEach(a => {
         const target = a.getAttribute('href').replace('#', '');
         if (target === hash || (hash.startsWith('academy') && target === 'academy')) {
@@ -184,8 +188,6 @@ function handleRoute() {
             a.classList.remove('active');
         }
     });
-
-    updateFloatingCTA();
 
     const container = document.getElementById('app-view-container');
     if (!container) return;
@@ -218,39 +220,32 @@ function handleRoute() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-// 4. FLOATING CTA CONTEXT UPDATER
-function updateFloatingCTA() {
-    const btn = document.getElementById('floating-cta-btn');
-    if (!btn) return;
-
-    if (currentRoute === 'pricing') {
-        btn.innerText = 'CHOOSE YOUR PLAN';
-        btn.setAttribute('href', '#pricing');
-    } else if (currentRoute.startsWith('academy')) {
-        btn.innerText = 'START LEARNING';
-        btn.setAttribute('href', '#academy');
-    } else if (currentRoute === 'services') {
-        btn.innerText = 'BUILD MY SYSTEM';
-        btn.setAttribute('href', '#contact');
-    } else if (currentRoute === 'community') {
-        btn.innerText = 'JOIN COMMUNITY';
-        btn.setAttribute('href', '#pricing');
-    } else if (currentRoute === 'risk-calculator') {
-        btn.innerText = 'CALCULATE YOUR RISK';
-        btn.setAttribute('href', '#risk-calculator');
-    } else if (currentRoute === 'journal') {
-        btn.innerText = 'OPEN TRADE JOURNAL';
-        btn.setAttribute('href', '#journal');
-    } else {
-        btn.innerText = 'EXPLORE CHARTORA';
-        btn.setAttribute('href', '#pricing');
-    }
+// 4. MOBILE MENU & HANDLERS
+function initMobileMenuHandlers() {
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            const drawer = document.getElementById('mobile-drawer');
+            if (drawer && drawer.classList.contains('open')) {
+                toggleMobileMenu();
+            }
+        }
+    });
 }
 
-function handleFloatingCTAClick(e) {
-    e.preventDefault();
-    const href = e.target.getAttribute('href').replace('#', '');
-    navigateTo(href);
+function toggleDropdown(e) {
+    if (e) e.preventDefault();
+    const menu = document.getElementById('more-dropdown-menu');
+    if (menu) menu.classList.toggle('show');
+}
+
+function toggleMobileMenu() {
+    const btn = document.getElementById('hamburger-btn');
+    const drawer = document.getElementById('mobile-drawer');
+    const overlay = document.getElementById('mobile-drawer-overlay');
+
+    if (btn) btn.classList.toggle('open');
+    if (drawer) drawer.classList.toggle('open');
+    if (overlay) overlay.classList.toggle('open');
 }
 
 // 5. VIEW RENDERERS
@@ -286,40 +281,6 @@ function renderHomeView() {
                 <div class="stage-indicator-bar">
                     <div class="stage-dot"></div>
                     <span>3D ENGINE STAGE: <strong id="stage-3d-name" style="color:var(--brand-emerald)">STAGE 1 — SCANNING (100+ Markets Monitored)</strong></span>
-                </div>
-            </div>
-        </section>
-
-        <!-- Homepage Live Metrics & System Status -->
-        <section class="section">
-            <div class="container">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
-                    <div>
-                        <span class="hero-badge">CHARTORA METRICS & STATUS</span>
-                        <h2>Platform Overview</h2>
-                    </div>
-                    <div class="glass-card" style="padding:10px 20px; font-family:var(--font-mono); font-size:0.85rem; border-color:var(--brand-emerald);">
-                        CHARTORA SYSTEM: <strong style="color:var(--brand-emerald)">🟢 ONLINE</strong> <span class="demo-badge">Demo System</span>
-                    </div>
-                </div>
-
-                <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:16px;">
-                    <div class="glass-card" style="text-align:center;">
-                        <div style="font-size:2.4rem; font-weight:800; font-family:var(--font-mono); color:var(--brand-emerald);">250+</div>
-                        <div style="font-size:0.88rem; color:var(--text-muted); margin-top:4px;">Markets Monitored <span class="demo-tag-mini">DEMO</span></div>
-                    </div>
-                    <div class="glass-card" style="text-align:center;">
-                        <div style="font-size:2.4rem; font-weight:800; font-family:var(--font-mono); color:var(--primary-cyan);">14</div>
-                        <div style="font-size:0.88rem; color:var(--text-muted); margin-top:4px;">Setups Detected Today <span class="demo-tag-mini">DEMO</span></div>
-                    </div>
-                    <div class="glass-card" style="text-align:center;">
-                        <div style="font-size:2.4rem; font-weight:800; font-family:var(--font-mono); color:var(--warning-yellow);">1:2.4</div>
-                        <div style="font-size:0.88rem; color:var(--text-muted); margin-top:4px;">Average Risk/Reward <span class="demo-tag-mini">DEMO</span></div>
-                    </div>
-                    <div class="glass-card" style="text-align:center;">
-                        <div style="font-size:2.4rem; font-weight:800; font-family:var(--font-mono); color:#fff;">99.9%</div>
-                        <div style="font-size:0.88rem; color:var(--text-muted); margin-top:4px;">Scanner Uptime <span class="demo-tag-mini">DEMO</span></div>
-                    </div>
                 </div>
             </div>
         </section>
@@ -392,7 +353,7 @@ function renderHomeView() {
     `;
 }
 
-// PRICING VIEW (CATEGORY PRICING + ALL ACCESS $79 + CUSTOM BUILD SERVICES)
+// PRICING VIEW
 function renderPricingView() {
     return `
         <section class="section">
@@ -402,11 +363,11 @@ function renderPricingView() {
                 <p class="section-subtitle">Follow one market category or unlock the complete Chartora ecosystem.</p>
 
                 <!-- Hero ALL ACCESS Card ($79/mo) -->
-                <div class="glass-card pricing-hero" style="margin-bottom:50px; padding:40px;">
+                <div class="glass-card pricing-hero" style="margin-bottom:50px; padding:clamp(20px, 4vw, 40px);">
                     <div class="pricing-hero-tag">POPULAR • ALL ACCESS</div>
-                    <div style="display:grid; grid-template-columns: 2fr 1fr; gap:40px; align-items:center;">
+                    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:30px; align-items:center;">
                         <div>
-                            <h2 style="font-size:2.2rem;">CHARTORA ALL ACCESS</h2>
+                            <h2 style="font-size:clamp(1.8rem, 4vw, 2.2rem);">CHARTORA ALL ACCESS</h2>
                             <p style="color:var(--brand-emerald); font-weight:700; font-size:1.1rem; margin-top:6px;">ONE SUBSCRIPTION. THE COMPLETE CHARTORA ECOSYSTEM.</p>
                             <p style="color:var(--text-muted); margin-top:12px; font-size:0.95rem;">
                                 Monitor Forex, Metals, Indices, US Stocks, Commodities, Crypto, and Swing setups from one centralized intelligence platform.
@@ -478,9 +439,9 @@ function renderPricingView() {
                     </div>
                 </div>
 
-                <!-- Custom Build Services Directly Inside Pricing Section -->
+                <!-- Custom Build Services -->
                 <h3 style="margin-top:50px; margin-bottom:20px;">Custom Development Services</h3>
-                <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:20px; margin-bottom:50px;">
+                <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:20px; margin-bottom:50px;">
                     <div class="glass-card">
                         <h4>TRADINGVIEW INDICATOR</h4>
                         <div style="font-size:1.4rem; font-weight:800; color:var(--primary-cyan); margin:6px 0;">From $149</div>
@@ -501,50 +462,118 @@ function renderPricingView() {
                         <p style="font-size:0.88rem; color:var(--text-muted);">Custom multi-market scanning system tailored to your watchlist.</p>
                         <a href="#contact" onclick="navigateTo('contact', event)" class="btn btn-secondary btn-full" style="margin-top:16px;">REQUEST A QUOTE</a>
                     </div>
-
-                    <div class="glass-card">
-                        <h4>TELEGRAM ALERT BOT</h4>
-                        <div style="font-size:1.4rem; font-weight:800; color:var(--primary-cyan); margin:6px 0;">From $199</div>
-                        <p style="font-size:0.88rem; color:var(--text-muted);">Custom alert automation connected to defined strategy rules.</p>
-                        <a href="#contact" onclick="navigateTo('contact', event)" class="btn btn-secondary btn-full" style="margin-top:16px;">REQUEST A QUOTE</a>
-                    </div>
-
-                    <div class="glass-card">
-                        <h4>MT5 EXPERT ADVISOR</h4>
-                        <div style="font-size:1.4rem; font-weight:800; color:var(--primary-cyan); margin:6px 0;">From $499</div>
-                        <p style="font-size:0.88rem; color:var(--text-muted);">Custom EA development for MT5 based on documented rules.</p>
-                        <a href="#contact" onclick="navigateTo('contact', event)" class="btn btn-secondary btn-full" style="margin-top:16px;">REQUEST A QUOTE</a>
-                    </div>
-
-                    <div class="glass-card">
-                        <h4>COMPLETE TRADING SYSTEM</h4>
-                        <div style="font-size:1.4rem; font-weight:800; color:var(--primary-cyan); margin:6px 0;">From $999</div>
-                        <p style="font-size:0.88rem; color:var(--text-muted);">Custom combination of scanner, indicator, alerts, and automation.</p>
-                        <a href="#contact" onclick="navigateTo('contact', event)" class="btn btn-secondary btn-full" style="margin-top:16px;">REQUEST A QUOTE</a>
-                    </div>
-                </div>
-
-                <!-- Free Member Features Section -->
-                <div class="glass-card">
-                    <h3>START FREE — NO SUBSCRIPTION REQUIRED</h3>
-                    <p style="color:var(--text-muted); margin-bottom:20px; font-size:0.9rem;">Free resources are accessible to everyone to learn structured trading concepts.</p>
-                    <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:16px; font-size:0.9rem;">
-                        <div>✔️ Daily Market Watchlist</div>
-                        <div>✔️ Economic Calendar Awareness</div>
-                        <div>✔️ Daily Market Briefing</div>
-                        <div>✔️ Weekly Market Summary</div>
-                        <div>✔️ Educational Newsletters</div>
-                        <div>✔️ Pre-Trade Checklists</div>
-                        <div>✔️ Market Terminology Guides</div>
-                        <div>✔️ Risk Management Education</div>
-                    </div>
-                    <div style="margin-top:20px;">
-                        <a href="#academy" onclick="navigateTo('academy', event)" class="btn btn-secondary">EXPLORE FREE ACADEMY</a>
-                    </div>
                 </div>
             </div>
         </section>
     `;
+}
+
+// CONTACT VIEW (EXACT 6 MANDATORY FIELDS WITH VALIDATION)
+function renderContactView() {
+    return `
+        <section class="section">
+            <div class="container" style="max-width:640px;">
+                <div class="hero-badge">SUPPORT & CUSTOM INQUIRIES</div>
+                <h1 class="section-title">CONTACT CHARTORA</h1>
+                <p class="section-subtitle">Have questions or custom system requirements? Fill out the form below.</p>
+                
+                <div id="contact-form-container" class="glass-card" style="margin-top:20px;">
+                    <form id="contact-form" onsubmit="handleV5ContactSubmit(event)">
+                        <div class="form-group">
+                            <label>FULL NAME *</label>
+                            <input type="text" id="cf-name" class="form-input" placeholder="e.g. Hemanth Ranam">
+                            <div id="err-name" style="color:var(--danger-red); font-size:0.8rem; display:none; margin-top:2px;">Please enter your name.</div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>EMAIL ADDRESS *</label>
+                            <input type="email" id="cf-email" class="form-input" placeholder="e.g. name@example.com">
+                            <div id="err-email" style="color:var(--danger-red); font-size:0.8rem; display:none; margin-top:2px;">Please enter a valid email address.</div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>PHONE NUMBER *</label>
+                            <input type="tel" id="cf-phone" class="form-input" placeholder="e.g. +1 (555) 000-0000">
+                            <div id="err-phone" style="color:var(--danger-red); font-size:0.8rem; display:none; margin-top:2px;">Please enter your phone number.</div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>TRADING EXPERIENCE (YEARS) *</label>
+                            <select id="cf-exp" class="form-input">
+                                <option value="">Select Years of Experience</option>
+                                <option value="0">0 Years (Brand New)</option>
+                                <option value="1">1 Year</option>
+                                <option value="2">2 Years</option>
+                                <option value="3">3 Years</option>
+                                <option value="5+">5+ Years</option>
+                            </select>
+                            <div id="err-exp" style="color:var(--danger-red); font-size:0.8rem; display:none; margin-top:2px;">Please select your trading experience.</div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>CURRENT LEVEL *</label>
+                            <select id="cf-level" class="form-input">
+                                <option value="">Select Current Level</option>
+                                <option value="Beginner">Beginner</option>
+                                <option value="Intermediate">Intermediate</option>
+                                <option value="Advanced">Advanced</option>
+                            </select>
+                            <div id="err-level" style="color:var(--danger-red); font-size:0.8rem; display:none; margin-top:2px;">Please select your trading level.</div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>MESSAGE *</label>
+                            <textarea id="cf-msg" class="form-input" rows="4" placeholder="How can Chartora help you?"></textarea>
+                            <div id="err-msg" style="color:var(--danger-red); font-size:0.8rem; display:none; margin-top:2px;">Please enter your message.</div>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary btn-full" style="margin-top:16px;">SEND MESSAGE</button>
+                    </form>
+                </div>
+            </div>
+        </section>
+    `;
+}
+
+function handleV5ContactSubmit(e) {
+    e.preventDefault();
+    
+    const name = document.getElementById('cf-name')?.value.trim();
+    const email = document.getElementById('cf-email')?.value.trim();
+    const phone = document.getElementById('cf-phone')?.value.trim();
+    const exp = document.getElementById('cf-exp')?.value;
+    const level = document.getElementById('cf-level')?.value;
+    const msg = document.getElementById('cf-msg')?.value.trim();
+
+    let isValid = true;
+
+    // Reset error messages
+    ['name', 'email', 'phone', 'exp', 'level', 'msg'].forEach(field => {
+        const el = document.getElementById(`err-${field}`);
+        if (el) el.style.display = 'none';
+    });
+
+    if (!name) { document.getElementById('err-name').style.display = 'block'; isValid = false; }
+    if (!email || !email.includes('@')) { document.getElementById('err-email').style.display = 'block'; isValid = false; }
+    if (!phone) { document.getElementById('err-phone').style.display = 'block'; isValid = false; }
+    if (!exp) { document.getElementById('err-exp').style.display = 'block'; isValid = false; }
+    if (!level) { document.getElementById('err-level').style.display = 'block'; isValid = false; }
+    if (!msg || msg.length < 5) { document.getElementById('err-msg').style.display = 'block'; isValid = false; }
+
+    if (isValid) {
+        const container = document.getElementById('contact-form-container');
+        if (container) {
+            container.innerHTML = `
+                <div style="text-align:center; padding:30px 10px;">
+                    <div style="font-size:3rem; margin-bottom:12px;">✅</div>
+                    <h2 style="color:var(--brand-emerald); margin-bottom:10px;">MESSAGE RECEIVED</h2>
+                    <p style="color:var(--text-muted); line-height:1.6;">
+                        Thank you for contacting Chartora.<br>Our team will review your message and get back to you shortly.
+                    </p>
+                </div>
+            `;
+        }
+    }
 }
 
 // FULLY FUNCTIONAL RISK CALCULATOR VIEW (/risk-calculator)
@@ -557,7 +586,7 @@ function renderRiskCalculatorView() {
                 <p class="section-subtitle">Calculate your exact position size, risk amount, and risk to reward ratio before taking entry.</p>
 
                 <div class="glass-card" style="margin-top:20px;">
-                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:24px;">
+                    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:24px;">
                         <div>
                             <div class="form-group">
                                 <label>Account Balance ($)</label>
@@ -645,8 +674,6 @@ function calculateRiskMath() {
     const rewardDist = Math.abs(tp - entry);
     const rr = stopDist > 0 ? (rewardDist / stopDist).toFixed(2) : 0;
     const rewardAmt = riskAmt * rr;
-
-    // Approximate position size lots (Gold: 100 oz per lot)
     const lots = stopDist > 0 ? (riskAmt / (stopDist * 100)).toFixed(2) : '0.00';
 
     if (document.getElementById('res-risk-amt')) document.getElementById('res-risk-amt').innerText = `$${riskAmt.toFixed(2)}`;
@@ -656,7 +683,7 @@ function calculateRiskMath() {
     if (document.getElementById('res-pos-size')) document.getElementById('res-pos-size').innerText = `${lots} Lots`;
 }
 
-// FULLY FUNCTIONAL INTERACTIVE TRADE JOURNAL VIEW (/journal)
+// FULLY FUNCTIONAL LOCAL STORAGE TRADE JOURNAL VIEW (/journal)
 function renderJournalView() {
     const totalTrades = tradeJournalData.length;
     const wins = tradeJournalData.filter(t => t.result > 0).length;
@@ -667,7 +694,7 @@ function renderJournalView() {
     return `
         <section class="section">
             <div class="container">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px; margin-bottom:24px;">
                     <div>
                         <span class="hero-badge">PERFORMANCE TRACKING</span>
                         <h1 class="section-title">Trade Journal</h1>
@@ -677,7 +704,7 @@ function renderJournalView() {
                 </div>
 
                 <!-- Stats Summary Cards -->
-                <div style="display:grid; grid-template-columns:repeat(5, 1fr); gap:16px; margin-bottom:30px;">
+                <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap:16px; margin-bottom:30px;">
                     <div class="glass-card" style="padding:16px; text-align:center;">
                         <div style="font-size:0.8rem; color:var(--text-muted); font-family:var(--font-mono);">TOTAL TRADES</div>
                         <div style="font-size:1.8rem; font-weight:800; font-family:var(--font-mono);">${totalTrades}</div>
@@ -700,10 +727,10 @@ function renderJournalView() {
                     </div>
                 </div>
 
-                <!-- Add Trade Modal Form Container (Hidden by default) -->
+                <!-- Add Trade Modal Form Container -->
                 <div id="journal-modal" class="glass-card" style="display:none; margin-bottom:30px; border-color:var(--brand-emerald);">
                     <h3>Add Trade Record</h3>
-                    <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:14px; margin-top:16px;">
+                    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:14px; margin-top:16px;">
                         <div class="form-group"><label>Date</label><input type="date" id="tj-date" class="form-input" value="${new Date().toISOString().split('T')[0]}"></div>
                         <div class="form-group"><label>Market</label><input type="text" id="tj-market" class="form-input" placeholder="XAUUSD"></div>
                         <div class="form-group"><label>Direction</label><select id="tj-dir" class="form-input"><option value="LONG">LONG</option><option value="SHORT">SHORT</option></select></div>
@@ -721,7 +748,7 @@ function renderJournalView() {
                 </div>
 
                 <!-- Trades Log Table -->
-                <div class="glass-card">
+                <div class="glass-card table-responsive">
                     <table class="data-table">
                         <thead>
                             <tr>
@@ -837,7 +864,7 @@ function renderAcademyView() {
                 <p class="section-subtitle">Structured, process-focused trading education designed to explain the methodology behind every setup.</p>
 
                 <!-- Course Navigation Tabs -->
-                <div style="display:grid; grid-template-columns:repeat(5, 1fr); gap:14px; margin-bottom:30px;">
+                <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:14px; margin-bottom:30px;">
                     ${courses.map(c => `
                         <div class="glass-card" onclick="selectCourse('${c.id}')" style="cursor:pointer; padding:16px; border-color:${c.id === activeCourseId ? 'var(--brand-emerald)' : 'var(--border-color)'}">
                             <h4 style="font-size:0.88rem; color:${c.id === activeCourseId ? 'var(--brand-emerald)' : '#fff'};">${c.name}</h4>
@@ -847,21 +874,21 @@ function renderAcademyView() {
 
                 <!-- Active Chapter Reader Container -->
                 <div class="glass-card">
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; border-bottom:1px solid var(--border-color); padding-bottom:16px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:16px; border-bottom:1px solid var(--border-color); padding-bottom:16px;">
                         <div>
                             <span class="hero-badge" style="margin-bottom:4px;">${currentCourse.name.toUpperCase()}</span>
-                            <h2>Chapter ${activeChapterId}: ${getV4ChapterTitle(activeCourseId, activeChapterId)}</h2>
+                            <h2>Chapter ${activeChapterId}: ${getV5ChapterTitle(activeCourseId, activeChapterId)}</h2>
                         </div>
                         <div style="font-family:var(--font-mono); color:var(--brand-emerald);">Chapter ${activeChapterId} / 15</div>
                     </div>
 
-                    <div style="background:rgba(6,9,16,0.85); border:1px solid var(--border-color); padding:28px; border-radius:12px;">
+                    <div style="background:rgba(6,9,16,0.85); border:1px solid var(--border-color); padding:clamp(16px, 3vw, 28px); border-radius:12px;">
                         <div style="font-size:1rem; color:var(--text-main); line-height:1.8;">
-                            ${getV4ChapterBody(activeCourseId, activeChapterId)}
+                            ${getV5ChapterBody(activeCourseId, activeChapterId)}
                         </div>
 
                         <div style="margin-top:24px; padding:16px; background:rgba(0,176,116,0.1); border-left:4px solid var(--brand-emerald); border-radius:6px;">
-                            <strong style="color:var(--brand-emerald)">KEY LESSON:</strong> ${getV4ChapterTakeaway(activeCourseId, activeChapterId)}
+                            <strong style="color:var(--brand-emerald)">KEY LESSON:</strong> ${getV5ChapterTakeaway(activeCourseId, activeChapterId)}
                         </div>
 
                         <div style="margin-top:16px; font-size:0.8rem; color:var(--text-dim); border-top:1px solid rgba(255,255,255,0.06); padding-top:12px;">
@@ -869,17 +896,17 @@ function renderAcademyView() {
                         </div>
 
                         <div style="display:flex; justify-content:space-between; margin-top:28px; border-top:1px solid var(--border-color); padding-top:16px;">
-                            <button class="btn btn-secondary" onclick="prevV4Chapter()" ${activeChapterId === 1 ? 'disabled' : ''}>← Previous Chapter</button>
-                            <button class="btn btn-primary" onclick="nextV4Chapter()" ${activeChapterId === 15 ? 'disabled' : ''}>Next Chapter →</button>
+                            <button class="btn btn-secondary" onclick="prevV5Chapter()" ${activeChapterId === 1 ? 'disabled' : ''}>← Previous Chapter</button>
+                            <button class="btn btn-primary" onclick="nextV5Chapter()" ${activeChapterId === 15 ? 'disabled' : ''}>Next Chapter →</button>
                         </div>
                     </div>
 
                     <!-- 15 Chapter Index Table -->
                     <h4 style="margin-top:32px; margin-bottom:14px;">Course Chapter Index (15 Chapters)</h4>
-                    <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:10px;">
+                    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:10px;">
                         ${Array.from({length: 15}, (_, i) => i + 1).map(num => `
-                            <div onclick="selectV4Chapter(${num})" style="background:rgba(14,20,32,0.7); border:1px solid ${num === activeChapterId ? 'var(--brand-emerald)' : 'var(--border-color)'}; padding:10px 14px; border-radius:8px; cursor:pointer; font-size:0.85rem; display:flex; justify-content:space-between;">
-                                <span>Ch. ${num}: ${getV4ChapterTitle(activeCourseId, num)}</span>
+                            <div onclick="selectV5Chapter(${num})" style="background:rgba(14,20,32,0.7); border:1px solid ${num === activeChapterId ? 'var(--brand-emerald)' : 'var(--border-color)'}; padding:10px 14px; border-radius:8px; cursor:pointer; font-size:0.85rem; display:flex; justify-content:space-between;">
+                                <span>Ch. ${num}: ${getV5ChapterTitle(activeCourseId, num)}</span>
                                 <span style="color:var(--brand-emerald)">→</span>
                             </div>
                         `).join('')}
@@ -896,20 +923,20 @@ function selectCourse(courseId) {
     navigateTo(`academy/${courseId}/chapter-1`);
 }
 
-function selectV4Chapter(chapId) {
+function selectV5Chapter(chapId) {
     activeChapterId = chapId;
     navigateTo(`academy/${activeCourseId}/chapter-${chapId}`);
 }
 
-function prevV4Chapter() {
-    if (activeChapterId > 1) selectV4Chapter(activeChapterId - 1);
+function prevV5Chapter() {
+    if (activeChapterId > 1) selectV5Chapter(activeChapterId - 1);
 }
 
-function nextV4Chapter() {
-    if (activeChapterId < 15) selectV4Chapter(activeChapterId + 1);
+function nextV5Chapter() {
+    if (activeChapterId < 15) selectV5Chapter(activeChapterId + 1);
 }
 
-function getV4ChapterTitle(courseId, chapId) {
+function getV5ChapterTitle(courseId, chapId) {
     const titles = {
         'market-foundations': ['What Financial Markets Actually Are', 'Why Prices Move', 'Candlestick Anatomy', 'Timeframes Explained', 'Trend vs Range', 'Market Structure Basics', 'Higher Highs & Higher Lows', 'Lower Highs & Lower Lows', 'Support & Resistance Principles', 'Volatility & Spreads', 'Liquidity Pools', 'Trading Sessions (London/NY)', 'Spread & Order Execution', 'Building a Trading Plan', 'Your First Structured Analysis'],
         'technical-analysis': ['Market Structure Mastery', 'Trend Identification Rules', 'Support & Resistance Zones', 'Breakout Execution', 'False Breakouts & Fakeouts', 'Pullback Entry Zones', 'Retest Confirmation', 'Momentum Indicators', 'Consolidation Ranges', 'Multi-Timeframe Confluence', 'Volume Profile Basics', 'Entry Scenario Planning', 'Invalidation Triggers', 'Trade Execution Discipline', 'Course 2 Review'],
@@ -920,9 +947,9 @@ function getV4ChapterTitle(courseId, chapId) {
     return (titles[courseId] && titles[courseId][chapId - 1]) || `Chapter ${chapId}`;
 }
 
-function getV4ChapterBody(courseId, chapId) {
+function getV5ChapterBody(courseId, chapId) {
     return `
-        Financial markets move based on supply, demand, and liquidity flows. In this chapter on <strong>${getV4ChapterTitle(courseId, chapId)}</strong>, we break down how systematic traders isolate technical setups without guessing.
+        Financial markets move based on supply, demand, and liquidity flows. In this chapter on <strong>${getV5ChapterTitle(courseId, chapId)}</strong>, we break down how systematic traders isolate technical setups without guessing.
         <br><br>
         First, market structure provides directional bias. When price respects higher timeframe key levels, lower timeframe pullbacks offer high probability entry scenarios with tight, predefined risk boundaries.
         <br><br>
@@ -930,7 +957,7 @@ function getV4ChapterBody(courseId, chapId) {
     `;
 }
 
-function getV4ChapterTakeaway(courseId, chapId) {
+function getV5ChapterTakeaway(courseId, chapId) {
     return `Always wait for structural confirmation at predefined key zones. Never enter a market based on green candle excitement alone.`;
 }
 
@@ -938,25 +965,6 @@ function getV4ChapterTakeaway(courseId, chapId) {
 function renderScannerView() { return renderHomeView(); }
 function renderSetupsView() { return renderHomeView(); }
 function renderServicesView() { return renderPricingView(); }
-function renderContactView() {
-    return `
-        <section class="section">
-            <div class="container" style="max-width:600px;">
-                <div class="hero-badge">SUPPORT & CUSTOM INQUIRIES</div>
-                <h1 class="section-title">CONTACT CHARTORA</h1>
-                <p class="section-subtitle">Have questions or custom system requirements? Reach out directly to our team.</p>
-                <form onsubmit="handleContactSubmit(event)" class="glass-card" style="margin-top:20px;">
-                    <div class="form-group"><label>Your Name</label><input type="text" class="form-input" required placeholder="John Doe"></div>
-                    <div class="form-group"><label>Email Address</label><input type="email" class="form-input" required placeholder="john@example.com"></div>
-                    <div class="form-group"><label>Service / Subject</label><input type="text" class="form-input" required placeholder="Custom Pine Script Inquiry"></div>
-                    <div class="form-group"><label>Message</label><textarea class="form-input" rows="4" required placeholder="How can Chartora help you?"></textarea></div>
-                    <button type="submit" class="btn btn-primary btn-full" style="margin-top:16px;">CONTACT CHARTORA</button>
-                    <p style="font-size:0.8rem; color:var(--text-muted); margin-top:12px; text-align:center;">Direct Email: <a href="mailto:info@chartora.in" style="color:var(--primary-cyan)">info@chartora.in</a></p>
-                </form>
-            </div>
-        </section>
-    `;
-}
 function renderAboutView() { return renderHomeView(); }
 function renderDashboardView() { return renderPricingView(); }
 function renderDisclaimerView() {
@@ -970,12 +978,6 @@ function renderDisclaimerView() {
             </div>
         </section>
     `;
-}
-
-// FORM HANDLERS
-function handleContactSubmit(e) {
-    e.preventDefault();
-    alert('Thank you for contacting Chartora! Your inquiry has been logged. We will reply to your email within 24 hours.');
 }
 
 // TOAST SIMULATOR

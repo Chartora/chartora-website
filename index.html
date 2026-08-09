@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Chartora.in | Market Scanning, Trading Alerts and Trading Education</title>
     <meta name="description" content="Scan supported markets, identify potential setups, review trade plans, manage risk and learn practical trading concepts with Chartora. You cannot watch every market. Chartora can.">
     <link rel="canonical" href="https://chartora.in/">
@@ -38,12 +38,19 @@
     <div class="bg-glow bg-glow-1"></div>
     <div class="bg-glow bg-glow-2"></div>
 
-    <!-- Persistent Context-Aware Floating CTA -->
-    <div class="floating-cta-container">
-        <a href="#pricing" id="floating-cta-btn" onclick="handleFloatingCTAClick(event)" class="btn btn-primary btn-glow floating-cta-btn">
-            EXPLORE CHARTORA
+    <!-- Floating Telegram Contact Button -->
+    <div class="telegram-cta-container">
+        <a href="https://t.me/chartora_official" target="_blank" rel="noopener" class="telegram-cta-btn" id="telegram-floating-cta">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" fill="#0088CC"/>
+                <path d="M8 11.8L15.5 8.5C16.2 8.2 16.8 8.6 16.6 9.4L15.3 15.6C15.2 16.1 14.8 16.3 14.4 16L12.1 14.3L11 15.4C10.9 15.5 10.7 15.6 10.5 15.6L10.7 13.2L15.1 9.2C15.3 9 15 8.9 14.7 9.1L9.3 12.5L7 11.8Z" fill="white"/>
+            </svg>
+            <span class="telegram-cta-text">MESSAGE US ON TELEGRAM</span>
         </a>
     </div>
+
+    <!-- Mobile Navigation Overlay Backdrop -->
+    <div class="mobile-drawer-overlay" id="mobile-drawer-overlay" onclick="toggleMobileMenu()"></div>
 
     <!-- Sales-First Header Navigation -->
     <nav class="navbar">
@@ -87,35 +94,48 @@
             </div>
 
             <!-- Mobile Hamburger Button -->
-            <button class="hamburger-btn" onclick="toggleMobileMenu()">
-                <span></span><span></span><span></span>
+            <button class="hamburger-btn" id="hamburger-btn" onclick="toggleMobileMenu()" aria-label="Toggle navigation">
+                <span class="ham-line ham-line-1"></span>
+                <span class="ham-line ham-line-2"></span>
+                <span class="ham-line ham-line-3"></span>
             </button>
         </div>
 
-        <!-- Mobile Drawer -->
+        <!-- Mobile Drawer Menu -->
         <div class="mobile-drawer" id="mobile-drawer">
-            <a href="#scanner" onclick="navigateTo('scanner', event); toggleMobileMenu();">Markets</a>
-            <a href="#academy" onclick="navigateTo('academy', event); toggleMobileMenu();">Academy</a>
-            <a href="#pricing" onclick="navigateTo('pricing', event); toggleMobileMenu();">Pricing</a>
-            <a href="#community" onclick="navigateTo('community', event); toggleMobileMenu();">Community</a>
-            <a href="#services" onclick="navigateTo('services', event); toggleMobileMenu();">Services</a>
-            <a href="#journal" onclick="navigateTo('journal', event); toggleMobileMenu();">Trade Journal</a>
-            <a href="#risk-calculator" onclick="navigateTo('risk-calculator', event); toggleMobileMenu();">Risk Calculator</a>
-            <a href="#contact" onclick="navigateTo('contact', event); toggleMobileMenu();">Contact</a>
+            <div class="mobile-drawer-header">
+                <span class="logo-text" style="font-size:1.2rem;">CHARTORA<span class="domain-ext">.IN</span></span>
+                <button class="mobile-drawer-close" onclick="toggleMobileMenu()">✕</button>
+            </div>
+            <div class="mobile-drawer-nav">
+                <a href="#scanner" onclick="navigateTo('scanner', event); toggleMobileMenu();">Markets</a>
+                <a href="#academy" onclick="navigateTo('academy', event); toggleMobileMenu();">Academy</a>
+                <a href="#pricing" onclick="navigateTo('pricing', event); toggleMobileMenu();">Pricing</a>
+                <a href="#community" onclick="navigateTo('community', event); toggleMobileMenu();">Community</a>
+                
+                <div class="mobile-menu-divider">MORE TOOLS & SERVICES</div>
+                <a href="#risk-calculator" onclick="navigateTo('risk-calculator', event); toggleMobileMenu();">Risk Calculator</a>
+                <a href="#journal" onclick="navigateTo('journal', event); toggleMobileMenu();">Trade Journal</a>
+                <a href="#setups" onclick="navigateTo('setups', event); toggleMobileMenu();">Active Setups</a>
+                <a href="#services" onclick="navigateTo('services', event); toggleMobileMenu();">Custom Build Services</a>
+                <a href="#contact" onclick="navigateTo('contact', event); toggleMobileMenu();">Contact Us</a>
+                <a href="#about" onclick="navigateTo('about', event); toggleMobileMenu();">About Chartora</a>
+                <a href="legal/disclaimer.html">Risk Disclaimer</a>
+            </div>
             <div style="margin-top:20px;">
                 <a href="#pricing" class="btn btn-primary btn-full" onclick="navigateTo('pricing', event); toggleMobileMenu();">GET STARTED</a>
             </div>
         </div>
     </nav>
 
-    <!-- Real-Time Ticker Bar (Clearly Marked DEMO DATA) -->
+    <!-- Real-Time Ticker Bar -->
     <div class="ticker-bar">
         <div class="ticker-content" id="ticker-items">
-            <span class="ticker-item"><span class="demo-tag-mini">DEMO</span> <strong style="color:var(--cat-metals-primary)">XAUUSD (Gold) 5M:</strong> 🟢 SETUP DETECTED (EMA Pullback)</span>
-            <span class="ticker-item"><span class="demo-tag-mini">DEMO</span> <strong style="color:var(--cat-forex-primary)">EURUSD 15M:</strong> 🟡 WAITING FOR CONFIRMATION</span>
-            <span class="ticker-item"><span class="demo-tag-mini">DEMO</span> <strong style="color:var(--cat-indices-primary)">USTEC 5M:</strong> 🔴 INVALIDATED (Structure Shift)</span>
-            <span class="ticker-item"><span class="demo-tag-mini">DEMO</span> <strong style="color:var(--cat-stocks-primary)">NVDA 30M:</strong> 🟢 CLEAN SETUP (Breakout Retest)</span>
-            <span class="ticker-item"><span class="demo-tag-mini">DEMO</span> <strong style="color:var(--cat-commodities-primary)">USOIL 15M:</strong> ⚪ NO TRADE (Choppy Structure)</span>
+            <span class="ticker-item"><strong style="color:var(--cat-metals-primary)">XAUUSD (Gold) 5M:</strong> 🟢 SETUP DETECTED (EMA Pullback)</span>
+            <span class="ticker-item"><strong style="color:var(--cat-forex-primary)">EURUSD 15M:</strong> 🟡 WAITING FOR CONFIRMATION</span>
+            <span class="ticker-item"><strong style="color:var(--cat-indices-primary)">USTEC 5M:</strong> 🔴 INVALIDATED (Structure Shift)</span>
+            <span class="ticker-item"><strong style="color:var(--cat-stocks-primary)">NVDA 30M:</strong> 🟢 CLEAN SETUP (Breakout Retest)</span>
+            <span class="ticker-item"><strong style="color:var(--cat-commodities-primary)">USOIL 15M:</strong> ⚪ NO TRADE (Choppy Structure)</span>
         </div>
     </div>
 
