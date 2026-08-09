@@ -1,0 +1,22 @@
+{
+  "name": "chartora-in",
+  "version": "3.0.0",
+  "description": "Chartora.in — Trading Intelligence, Market Alerts & Trading Education Platform",
+  "private": true,
+  "scripts": {
+    "dev": "python3 -m http.server 8080",
+    "build": "mkdir -p dist && cp -r index.html styles js public legal README.md DEPLOYMENT.md dist/ && cp public/_redirects dist/",
+    "preview": "python3 -m http.server 8080 --directory dist"
+  },
+  "keywords": [
+    "trading",
+    "market-intelligence",
+    "forex",
+    "gold",
+    "technical-analysis",
+    "tradingview",
+    "mt5"
+  ],
+  "author": "Chartora.in",
+  "license": "MIT"
+}

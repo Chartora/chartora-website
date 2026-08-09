@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chartora.in | Market Scanning, Trading Alerts and Trading Education</title>
+    <meta name="description" content="Scan supported markets, identify potential setups, review trade plans, manage risk and learn practical trading concepts with Chartora. You cannot watch every market. Chartora can.">
+    <link rel="canonical" href="https://chartora.in/">
+    <link rel="sitemap" type="application/xml" href="/sitemap.xml">
+
+    <!-- OpenGraph Metadata -->
+    <meta property="og:title" content="Chartora.in | Market Scanning, Trading Alerts and Trading Education">
+    <meta property="og:description" content="Scan supported markets, identify potential setups, review trade plans, manage risk and learn practical trading concepts with Chartora.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://chartora.in/">
+    <meta property="og:image" content="https://chartora.in/public/og-image.png">
+
+    <!-- Twitter Card Metadata -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Chartora.in | Market Scanning & Trading Alerts">
+    <meta name="twitter:description" content="You cannot watch every market. Chartora can. Scan supported markets and identify technical setups with risk planning.">
+    <meta name="twitter:image" content="https://chartora.in/public/og-image.png">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles/main.css">
+    
+    <!-- Three.js CDN for 3D Storytelling Workflow Scene -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+    <!-- 3D WebGL Background Canvas -->
+    <canvas id="bg-3d-canvas"></canvas>
+
+    <!-- Background Glow Orbs -->
+    <div class="bg-glow bg-glow-1"></div>
+    <div class="bg-glow bg-glow-2"></div>
+
+    <!-- Persistent Context-Aware Floating CTA -->
+    <div class="floating-cta-container">
+        <a href="#pricing" id="floating-cta-btn" onclick="handleFloatingCTAClick(event)" class="btn btn-primary btn-glow floating-cta-btn">
+            EXPLORE CHARTORA
+        </a>
+    </div>
+
+    <!-- Sales-First Header Navigation -->
+    <nav class="navbar">
+        <div class="container nav-container">
+            <a href="#home" class="brand-logo" onclick="navigateTo('home', event)">
+                <span class="logo-mark-c3">
+                    <svg width="28" height="28" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 28C8.68629 28 6 25.3137 6 22V18C6 14.6863 8.68629 12 12 12H20" stroke="#00B074" stroke-width="4.5" stroke-linecap="round"/>
+                        <path d="M22 28H28C31.3137 28 34 25.3137 34 22V18C34 14.6863 31.3137 12 28 12" stroke="#00B074" stroke-width="4.5" stroke-linecap="round"/>
+                        <path d="M24 16L30 10M30 10H24M30 10V16" stroke="#00B074" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </span>
+                <span class="logo-text">CHARTORA<span class="domain-ext">.IN</span></span>
+            </a>
+
+            <!-- Simplified Navigation (Max 5 Items) -->
+            <div class="nav-links" id="desktop-nav-links">
+                <a href="#scanner" onclick="navigateTo('scanner', event)">Markets</a>
+                <a href="#academy" onclick="navigateTo('academy', event)">Academy</a>
+                <a href="#pricing" onclick="navigateTo('pricing', event)">Pricing</a>
+                <a href="#community" onclick="navigateTo('community', event)">Community</a>
+                
+                <!-- More Dropdown -->
+                <div class="nav-dropdown">
+                    <a href="#" class="dropdown-trigger" onclick="toggleDropdown(event)">More ▾</a>
+                    <div class="dropdown-menu" id="more-dropdown-menu">
+                        <a href="#about" onclick="navigateTo('about', event)">About Chartora</a>
+                        <a href="#services" onclick="navigateTo('services', event)">Custom Build Services</a>
+                        <a href="#journal" onclick="navigateTo('journal', event)">Trade Journal</a>
+                        <a href="#risk-calculator" onclick="navigateTo('risk-calculator', event)">Risk Calculator</a>
+                        <a href="#contact" onclick="navigateTo('contact', event)">Contact Us</a>
+                        <a href="legal/disclaimer.html">Risk Disclaimer</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Header CTAs -->
+            <div class="nav-cta">
+                <a href="#academy" class="btn btn-secondary" onclick="navigateTo('academy', event)" style="margin-right:8px;">LEARN FREE</a>
+                <a href="#pricing" class="btn btn-primary btn-glow" onclick="navigateTo('pricing', event)">GET STARTED</a>
+            </div>
+
+            <!-- Mobile Hamburger Button -->
+            <button class="hamburger-btn" onclick="toggleMobileMenu()">
+                <span></span><span></span><span></span>
+            </button>
+        </div>
+
+        <!-- Mobile Drawer -->
+        <div class="mobile-drawer" id="mobile-drawer">
+            <a href="#scanner" onclick="navigateTo('scanner', event); toggleMobileMenu();">Markets</a>
+            <a href="#academy" onclick="navigateTo('academy', event); toggleMobileMenu();">Academy</a>
+            <a href="#pricing" onclick="navigateTo('pricing', event); toggleMobileMenu();">Pricing</a>
+            <a href="#community" onclick="navigateTo('community', event); toggleMobileMenu();">Community</a>
+            <a href="#services" onclick="navigateTo('services', event); toggleMobileMenu();">Services</a>
+            <a href="#journal" onclick="navigateTo('journal', event); toggleMobileMenu();">Trade Journal</a>
+            <a href="#risk-calculator" onclick="navigateTo('risk-calculator', event); toggleMobileMenu();">Risk Calculator</a>
+            <a href="#contact" onclick="navigateTo('contact', event); toggleMobileMenu();">Contact</a>
+            <div style="margin-top:20px;">
+                <a href="#pricing" class="btn btn-primary btn-full" onclick="navigateTo('pricing', event); toggleMobileMenu();">GET STARTED</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Real-Time Ticker Bar (Clearly Marked DEMO DATA) -->
+    <div class="ticker-bar">
+        <div class="ticker-content" id="ticker-items">
+            <span class="ticker-item"><span class="demo-tag-mini">DEMO</span> <strong style="color:var(--cat-metals-primary)">XAUUSD (Gold) 5M:</strong> 🟢 SETUP DETECTED (EMA Pullback)</span>
+            <span class="ticker-item"><span class="demo-tag-mini">DEMO</span> <strong style="color:var(--cat-forex-primary)">EURUSD 15M:</strong> 🟡 WAITING FOR CONFIRMATION</span>
+            <span class="ticker-item"><span class="demo-tag-mini">DEMO</span> <strong style="color:var(--cat-indices-primary)">USTEC 5M:</strong> 🔴 INVALIDATED (Structure Shift)</span>
+            <span class="ticker-item"><span class="demo-tag-mini">DEMO</span> <strong style="color:var(--cat-stocks-primary)">NVDA 30M:</strong> 🟢 CLEAN SETUP (Breakout Retest)</span>
+            <span class="ticker-item"><span class="demo-tag-mini">DEMO</span> <strong style="color:var(--cat-commodities-primary)">USOIL 15M:</strong> ⚪ NO TRADE (Choppy Structure)</span>
+        </div>
+    </div>
+
+    <!-- 3D Alert Toast Container -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <!-- MAIN SPA VIEW CONTAINER -->
+    <main id="app-view-container">
+        <!-- SPA Views dynamically rendered by js/app.js -->
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-col">
+                    <a href="#home" class="brand-logo" onclick="navigateTo('home', event)">
+                        <span class="logo-text">CHARTORA<span class="domain-ext">.IN</span></span>
+                    </a>
+                    <p class="footer-tagline">Market scanning, setup identification, alert tools and free trading education.</p>
+                    <p class="footer-philosophy"><em>"Your markets. Our scanners. Your decision."</em></p>
+                    <p style="margin-top:10px; font-size:0.85rem; color:var(--text-muted);">Official Contact: <a href="mailto:info@chartora.in" style="color:var(--primary-cyan)">info@chartora.in</a></p>
+                </div>
+                <div class="footer-col">
+                    <h4>Platform & Tools</h4>
+                    <a href="#scanner" onclick="navigateTo('scanner', event)">Supported Markets</a>
+                    <a href="#setups" onclick="navigateTo('setups', event)">Setup Analysis</a>
+                    <a href="#risk-calculator" onclick="navigateTo('risk-calculator', event)">Risk Calculator</a>
+                    <a href="#journal" onclick="navigateTo('journal', event)">Trade Journal</a>
+                </div>
+                <div class="footer-col">
+                    <h4>Trading Academy</h4>
+                    <a href="#academy/market-foundations" onclick="navigateTo('academy/market-foundations', event)">Course 1: Market Foundations</a>
+                    <a href="#academy/technical-analysis" onclick="navigateTo('academy/technical-analysis', event)">Course 2: Technical Analysis</a>
+                    <a href="#academy/top-strategies" onclick="navigateTo('academy/top-strategies', event)">Course 3: Five Trading Approaches</a>
+                    <a href="#academy/risk-management" onclick="navigateTo('academy/risk-management', event)">Course 4: Risk Management</a>
+                    <a href="#academy/trading-psychology" onclick="navigateTo('academy/trading-psychology', event)">Course 5: Trading Psychology</a>
+                </div>
+                <div class="footer-col">
+                    <h4>Services & Legal</h4>
+                    <a href="#pricing" onclick="navigateTo('pricing', event)">Pricing & All Access ($79/mo)</a>
+                    <a href="#services" onclick="navigateTo('services', event)">Custom Build Services</a>
+                    <a href="#contact" onclick="navigateTo('contact', event)">Contact Us</a>
+                    <a href="legal/disclaimer.html">Official Risk Disclaimer</a>
+                </div>
+            </div>
+
+            <div class="disclaimer-box" style="margin-top: 40px;">
+                <h4>RESPONSIBLE TRADING & RISK DISCLAIMER</h4>
+                <p>
+                    Trading financial markets involves substantial risk and may not be suitable for everyone. Chartora provides educational content, market analysis, technical tools and alerts for informational purposes only. No setup, strategy or alert guarantees profits. Past performance does not guarantee future results. Users remain responsible for their own trading decisions, account activity and risk management.
+                </p>
+            </div>
+
+            <div class="footer-bottom">
+                <p>&copy; 2026 Chartora.in — All rights reserved.</p>
+                <div class="footer-links">
+                    <a href="#disclaimer" onclick="navigateTo('disclaimer', event)">Disclaimer</a> | 
+                    <a href="#privacy" onclick="navigateTo('privacy', event)">Privacy Policy</a> | 
+                    <a href="#terms" onclick="navigateTo('terms', event)">Terms of Service</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/app.js"></script>
+</body>
+</html>
