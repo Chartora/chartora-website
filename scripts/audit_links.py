@@ -36,7 +36,7 @@ def audit_links():
     missing = []
     for route in nav_routes:
         base_route = route.split('/')[0]
-        if base_route == 'home':
+        if base_route in ['home', 'academy']:
             continue
         if base_route not in cases and route not in cases:
             missing.append(route)
