@@ -654,6 +654,7 @@ html, body {
     font-family: var(--font-mono);
     font-size: 0.95rem;
     width: 100%;
+    min-height: 44px; /* Touch target minimum */
 }
 .form-input:focus {
     outline: none;
@@ -664,6 +665,7 @@ html, body {
 .table-responsive {
     width: 100%;
     overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
 }
 .data-table {
     width: 100%;
@@ -687,9 +689,9 @@ html, body {
 /* Toast Alerts */
 .toast-container {
     position: fixed;
-    bottom: 24px;
+    bottom: 80px;
     right: 24px;
-    z-index: 9999;
+    z-index: 9998;
     display: flex;
     flex-direction: column;
     gap: 12px;
@@ -734,6 +736,9 @@ html, body {
     text-decoration: none;
     font-size: 0.88rem;
     margin-bottom: 10px;
+    min-height: 36px;
+    display: flex;
+    align-items: center;
 }
 .footer-col a:hover { color: var(--brand-emerald); }
 .disclaimer-box {
@@ -761,19 +766,86 @@ html, body {
     flex-wrap: wrap;
     gap: 10px;
 }
-.footer-links a { color: var(--text-muted); text-decoration: none; }
+.footer-links a { color: var(--text-muted); text-decoration: none; padding: 4px 8px; }
 
-/* Responsive Breakpoints Matrix */
+/* Comprehensive Mobile & Tablet Responsive Breakpoints Matrix */
 @media (max-width: 1024px) {
     .exp-grid, .category-pricing-grid, .community-grid { grid-template-columns: 1fr 1fr; }
-    .workflow-steps-v4 { grid-template-columns: 1fr 1fr; }
+    .workflow-steps-v4 { grid-template-columns: repeat(3, 1fr); }
     .footer-grid { grid-template-columns: 1fr 1fr; }
 }
+
 @media (max-width: 768px) {
     .nav-links, .nav-cta { display: none; }
     .hamburger-btn { display: flex; }
-    .exp-grid, .category-pricing-grid, .community-grid, .workflow-steps-v4 { grid-template-columns: 1fr; }
+    .exp-grid, .category-pricing-grid, .community-grid { grid-template-columns: 1fr; }
     .footer-grid { grid-template-columns: 1fr; }
-    .telegram-cta-text { display: none; }
-    .telegram-cta-btn { padding: 12px; border-radius: 50%; }
+    
+    /* Mobile Vertical Workflow Step Connector (SCAN ↓ IDENTIFY ↓ ... ↓ LEARN) */
+    .workflow-steps-v4 {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        position: relative;
+    }
+    .wf-card-v4 {
+        margin-bottom: 4px;
+    }
+    .wf-card-v4:not(:last-child)::after {
+        content: "↓";
+        display: block;
+        text-align: center;
+        color: var(--brand-emerald);
+        font-size: 1.5rem;
+        font-weight: 800;
+        margin-top: 10px;
+        line-height: 1;
+        text-shadow: 0 0 10px var(--brand-emerald);
+    }
+
+    /* Floating Telegram Button Mobile Optimization */
+    .telegram-cta-container {
+        bottom: 16px;
+        right: 16px;
+    }
+    .telegram-cta-btn {
+        padding: 10px 16px;
+        border-radius: 25px;
+        font-size: 0.78rem;
+    }
+    .telegram-cta-text {
+        font-size: 0.75rem;
+        letter-spacing: 0.5px;
+    }
+
+    .toast-container {
+        bottom: 70px;
+        right: 16px;
+        left: 16px;
+    }
+    .toast-alert {
+        width: 100%;
+    }
+}
+
+@media (max-width: 480px) {
+    .hero-title {
+        font-size: clamp(1.75rem, 7vw, 2.3rem);
+    }
+    .hero-subtitle {
+        font-size: 0.92rem;
+    }
+    .hero-actions {
+        flex-direction: column;
+        width: 100%;
+    }
+    .hero-actions .btn {
+        width: 100%;
+    }
+    .glass-card {
+        padding: 16px;
+    }
+    .section {
+        padding: 40px 0;
+    }
 }

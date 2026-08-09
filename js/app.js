@@ -135,7 +135,7 @@ function init3DTradingWorkflowScene() {
 // 10-STAGE STORYTELLING LOOP
 function start3DStageLoop() {
     const stageNames = [
-        "STAGE 1 — SCANNING (100+ Markets Monitored)",
+        "STAGE 1 — SCANNING (Supported Markets Monitored)",
         "STAGE 2 — SETUP DETECTED (XAUUSD 5M Pullback)",
         "STAGE 3 — VALIDATING SETUP (Structure & Multi-Timeframe Check)",
         "STAGE 4 — SETUP CONFIRMED (Entry + SL + TP Defined)",
@@ -176,12 +176,17 @@ function navigateTo(route, event) {
 }
 
 function handleRoute() {
-    const hash = window.location.hash.replace('#', '') || 'home';
+    let rawRoute = window.location.hash.replace('#', '');
+    if (!rawRoute && window.location.pathname && window.location.pathname !== '/' && window.location.pathname !== '/index.html') {
+        rawRoute = window.location.pathname.replace(/^\//, '');
+    }
+    const hash = rawRoute || 'home';
     currentRoute = hash;
 
     // Highlight navbar link
     document.querySelectorAll('.nav-links a').forEach(a => {
-        const target = a.getAttribute('href').replace('#', '');
+        const href = a.getAttribute('href') || '';
+        const target = href.replace('#', '');
         if (target === hash || (hash.startsWith('academy') && target === 'academy')) {
             a.classList.add('active');
         } else {
@@ -202,6 +207,8 @@ function handleRoute() {
             case 'markets':
             case 'scanner': container.innerHTML = renderScannerView(); break;
             case 'setups': container.innerHTML = renderSetupsView(); break;
+            case 'alerts': container.innerHTML = renderAlertsView(); break;
+            case 'active-trades': container.innerHTML = renderActiveTradesView(); break;
             case 'pricing': container.innerHTML = renderPricingView(); break;
             case 'community': container.innerHTML = renderCommunityView(); break;
             case 'services': container.innerHTML = renderServicesView(); break;
@@ -209,10 +216,12 @@ function handleRoute() {
             case 'risk-calculator': container.innerHTML = renderRiskCalculatorView(); break;
             case 'contact': container.innerHTML = renderContactView(); break;
             case 'about': container.innerHTML = renderAboutView(); break;
+            case 'terms': container.innerHTML = renderTermsView(); break;
+            case 'privacy': container.innerHTML = renderPrivacyView(); break;
+            case 'disclaimer': container.innerHTML = renderDisclaimerView(); break;
             case 'login':
             case 'signup':
-            case 'dashboard': container.innerHTML = renderDashboardView(); break;
-            case 'disclaimer': container.innerHTML = renderDisclaimerView(); break;
+            case 'dashboard': container.innerHTML = renderPricingView(); break;
             default: container.innerHTML = renderHomeView(); break;
         }
     }
@@ -280,7 +289,7 @@ function renderHomeView() {
                 <!-- 10-Stage 3D Story Indicator Bar -->
                 <div class="stage-indicator-bar">
                     <div class="stage-dot"></div>
-                    <span>3D ENGINE STAGE: <strong id="stage-3d-name" style="color:var(--brand-emerald)">STAGE 1 — SCANNING (100+ Markets Monitored)</strong></span>
+                    <span>3D ENGINE STAGE: <strong id="stage-3d-name" style="color:var(--brand-emerald)">STAGE 1 — SCANNING (Supported Markets Monitored)</strong></span>
                 </div>
             </div>
         </section>
@@ -961,19 +970,193 @@ function getV5ChapterTakeaway(courseId, chapId) {
     return `Always wait for structural confirmation at predefined key zones. Never enter a market based on green candle excitement alone.`;
 }
 
-// OTHER SUBPAGE RENDERERS
-function renderScannerView() { return renderHomeView(); }
-function renderSetupsView() { return renderHomeView(); }
-function renderServicesView() { return renderPricingView(); }
-function renderAboutView() { return renderHomeView(); }
-function renderDashboardView() { return renderPricingView(); }
-function renderDisclaimerView() {
+// DEDICATED SUBPAGE RENDERERS
+
+function renderScannerView() {
     return `
         <section class="section">
             <div class="container">
-                <h1 class="section-title">Official Risk Disclaimer</h1>
+                <div class="hero-badge">SUPPORTED MARKETS & SCANNER PLATFORM</div>
+                <h1 class="section-title">MONITORED MARKET CATEGORIES</h1>
+                <p class="section-subtitle">Chartora constantly monitors technical conditions across 7 distinct asset classes.</p>
+
+                <div class="category-pricing-grid" style="margin-top:30px;">
+                    <div class="glass-card">
+                        <span class="hero-badge" style="color:var(--cat-forex-primary); border-color:var(--cat-forex-primary);">FOREX MARKETS</span>
+                        <h3 style="margin:12px 0 6px;">Major & Minor Pairs</h3>
+                        <p style="font-size:0.88rem; color:var(--text-muted);">EURUSD, GBPUSD, USDJPY, AUDUSD, NZDUSD, USDCAD, USDCHF and EURGBP structure scanning.</p>
+                        <a href="#pricing" onclick="navigateTo('pricing', event)" class="btn btn-outline btn-full" style="margin-top:16px;">VIEW FOREX SYSTEM</a>
+                    </div>
+                    <div class="glass-card">
+                        <span class="hero-badge" style="color:var(--cat-metals-primary); border-color:var(--cat-metals-primary);">METALS MARKETS</span>
+                        <h3 style="margin:12px 0 6px;">Gold & Silver</h3>
+                        <p style="font-size:0.88rem; color:var(--text-muted);">XAUUSD (Spot Gold) and XAGUSD (Spot Silver) technical pullback and breakout monitoring.</p>
+                        <a href="#pricing" onclick="navigateTo('pricing', event)" class="btn btn-outline btn-full" style="margin-top:16px;">VIEW METALS SYSTEM</a>
+                    </div>
+                    <div class="glass-card">
+                        <span class="hero-badge" style="color:var(--cat-indices-primary); border-color:var(--cat-indices-primary);">INDEX MARKETS</span>
+                        <h3 style="margin:12px 0 6px;">Global Indices</h3>
+                        <p style="font-size:0.88rem; color:var(--text-muted);">US100 (Nasdaq), US500 (S&P 500), US30 (Dow Jones), and GER40 (DAX) index setups.</p>
+                        <a href="#pricing" onclick="navigateTo('pricing', event)" class="btn btn-outline btn-full" style="margin-top:16px;">VIEW INDICES SYSTEM</a>
+                    </div>
+                    <div class="glass-card">
+                        <span class="hero-badge" style="color:var(--cat-stocks-primary); border-color:var(--cat-stocks-primary);">US STOCKS MARKETS</span>
+                        <h3 style="margin:12px 0 6px;">Liquid US Equities</h3>
+                        <p style="font-size:0.88rem; color:var(--text-muted);">NVDA, AAPL, TSLA, MSFT, AMZN, and META technical key level structure checks.</p>
+                        <a href="#pricing" onclick="navigateTo('pricing', event)" class="btn btn-outline btn-full" style="margin-top:16px;">VIEW STOCKS SYSTEM</a>
+                    </div>
+                    <div class="glass-card">
+                        <span class="hero-badge" style="color:var(--cat-commodities-primary); border-color:var(--cat-commodities-primary);">COMMODITY MARKETS</span>
+                        <h3 style="margin:12px 0 6px;">Energy & Resources</h3>
+                        <p style="font-size:0.88rem; color:var(--text-muted);">USOIL (WTI Crude Oil) and Natural Gas trend continuation and key level retests.</p>
+                        <a href="#pricing" onclick="navigateTo('pricing', event)" class="btn btn-outline btn-full" style="margin-top:16px;">VIEW COMMODITIES SYSTEM</a>
+                    </div>
+                    <div class="glass-card">
+                        <span class="hero-badge" style="color:var(--cat-crypto-primary); border-color:var(--cat-crypto-primary);">CRYPTO MARKETS</span>
+                        <h3 style="margin:12px 0 6px;">24/7 Crypto Assets</h3>
+                        <p style="font-size:0.88rem; color:var(--text-muted);">BTCUSD (Bitcoin) and ETHUSD (Ethereum) structure and momentum alerts around the clock.</p>
+                        <a href="#pricing" onclick="navigateTo('pricing', event)" class="btn btn-outline btn-full" style="margin-top:16px;">VIEW CRYPTO SYSTEM</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+    `;
+}
+
+function renderSetupsView() {
+    return `
+        <section class="section">
+            <div class="container">
+                <div class="hero-badge">TECHNICAL ANALYSIS & SETUP LIFECYCLE</div>
+                <h1 class="section-title">ACTIVE SETUP METHODOLOGY</h1>
+                <p class="section-subtitle">How Chartora identifies, confirms, and logs technical market setups.</p>
+                <div class="glass-card" style="margin-top:20px; padding:30px;">
+                    <h3>The 4-Step Technical Validation Framework</h3>
+                    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:20px; margin-top:20px;">
+                        <div style="background:rgba(6,9,16,0.7); padding:16px; border-radius:10px; border:1px solid var(--border-color);">
+                            <div style="color:var(--brand-emerald); font-weight:700; font-family:var(--font-mono);">01. TREND ALIGNMENT</div>
+                            <p style="font-size:0.88rem; color:var(--text-muted); margin-top:6px;">Market structure is evaluated on higher timeframes to confirm directional bias.</p>
+                        </div>
+                        <div style="background:rgba(6,9,16,0.7); padding:16px; border-radius:10px; border:1px solid var(--border-color);">
+                            <div style="color:var(--brand-emerald); font-weight:700; font-family:var(--font-mono);">02. KEY LEVEL RETEST</div>
+                            <p style="font-size:0.88rem; color:var(--text-muted); margin-top:6px;">Price pulls back into support/resistance or moving average confluence zones.</p>
+                        </div>
+                        <div style="background:rgba(6,9,16,0.7); padding:16px; border-radius:10px; border:1px solid var(--border-color);">
+                            <div style="color:var(--brand-emerald); font-weight:700; font-family:var(--font-mono);">03. RISK PARAMETERS</div>
+                            <p style="font-size:0.88rem; color:var(--text-muted); margin-top:6px;">Entry price, Stop Loss boundary, and Take Profit target are pre-calculated.</p>
+                        </div>
+                        <div style="background:rgba(6,9,16,0.7); padding:16px; border-radius:10px; border:1px solid var(--border-color);">
+                            <div style="color:var(--brand-emerald); font-weight:700; font-family:var(--font-mono);">04. ALERT DISPATCH</div>
+                            <p style="font-size:0.88rem; color:var(--text-muted); margin-top:6px;">Subscribers receive instant notification with chart context and risk metrics.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    `;
+}
+
+function renderAlertsView() {
+    return `
+        <section class="section">
+            <div class="container">
+                <div class="hero-badge">REAL-TIME NOTIFICATIONS</div>
+                <h1 class="section-title">INSTANT TELEGRAM ALERTS</h1>
+                <p class="section-subtitle">Receive technical setups, watchlists, and market updates directly on your mobile or desktop device.</p>
+                <div class="glass-card" style="margin-top:20px; text-align:center; padding:40px 20px;">
+                    <div style="font-size:3rem; margin-bottom:12px;">📲</div>
+                    <h2 style="color:var(--brand-emerald);">Connect with Chartora on Telegram</h2>
+                    <p style="color:var(--text-muted); max-width:600px; margin:12px auto 24px;">
+                        Stay informed with daily market previews, setup updates, and educational commentary directly in Telegram.
+                    </p>
+                    <a href="https://t.me/chartora_official" target="_blank" rel="noopener" class="btn btn-primary btn-large btn-glow">OPEN CHARTORA TELEGRAM</a>
+                </div>
+            </div>
+        </section>
+    `;
+}
+
+function renderActiveTradesView() {
+    return renderSetupsView();
+}
+
+function renderAboutView() {
+    return `
+        <section class="section">
+            <div class="container" style="max-width:800px;">
+                <div class="hero-badge">ABOUT CHARTORA</div>
+                <h1 class="section-title">OUR MISSION & METHODOLOGY</h1>
+                <p class="section-subtitle">Process-first market scanning, risk planning, and systematic trader education.</p>
                 <div class="glass-card" style="margin-top:20px; font-size:0.95rem; line-height:1.8;">
-                    Trading financial markets involves substantial risk of loss and is not suitable for everyone. All content provided by Chartora.in is for educational and informational purposes only. No content or alert constitutes financial advice.
+                    <p>
+                        Chartora was created to solve a fundamental problem that every retail trader faces: <strong>you cannot watch every chart at once without suffering from decision fatigue and FOMO</strong>.
+                    </p>
+                    <br>
+                    <p>
+                        Instead of encouraging impulse trading or selling fake signal promises, Chartora provides structured market intelligence. We focus on defined technical rules, mandatory risk management before entry, and continuous process learning through our free Trading Academy.
+                    </p>
+                </div>
+            </div>
+        </section>
+    `;
+}
+
+function renderTermsView() {
+    return `
+        <section class="section">
+            <div class="container" style="max-width:800px;">
+                <h1 class="section-title">Terms of Service</h1>
+                <div class="glass-card" style="margin-top:20px; font-size:0.92rem; line-height:1.8; color:var(--text-muted);">
+                    <p>Welcome to Chartora.in. By accessing or using our website, tools, services, or content, you agree to be bound by these Terms of Service.</p>
+                    <h4 style="color:#fff; margin-top:16px;">1. Educational & Informational Purpose Only</h4>
+                    <p>Chartora provides technical market scanning tools, setup analysis, and educational resources. We do not provide personalized financial, investment, or trading advice.</p>
+                    <h4 style="color:#fff; margin-top:16px;">2. User Responsibility</h4>
+                    <p>You remain solely responsible for your trading decisions, financial risk management, and account activity.</p>
+                    <h4 style="color:#fff; margin-top:16px;">3. Intellectual Property</h4>
+                    <p>All content, code, branding, and educational materials are protected by copyright and intellectual property laws.</p>
+                </div>
+            </div>
+        </section>
+    `;
+}
+
+function renderPrivacyView() {
+    return `
+        <section class="section">
+            <div class="container" style="max-width:800px;">
+                <h1 class="section-title">Privacy Policy</h1>
+                <div class="glass-card" style="margin-top:20px; font-size:0.92rem; line-height:1.8; color:var(--text-muted);">
+                    <p>Your privacy is important to us. This Privacy Policy explains how Chartora.in handles information.</p>
+                    <h4 style="color:#fff; margin-top:16px;">1. Information Collection</h4>
+                    <p>We only collect contact information (such as name, email, phone) when explicitly submitted by you through our contact or inquiry forms.</p>
+                    <h4 style="color:#fff; margin-top:16px;">2. Local Storage</h4>
+                    <p>Tools such as our Trade Journal store data locally in your browser's LocalStorage. This data remains on your personal device and is not transmitted to external servers.</p>
+                    <h4 style="color:#fff; margin-top:16px;">3. Data Protection</h4>
+                    <p>We do not sell, rent, or trade your personal information to third parties.</p>
+                </div>
+            </div>
+        </section>
+    `;
+}
+
+function renderDisclaimerView() {
+    return `
+        <section class="section">
+            <div class="container" style="max-width:800px;">
+                <h1 class="section-title">Official Risk Disclaimer</h1>
+                <div class="glass-card" style="margin-top:20px; font-size:0.95rem; line-height:1.8; color:var(--text-main);">
+                    <h3 style="color:var(--warning-yellow); margin-bottom:12px;">RESPONSIBLE TRADING & RISK WARNING</h3>
+                    <p>
+                        Trading leveraged financial instruments (including Forex, Commodities, Indices, Stocks, and Cryptocurrencies) carries a high level of risk and may not be suitable for all investors. The high degree of leverage can work against you as well as for you.
+                    </p>
+                    <br>
+                    <p>
+                        Before deciding to trade, you should carefully consider your investment objectives, level of experience, and risk appetite. There is a possibility that you could sustain a loss of some or all of your initial investment.
+                    </p>
+                    <br>
+                    <p>
+                        All market analysis, scanner outputs, trading setup alerts, and educational materials provided on Chartora.in are for <strong>informational and educational purposes only</strong> and do not constitute financial or investment advice.
+                    </p>
                 </div>
             </div>
         </section>
