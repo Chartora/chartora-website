@@ -1,0 +1,18 @@
+{
+  "name": "Chartora.in — Market Intelligence & Trading Platform",
+  "short_name": "Chartora",
+  "description": "Scan supported markets, identify potential setups, review trade plans, manage risk, and learn practical trading concepts.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0B0F19",
+  "theme_color": "#10B981",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/public/favicon.svg",
+      "sizes": "64x64 128x128 192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

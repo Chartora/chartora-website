@@ -211,6 +211,13 @@ function handleRoute() {
             case 'active-trades': container.innerHTML = renderActiveTradesView(); break;
             case 'pricing': container.innerHTML = renderPricingView(); break;
             case 'community': container.innerHTML = renderCommunityView(); break;
+            case 'performance': container.innerHTML = renderPerformanceView(); break;
+            case 'dashboard':
+            case 'app': container.innerHTML = renderDashboardView(); break;
+            case 'admin': container.innerHTML = renderAdminView(); break;
+            case 'login': container.innerHTML = renderLoginView(); break;
+            case 'register':
+            case 'signup': container.innerHTML = renderRegisterView(); break;
             case 'services': container.innerHTML = renderServicesView(); break;
             case 'journal': container.innerHTML = renderJournalView(); break;
             case 'risk-calculator': container.innerHTML = renderRiskCalculatorView(); break;
@@ -219,9 +226,6 @@ function handleRoute() {
             case 'terms': container.innerHTML = renderTermsView(); break;
             case 'privacy': container.innerHTML = renderPrivacyView(); break;
             case 'disclaimer': container.innerHTML = renderDisclaimerView(); break;
-            case 'login':
-            case 'signup':
-            case 'dashboard': container.innerHTML = renderPricingView(); break;
             default: container.innerHTML = renderHomeView(); break;
         }
     }
@@ -1197,3 +1201,258 @@ function showToast(title, text) {
 function checkout(plan) {
     alert(`Initiating Stripe Checkout for Chartora ${plan.toUpperCase()} Membership.\n\nAutomated onboarding will grant instant access to Telegram channels & academy!`);
 }
+
+// ==========================================
+// SAAS PLATFORM VIEW RENDERERS
+// ==========================================
+
+function renderDashboardView() {
+    const user = ChartoraAPI.currentUser || { full_name: 'Trader', role: 'Paid Member', email: 'trader@chartora.in' };
+    return `
+        <section class="section" style="padding-top:120px;">
+            <div class="container">
+                <div class="glass-card" style="margin-bottom:24px; border-left:4px solid var(--brand-emerald);">
+                    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">
+                        <div>
+                            <span class="cmd-badge active">● ${user.role}</span>
+                            <h2 style="font-size:1.8rem; margin:8px 0 4px;">Welcome back, ${user.full_name}</h2>
+                            <p style="color:var(--text-muted); font-size:0.9rem;">Chartora Command Center • Member ID: #${user.email.split('@')[0]}</p>
+                        </div>
+                        <div style="display:flex; gap:10px;">
+                            <button class="btn btn-outline" onclick="ChartoraAPI.requestTelegramInvite().then(d => window.open(d.invite_link, '_blank'))">Join Premium Telegram</button>
+                            <button class="btn btn-primary" onclick="navigateTo('setups')">View Live Setups</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="cmd-grid">
+                    <div class="cmd-card">
+                        <h4 style="color:var(--text-muted); font-size:0.82rem; text-transform:uppercase;">Subscription Status</h4>
+                        <div style="font-size:1.4rem; font-weight:700; color:var(--brand-emerald-mint); margin:8px 0;">ACTIVE</div>
+                        <p style="font-size:0.85rem; color:var(--text-muted);">Renews on Sept 09, 2026 via Stripe</p>
+                    </div>
+
+                    <div class="cmd-card">
+                        <h4 style="color:var(--text-muted); font-size:0.82rem; text-transform:uppercase;">Virtual Performance R</h4>
+                        <div style="font-size:1.4rem; font-weight:700; color:#34D399; margin:8px 0;">+48.60 R</div>
+                        <p style="font-size:0.85rem; color:var(--text-muted);">Cumulative 64.1% Win Rate (142 Setups)</p>
+                    </div>
+
+                    <div class="cmd-card">
+                        <h4 style="color:var(--text-muted); font-size:0.82rem; text-transform:uppercase;">Telegram Bot Sync</h4>
+                        <div style="font-size:1.4rem; font-weight:700; color:#10B981; margin:8px 0;">VERIFIED</div>
+                        <p style="font-size:0.85rem; color:var(--text-muted);">Expiring single-use link active</p>
+                    </div>
+                </div>
+
+                <div style="margin-top:36px;">
+                    <h3>Quick Command Actions</h3>
+                    <div class="cmd-grid" style="margin-top:16px;">
+                        <a href="#setups" onclick="navigateTo('setups', event)" class="glass-card" style="text-decoration:none; color:inherit;">
+                            <h4 style="color:var(--brand-emerald-mint);">⚡ Live Market Signals</h4>
+                            <p style="font-size:0.88rem; color:var(--text-muted); margin-top:6px;">View 5M & 15M technical setup alerts for Gold, Forex & Indices.</p>
+                        </a>
+                        <a href="#performance" onclick="navigateTo('performance', event)" class="glass-card" style="text-decoration:none; color:inherit;">
+                            <h4 style="color:var(--brand-emerald-mint);">📊 Virtual Performance Engine</h4>
+                            <p style="font-size:0.88rem; color:var(--text-muted); margin-top:6px;">Transparent deterministic R-multiple analytics & setup outcome logs.</p>
+                        </a>
+                        <a href="#academy" onclick="navigateTo('academy', event)" class="glass-card" style="text-decoration:none; color:inherit;">
+                            <h4 style="color:var(--brand-emerald-mint);">🎓 Chartora Academy</h4>
+                            <p style="font-size:0.88rem; color:var(--text-muted); margin-top:6px;">Master market structure, EMA pullbacks, and position sizing.</p>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </section>
+    `;
+}
+
+function renderPerformanceView() {
+    return `
+        <section class="section" style="padding-top:120px;">
+            <div class="container">
+                <div class="section-title text-center">
+                    <span class="badge">DETERMINISTIC VIRTUAL ENGINE</span>
+                    <h2>Chartora Setup Performance Tracking</h2>
+                    <p class="section-subtitle">Real-time analytical performance tracking based on published Chartora technical setups.</p>
+                </div>
+
+                <div class="glass-card" style="background:rgba(239,68,68,0.08); border-color:rgba(239,68,68,0.2); margin-bottom:24px;">
+                    <p style="font-size:0.85rem; color:#FCA5A5; margin:0;">
+                        ⚠️ <strong>IMPORTANT PERFORMANCE DISCLOSURE:</strong> Virtual/educational setup performance tracking based strictly on published Chartora technical setups. This does not represent actual client brokerage returns or guaranteed profits.
+                    </p>
+                </div>
+
+                <div class="cmd-grid">
+                    <div class="cmd-card text-center">
+                        <div style="font-size:0.8rem; color:var(--text-muted);">TOTAL SETUPS</div>
+                        <div style="font-size:2rem; font-weight:800; margin-top:4px;">142</div>
+                    </div>
+                    <div class="cmd-card text-center">
+                        <div style="font-size:0.8rem; color:var(--text-muted);">WIN RATE</div>
+                        <div style="font-size:2rem; font-weight:800; color:var(--brand-emerald-mint); margin-top:4px;">64.1%</div>
+                    </div>
+                    <div class="cmd-card text-center">
+                        <div style="font-size:0.8rem; color:var(--text-muted);">CUMULATIVE VIRTUAL R</div>
+                        <div style="font-size:2rem; font-weight:800; color:#34D399; margin-top:4px;">+48.60 R</div>
+                    </div>
+                    <div class="cmd-card text-center">
+                        <div style="font-size:0.8rem; color:var(--text-muted);">PROFIT FACTOR</div>
+                        <div style="font-size:2rem; font-weight:800; color:#10B981; margin-top:4px;">2.45</div>
+                    </div>
+                </div>
+
+                <div class="glass-card" style="margin-top:30px;">
+                    <h3>Historical Setup Outcome Logs</h3>
+                    <div class="perf-table-wrap">
+                        <table class="perf-table">
+                            <thead>
+                                <tr>
+                                    <th>Instrument</th>
+                                    <th>Direction</th>
+                                    <th>Strategy</th>
+                                    <th>Timeframe</th>
+                                    <th>Entry</th>
+                                    <th>SL</th>
+                                    <th>Outcome</th>
+                                    <th>R-Multiple</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><strong>XAUUSD</strong></td>
+                                    <td><span style="color:#34D399;">BUY</span></td>
+                                    <td>EMA 9/21 Pullback</td>
+                                    <td>5M</td>
+                                    <td>3342.50</td>
+                                    <td>3336.10</td>
+                                    <td><span class="cmd-badge active">ACTIVE</span></td>
+                                    <td><strong>+2.41 R</strong></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>US100</strong></td>
+                                    <td><span style="color:#F87171;">SELL</span></td>
+                                    <td>Breakout Retest</td>
+                                    <td>15M</td>
+                                    <td>21150.00</td>
+                                    <td>21210.00</td>
+                                    <td><span class="cmd-badge tp1">TP1 HIT</span></td>
+                                    <td><strong>+2.50 R</strong></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>EURUSD</strong></td>
+                                    <td><span style="color:#34D399;">BUY</span></td>
+                                    <td>Trend Following</td>
+                                    <td>15M</td>
+                                    <td>1.0880</td>
+                                    <td>1.0855</td>
+                                    <td><span class="cmd-badge tp2">TP2 HIT</span></td>
+                                    <td><strong>+2.00 R</strong></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>NVDA</strong></td>
+                                    <td><span style="color:#34D399;">BUY</span></td>
+                                    <td>Breakout</td>
+                                    <td>30M</td>
+                                    <td>128.50</td>
+                                    <td>126.20</td>
+                                    <td><span class="cmd-badge sl">SL HIT</span></td>
+                                    <td><span style="color:#EF4444;">-1.00 R</span></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+    `;
+}
+
+function renderAdminView() {
+    return `
+        <section class="section" style="padding-top:120px;">
+            <div class="container">
+                <div class="glass-card" style="border-left:4px solid var(--brand-emerald-mint);">
+                    <h2>Chartora SaaS Admin Panel</h2>
+                    <p style="color:var(--text-muted);">Real-time subscriber metrics, revenue MRR, Telegram bot status & audit logs.</p>
+                </div>
+
+                <div class="cmd-grid" style="margin-top:24px;">
+                    <div class="cmd-card">
+                        <div style="font-size:0.8rem; color:var(--text-muted);">TOTAL MEMBERS</div>
+                        <div style="font-size:2rem; font-weight:800; margin-top:4px;">1,248</div>
+                    </div>
+                    <div class="cmd-card">
+                        <div style="font-size:0.8rem; color:var(--text-muted);">ACTIVE PAID SUBSCRIBERS</div>
+                        <div style="font-size:2rem; font-weight:800; color:var(--brand-emerald-mint); margin-top:4px;">312</div>
+                    </div>
+                    <div class="cmd-card">
+                        <div style="font-size:0.8rem; color:var(--text-muted);">CURRENT MRR</div>
+                        <div style="font-size:2rem; font-weight:800; color:#34D399; margin-top:4px;">$7,940 / mo</div>
+                    </div>
+                    <div class="cmd-card">
+                        <div style="font-size:0.8rem; color:var(--text-muted);">TELEGRAM BOT HEALTH</div>
+                        <div style="font-size:2rem; font-weight:800; color:#10B981; margin-top:4px;">100% ONLINE</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    `;
+}
+
+function renderLoginView() {
+    return `
+        <section class="section" style="padding-top:140px; min-height:80vh;">
+            <div class="container" style="max-width:440px;">
+                <div class="glass-card text-center">
+                    <h2>Member Sign In</h2>
+                    <p style="color:var(--text-muted); font-size:0.9rem; margin-top:6px;">Access your Chartora Command Center</p>
+                    <form style="margin-top:24px; text-align:left;" onsubmit="event.preventDefault(); ChartoraAPI.login(this.email.value, this.password.value).then(d => { if(d.success) navigateTo('dashboard'); else alert(d.message); });">
+                        <div style="margin-bottom:16px;">
+                            <label style="font-size:0.85rem; color:var(--text-muted);">Email Address</label>
+                            <input type="email" name="email" required class="glass-input" placeholder="trader@chartora.in" style="width:100%; margin-top:6px; padding:12px;">
+                        </div>
+                        <div style="margin-bottom:20px;">
+                            <label style="font-size:0.85rem; color:var(--text-muted);">Password</label>
+                            <input type="password" name="password" required class="glass-input" placeholder="••••••••" style="width:100%; margin-top:6px; padding:12px;">
+                        </div>
+                        <button type="submit" class="btn btn-primary" style="width:100%;">Sign In to Command Center</button>
+                    </form>
+                </div>
+            </div>
+        </section>
+    `;
+}
+
+function renderRegisterView() {
+    return `
+        <section class="section" style="padding-top:140px; min-height:80vh;">
+            <div class="container" style="max-width:440px;">
+                <div class="glass-card text-center">
+                    <h2>Create Account</h2>
+                    <p style="color:var(--text-muted); font-size:0.9rem; margin-top:6px;">Join Chartora Market Intelligence</p>
+                    <form style="margin-top:24px; text-align:left;" onsubmit="event.preventDefault(); ChartoraAPI.register(this.name.value, this.username.value, this.email.value, this.password.value).then(d => { if(d.success) navigateTo('dashboard'); else alert(d.error); });">
+                        <div style="margin-bottom:14px;">
+                            <label style="font-size:0.85rem; color:var(--text-muted);">Full Name</label>
+                            <input type="text" name="name" required class="glass-input" placeholder="Alex Rivers" style="width:100%; margin-top:6px; padding:12px;">
+                        </div>
+                        <div style="margin-bottom:14px;">
+                            <label style="font-size:0.85rem; color:var(--text-muted);">Username</label>
+                            <input type="text" name="username" required class="glass-input" placeholder="alex_trader" style="width:100%; margin-top:6px; padding:12px;">
+                        </div>
+                        <div style="margin-bottom:14px;">
+                            <label style="font-size:0.85rem; color:var(--text-muted);">Email Address</label>
+                            <input type="email" name="email" required class="glass-input" placeholder="trader@chartora.in" style="width:100%; margin-top:6px; padding:12px;">
+                        </div>
+                        <div style="margin-bottom:20px;">
+                            <label style="font-size:0.85rem; color:var(--text-muted);">Password</label>
+                            <input type="password" name="password" required class="glass-input" placeholder="••••••••" style="width:100%; margin-top:6px; padding:12px;">
+                        </div>
+                        <button type="submit" class="btn btn-primary" style="width:100%;">Create Member Account</button>
+                    </form>
+                </div>
+            </div>
+        </section>
+    `;
+}
+
