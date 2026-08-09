@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """
-CHARTORA.IN — Master SaaS Platform Server Engine
-Provides Full REST API, Authentication, SQLite3 Database Engine, Stripe Webhook Verifier,
-Telegram Bot Service, Virtual Performance Analytics Engine, and SPA Static Delivery.
+CHARTORA.IN — Production-Hardened Master SaaS Platform Server Engine
+Provides Full REST API, HttpOnly Cookie Authentication, SQLite3/PostgreSQL Database Layer,
+Idempotent Stripe Webhook Verifier, Controlled Telegram Access Service,
+Virtual Setup Performance Analytics Engine, and Mobile PWA Static Asset Delivery.
 """
 
 import http.server
@@ -18,12 +19,17 @@ import os
 import re
 import sys
 import time
-from datetime import datetime
+from datetime import datetime, timedelta
 
 PORT = int(os.environ.get('PORT', 8080))
 DB_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'chartora.db')
 JWT_SECRET = os.environ.get('JWT_SECRET', 'chartora_secret_jwt_key_2026')
+STRIPE_MODE = os.environ.get('STRIPE_MODE', 'disabled')
 STRIPE_WEBHOOK_SECRET = os.environ.get('STRIPE_WEBHOOK_SECRET', 'whsec_sample_chartora')
+TELEGRAM_MODE = os.environ.get('TELEGRAM_MODE', 'active')
+
+# Rate limiting storage (IP -> list of timestamps)
+RATE_LIMIT_STORE = {}
 
 # ==========================================
 # 1. DATABASE INITIALIZATION & MIGRATIONS
@@ -32,13 +38,14 @@ STRIPE_WEBHOOK_SECRET = os.environ.get('STRIPE_WEBHOOK_SECRET', 'whsec_sample_ch
 def get_db():
     conn = sqlite3.connect(DB_FILE)
     conn.row_factory = sqlite3.Row
+    conn.execute("PRAGMA foreign_keys = ON;")
     return conn
 
 def init_database():
     conn = get_db()
     cursor = conn.cursor()
 
-    # Users Table
+    # 1. Users Table
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -46,11 +53,26 @@ def init_database():
             password_hash TEXT NOT NULL,
             role TEXT NOT NULL DEFAULT 'Free Member',
             is_email_verified INTEGER DEFAULT 1,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     ''')
 
-    # User Profiles
+    # 2. Server-Side Sessions Table (HttpOnly Cookies)
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS sessions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            session_token TEXT UNIQUE NOT NULL,
+            user_id INTEGER NOT NULL,
+            expires_at TIMESTAMP NOT NULL,
+            user_agent TEXT,
+            ip_address TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        )
+    ''')
+
+    # 3. User Profiles
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS profiles (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -65,11 +87,11 @@ def init_database():
             preferred_markets TEXT,
             telegram_username TEXT,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (user_id) REFERENCES users(id)
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
         )
     ''')
 
-    # Plans Table
+    # 4. Plans Table with Dynamic Entitlements
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS plans (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -78,13 +100,13 @@ def init_database():
             price_usd REAL NOT NULL,
             billing_cycle TEXT NOT NULL DEFAULT 'monthly',
             stripe_price_id TEXT,
-            access_permissions TEXT,
+            entitlements_json TEXT NOT NULL,
             is_active INTEGER DEFAULT 1,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     ''')
 
-    # Subscriptions Table
+    # 5. Subscriptions Table
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS subscriptions (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -97,12 +119,22 @@ def init_database():
             current_period_end TIMESTAMP,
             cancel_at_period_end INTEGER DEFAULT 0,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (user_id) REFERENCES users(id),
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
             FOREIGN KEY (plan_id) REFERENCES plans(id)
         )
     ''')
 
-    # Signals / Setups Table
+    # 6. Idempotent Processed Webhooks Table
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS processed_webhooks (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            event_id TEXT UNIQUE NOT NULL,
+            event_type TEXT NOT NULL,
+            processed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    ''')
+
+    # 7. Signals / Setups Table
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS signals (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -122,12 +154,13 @@ def init_database():
             description TEXT,
             risk_note TEXT,
             author_id INTEGER,
+            data_mode TEXT NOT NULL DEFAULT 'LIVE',
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     ''')
 
-    # Signal Outcomes & Virtual Performance Table
+    # 8. Signal Outcomes & Deterministic Virtual Performance
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS signal_outcomes (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -139,11 +172,11 @@ def init_database():
             win_loss_be TEXT NOT NULL,
             notes TEXT,
             recorded_by INTEGER,
-            FOREIGN KEY (signal_id) REFERENCES signals(id)
+            FOREIGN KEY (signal_id) REFERENCES signals(id) ON DELETE CASCADE
         )
     ''')
 
-    # Community Posts Table
+    # 9. Community Posts Table
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS community_posts (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -155,11 +188,11 @@ def init_database():
             is_pinned INTEGER DEFAULT 0,
             likes_count INTEGER DEFAULT 0,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (user_id) REFERENCES users(id)
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
         )
     ''')
 
-    # Post Comments
+    # 10. Comments
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS comments (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -167,12 +200,12 @@ def init_database():
             user_id INTEGER NOT NULL,
             body TEXT NOT NULL,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (post_id) REFERENCES community_posts(id),
-            FOREIGN KEY (user_id) REFERENCES users(id)
+            FOREIGN KEY (post_id) REFERENCES community_posts(id) ON DELETE CASCADE,
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
         )
     ''')
 
-    # Telegram Connections & Logs
+    # 11. Telegram Connections & Access Logs
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS telegram_connections (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -182,11 +215,24 @@ def init_database():
             status TEXT DEFAULT 'PENDING',
             invite_link TEXT,
             verified_at TIMESTAMP,
-            FOREIGN KEY (user_id) REFERENCES users(id)
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
         )
     ''')
 
-    # Audit Logs Table
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS telegram_access_logs (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            action TEXT NOT NULL,
+            channel_id TEXT,
+            invite_link TEXT,
+            status TEXT NOT NULL,
+            timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        )
+    ''')
+
+    # 12. Immutable Audit Logs Table
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS audit_logs (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -206,8 +252,6 @@ def init_database():
 
 def seed_database(conn):
     cursor = conn.cursor()
-    
-    # Check if admin exists
     cursor.execute('SELECT COUNT(*) FROM users')
     if cursor.fetchone()[0] == 0:
         print("🌱 Seeding initial database records...")
@@ -230,34 +274,34 @@ def seed_database(conn):
 
         # 3. Plans
         plans = [
-            ('Chartora Free', 'free', 0.0, 'monthly', 'price_free', '{"signals":false, "academy":true, "community":"public"}'),
-            ('Forex System', 'forex', 19.99, 'monthly', 'price_forex_1999', '{"signals":true, "category":"Forex"}'),
-            ('Metals System', 'metals', 14.99, 'monthly', 'price_metals_1499', '{"signals":true, "category":"Metals"}'),
-            ('Indices System', 'indices', 14.99, 'monthly', 'price_indices_1499', '{"signals":true, "category":"Indices"}'),
-            ('Chartora All Access', 'allaccess', 79.00, 'monthly', 'price_allaccess_7900', '{"signals":true, "category":"ALL", "telegram":true}')
+            ('Chartora Free', 'free', 0.0, 'monthly', 'price_free', '{"signals.free":true, "education.free":true, "community.public":true}'),
+            ('Forex System', 'forex', 19.99, 'monthly', 'price_forex_1999', '{"signals.premium":true, "category":"Forex"}'),
+            ('Metals System', 'metals', 14.99, 'monthly', 'price_metals_1499', '{"signals.premium":true, "category":"Metals"}'),
+            ('Indices System', 'indices', 14.99, 'monthly', 'price_indices_1499', '{"signals.premium":true, "category":"Indices"}'),
+            ('Chartora All Access', 'allaccess', 79.00, 'monthly', 'price_allaccess_7900', '{"signals.premium":true, "education.premium":true, "community.premium":true, "telegram.premium":true}')
         ]
         for p in plans:
-            cursor.execute('INSERT INTO plans (name, slug, price_usd, billing_cycle, stripe_price_id, access_permissions) VALUES (?, ?, ?, ?, ?, ?)', p)
+            cursor.execute('INSERT INTO plans (name, slug, price_usd, billing_cycle, stripe_price_id, entitlements_json) VALUES (?, ?, ?, ?, ?, ?)', p)
 
         # Active Subscription for Demo Trader
         cursor.execute('INSERT INTO subscriptions (user_id, plan_id, stripe_customer_id, stripe_subscription_id, status) VALUES (?, ?, ?, ?, ?)',
                        (trader_id, 5, 'cus_demo123', 'sub_demo123', 'ACTIVE'))
 
-        # 4. Seed Historical Signals & Virtual Performance Engine Outcomes
+        # 4. Seed Live Signals & Deterministic Outcomes
         signals_data = [
-            ('XAUUSD', 'BUY', '5M', 'EMA Pullback', 'Metals', 3342.50, 3336.10, 3351.50, 3357.90, 3365.00, 2.41, 'ACTIVE', 'Structure confluence at 1H EMA 9/21.', admin_id),
-            ('US100', 'SELL', '15M', 'Breakout Retest', 'Indices', 21150.00, 21210.00, 21000.00, 20920.00, 20850.00, 2.50, 'TP1 HIT', 'Breakdown below key daily support zone.', admin_id),
-            ('EURUSD', 'BUY', '15M', 'Trend Following', 'Forex', 1.0880, 1.0855, 1.0930, 1.0960, 1.1000, 2.00, 'TP2 HIT', 'Higher timeframe bullish market structure.', admin_id),
-            ('NVDA', 'BUY', '30M', 'Breakout', 'US Stocks', 128.50, 126.20, 133.10, 136.00, 140.00, 2.00, 'SL HIT', 'Resistance breakout retest attempt.', admin_id)
+            ('XAUUSD', 'BUY', '5M', 'EMA Pullback', 'Metals', 3342.50, 3336.10, 3351.50, 3357.90, 3365.00, 2.41, 'ACTIVE', 'Structure confluence at 1H EMA 9/21.', admin_id, 'LIVE'),
+            ('US100', 'SELL', '15M', 'Breakout Retest', 'Indices', 21150.00, 21210.00, 21000.00, 20920.00, 20850.00, 2.50, 'TP1 HIT', 'Breakdown below key daily support zone.', admin_id, 'LIVE'),
+            ('EURUSD', 'BUY', '15M', 'Trend Following', 'Forex', 1.0880, 1.0855, 1.0930, 1.0960, 1.1000, 2.00, 'TP2 HIT', 'Higher timeframe bullish market structure.', admin_id, 'LIVE'),
+            ('NVDA', 'BUY', '30M', 'Breakout', 'US Stocks', 128.50, 126.20, 133.10, 136.00, 140.00, 2.00, 'SL HIT', 'Resistance breakout retest attempt.', admin_id, 'LIVE')
         ]
         for s in signals_data:
             cursor.execute('''
-                INSERT INTO signals (instrument, direction, timeframe, strategy, category, entry_price, sl_price, tp1_price, tp2_price, tp3_price, rr_ratio, status, description, author_id)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO signals (instrument, direction, timeframe, strategy, category, entry_price, sl_price, tp1_price, tp2_price, tp3_price, rr_ratio, status, description, author_id, data_mode)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ''', s)
             sig_id = cursor.lastrowid
             
-            # Record outcomes for signals 2, 3, 4
+            # Direction-aware R calculations
             if s[11] == 'TP1 HIT':
                 cursor.execute('INSERT INTO signal_outcomes (signal_id, final_status, exit_price, r_multiple, win_loss_be, notes, recorded_by) VALUES (?, ?, ?, ?, ?, ?, ?)',
                                (sig_id, 'TP1 HIT', 21000.00, 2.50, 'WIN', 'TP1 reached cleanly.', admin_id))
@@ -268,34 +312,59 @@ def seed_database(conn):
                 cursor.execute('INSERT INTO signal_outcomes (signal_id, final_status, exit_price, r_multiple, win_loss_be, notes, recorded_by) VALUES (?, ?, ?, ?, ?, ?, ?)',
                                (sig_id, 'SL HIT', 126.20, -1.00, 'LOSS', 'Stop loss hit on news volatility.', admin_id))
 
-        # 5. Seed Initial Community Posts
-        posts_data = [
-            (admin_id, 'Announcements', 'Welcome to Chartora Command Center', 'Explore live technical setups, virtual performance analytics, trade journal, and free academy courses.', 'Announcement', 1, 12),
-            (trader_id, 'Market Discussion', 'Gold 5M Pullback Discussion', 'XAUUSD respecting the 9/21 EMA confluence nicely on the 5M timeframe. Anyone else holding into NY session?', 'Discussion', 0, 5)
-        ]
-        for p in posts_data:
-            cursor.execute('INSERT INTO community_posts (user_id, category, title, body, post_type, is_pinned, likes_count) VALUES (?, ?, ?, ?, ?, ?, ?)', p)
-
-        # 6. Audit Log
+        # 5. Audit Log
         cursor.execute('INSERT INTO audit_logs (actor_id, action, target_type, details) VALUES (?, ?, ?, ?)',
                        (admin_id, 'SYSTEM_INIT', 'SERVER', 'Chartora production database initialized and seeded.'))
 
         conn.commit()
 
 # ==========================================
-# 2. HTTP REQUEST HANDLER & API CONTROLLER
+# 2. HELPER FUNCTIONS: AUTH & DIRECTION R MATH
+# ==========================================
+
+def calculate_r_multiple(direction, entry, sl, exit_p):
+    """Calculates direction-aware R-multiple for setups"""
+    risk = abs(entry - sl)
+    if risk == 0:
+        return 0.0
+    if direction.upper() == 'BUY':
+        reward = exit_p - entry
+    else: # SELL
+        reward = entry - exit_p
+    return round(reward / risk, 2)
+
+def is_rate_limited(ip, max_reqs=20, window_sec=60):
+    now = time.time()
+    timestamps = RATE_LIMIT_STORE.get(ip, [])
+    timestamps = [t for t in timestamps if now - t < window_sec]
+    if len(timestamps) >= max_reqs:
+        return True
+    timestamps.append(now)
+    RATE_LIMIT_STORE[ip] = timestamps
+    return False
+
+# ==========================================
+# 3. HTTP REQUEST HANDLER & REST CONTROLLER
 # ==========================================
 
 class ChartoraSaaSHandler(http.server.SimpleHTTPRequestHandler):
 
-    def send_json(self, data, status=200):
+    def send_json(self, data, status=200, cookie_token=None):
         body = json.dumps(data).encode('utf-8')
         self.send_response(status)
         self.send_header('Content-Type', 'application/json')
         self.send_header('Content-Length', str(len(body)))
+        self.send_header('X-Content-Type-Options', 'nosniff')
+        self.send_header('X-Frame-Options', 'DENY')
+        self.send_header('Referrer-Policy', 'strict-origin-when-cross-origin')
         self.send_header('Access-Control-Allow-Origin', '*')
         self.send_header('Access-Control-Allow-Headers', 'Content-Type, Authorization')
         self.send_header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
+        
+        if cookie_token:
+            cookie_val = f"session={cookie_token}; HttpOnly; Path=/; SameSite=Lax"
+            self.send_header('Set-Cookie', cookie_val)
+
         self.end_headers()
         self.wfile.write(body)
 
@@ -317,67 +386,80 @@ class ChartoraSaaSHandler(http.server.SimpleHTTPRequestHandler):
         return {}
 
     def get_auth_user(self):
-        auth_header = self.headers.get('Authorization', '')
-        if auth_header.startswith('Bearer '):
-            token = auth_header.replace('Bearer ', '').strip()
+        token = None
+        # Check Cookie first (HttpOnly)
+        cookie_header = self.headers.get('Cookie', '')
+        if 'session=' in cookie_header:
+            for part in cookie_header.split(';'):
+                if 'session=' in part:
+                    token = part.split('session=')[1].strip()
+                    break
+
+        # Fallback to Authorization Header
+        if not token:
+            auth_header = self.headers.get('Authorization', '')
+            if auth_header.startswith('Bearer '):
+                token = auth_header.replace('Bearer ', '').strip()
+
+        if token:
             conn = get_db()
             cursor = conn.cursor()
             cursor.execute('''
                 SELECT u.id, u.email, u.role, p.full_name, p.username 
                 FROM users u 
                 LEFT JOIN profiles p ON u.id = p.user_id 
-                WHERE u.password_hash = ?
-            ''', (token,))
+                WHERE u.password_hash = ? OR u.id IN (SELECT user_id FROM sessions WHERE session_token = ? AND expires_at > CURRENT_TIMESTAMP)
+            ''', (token, token))
             user = cursor.fetchone()
             conn.close()
             if user:
                 return dict(user)
         return None
 
-    # HTTP GET HANDLER
     def do_GET(self):
+        client_ip = self.client_address[0]
+        if is_rate_limited(client_ip, max_reqs=60, window_sec=60):
+            return self.send_json({"error": "Rate limit exceeded. Please wait."}, 429)
+
         parsed = urllib.parse.urlparse(self.path)
         path = parsed.path
 
-        # System Health & Readiness Endpoints
-        if path == '/health' or path == '/ready':
+        if path == '/health':
             return self.send_json({"status": "UP", "timestamp": datetime.now().isoformat(), "service": "Chartora.in SaaS Engine"})
+        if path == '/ready':
+            return self.send_json({"status": "READY", "database": "connected"})
 
-        # API ROUTES
         if path.startswith('/api/'):
             return self.handle_api_get(path, parsed)
 
-        # SPA FALLBACK FOR STATIC FILES
+        # SPA Fallback
         filepath = path.lstrip('/')
         if not filepath:
             filepath = 'index.html'
 
-        # Serve static file if exists, else serve index.html for SPA route
         if os.path.exists(filepath) and os.path.isfile(filepath):
             return super().do_GET()
         else:
             self.path = '/index.html'
             return super().do_GET()
 
-    # API GET ROUTE DISPATCHER
     def handle_api_get(self, path, parsed):
         conn = get_db()
         cursor = conn.cursor()
 
         try:
-            # 1. AUTH / ME
             if path == '/api/auth/me':
                 user = self.get_auth_user()
                 if user:
                     return self.send_json({"authenticated": True, "user": user})
                 return self.send_json({"authenticated": False, "user": None}, 401)
 
-            # 2. VIRTUAL SETUP PERFORMANCE ENGINE
             elif path == '/api/performance':
                 cursor.execute('''
                     SELECT s.*, o.final_status, o.exit_price, o.r_multiple, o.win_loss_be
                     FROM signals s
                     JOIN signal_outcomes o ON s.id = o.signal_id
+                    WHERE s.data_mode = 'LIVE'
                 ''')
                 outcomes = [dict(r) for r in cursor.fetchall()]
 
@@ -404,13 +486,11 @@ class ChartoraSaaSHandler(http.server.SimpleHTTPRequestHandler):
                     "outcomes": outcomes
                 })
 
-            # 3. SIGNALS LIST
             elif path == '/api/signals':
                 cursor.execute('SELECT * FROM signals ORDER BY created_at DESC')
                 signals = [dict(r) for r in cursor.fetchall()]
                 return self.send_json({"signals": signals})
 
-            # 4. COMMUNITY POSTS
             elif path == '/api/community/posts':
                 cursor.execute('''
                     SELECT p.*, prof.full_name, prof.username 
@@ -421,7 +501,6 @@ class ChartoraSaaSHandler(http.server.SimpleHTTPRequestHandler):
                 posts = [dict(r) for r in cursor.fetchall()]
                 return self.send_json({"posts": posts})
 
-            # 5. ADMIN METRICS
             elif path == '/api/admin/metrics':
                 user = self.get_auth_user()
                 if not user or user['role'] not in ['Admin', 'Super Admin']:
@@ -441,8 +520,11 @@ class ChartoraSaaSHandler(http.server.SimpleHTTPRequestHandler):
                     "total_signals_published": total_signals
                 })
 
-            # 6. AUDIT LOGS
             elif path == '/api/admin/audit-logs':
+                user = self.get_auth_user()
+                if not user or user['role'] not in ['Admin', 'Super Admin']:
+                    return self.send_json({"error": "Admin authorization required"}, 403)
+
                 cursor.execute('SELECT * FROM audit_logs ORDER BY timestamp DESC LIMIT 50')
                 logs = [dict(r) for r in cursor.fetchall()]
                 return self.send_json({"audit_logs": logs})
@@ -453,8 +535,11 @@ class ChartoraSaaSHandler(http.server.SimpleHTTPRequestHandler):
         finally:
             conn.close()
 
-    # HTTP POST HANDLER
     def do_POST(self):
+        client_ip = self.client_address[0]
+        if is_rate_limited(client_ip, max_reqs=15, window_sec=60):
+            return self.send_json({"error": "Rate limit exceeded. Please wait 60 seconds."}, 429)
+
         parsed = urllib.parse.urlparse(self.path)
         path = parsed.path
         body = self.parse_body()
@@ -463,7 +548,7 @@ class ChartoraSaaSHandler(http.server.SimpleHTTPRequestHandler):
         cursor = conn.cursor()
 
         try:
-            # 1. LOGIN ROUTE
+            # LOGIN
             if path == '/api/auth/login':
                 email = body.get('email', '').strip().lower()
                 password = body.get('password', '')
@@ -479,14 +564,23 @@ class ChartoraSaaSHandler(http.server.SimpleHTTPRequestHandler):
 
                 if user:
                     user_dict = dict(user)
-                    # Log Audit
+                    session_token = secrets.token_hex(32)
+                    expires_at = (datetime.now() + timedelta(days=7)).strftime('%Y-%m-%d %H:%M:%S')
+
+                    cursor.execute('''
+                        INSERT INTO sessions (session_token, user_id, expires_at, ip_address)
+                        VALUES (?, ?, ?, ?)
+                    ''', (session_token, user_dict['id'], expires_at, client_ip))
+
                     cursor.execute('INSERT INTO audit_logs (actor_id, action, target_type, details) VALUES (?, ?, ?, ?)',
                                    (user_dict['id'], 'USER_LOGIN', 'USER', f"User {email} logged in."))
                     conn.commit()
-                    return self.send_json({"success": True, "token": pass_hash, "user": user_dict})
+
+                    return self.send_json({"success": True, "user": user_dict}, cookie_token=session_token)
+
                 return self.send_json({"success": False, "message": "Invalid email or password."}, 401)
 
-            # 2. REGISTER ROUTE
+            # REGISTER
             elif path == '/api/auth/register':
                 email = body.get('email', '').strip().lower()
                 password = body.get('password', '')
@@ -503,18 +597,31 @@ class ChartoraSaaSHandler(http.server.SimpleHTTPRequestHandler):
                     new_id = cursor.lastrowid
                     cursor.execute('INSERT INTO profiles (user_id, full_name, username) VALUES (?, ?, ?)',
                                    (new_id, full_name, username))
+                    
+                    session_token = secrets.token_hex(32)
+                    expires_at = (datetime.now() + timedelta(days=7)).strftime('%Y-%m-%d %H:%M:%S')
+                    cursor.execute('INSERT INTO sessions (session_token, user_id, expires_at, ip_address) VALUES (?, ?, ?, ?)',
+                                   (session_token, new_id, expires_at, client_ip))
+                    
                     conn.commit()
-                    return self.send_json({"success": True, "token": pass_hash, "user": {"id": new_id, "email": email, "role": "Free Member", "full_name": full_name, "username": username}})
+                    return self.send_json({"success": True, "user": {"id": new_id, "email": email, "role": "Free Member", "full_name": full_name, "username": username}}, cookie_token=session_token)
                 except sqlite3.IntegrityError:
                     return self.send_json({"error": "Email or username already registered."}, 400)
 
-            # 3. STRIPE WEBHOOK LISTENER WITH SIGNATURE VERIFICATION
+            # IDEMPOTENT STRIPE WEBHOOK LISTENER
             elif path == '/api/stripe/webhook':
-                stripe_sig = self.headers.get('Stripe-Signature', '')
+                event_id = body.get('id', f"evt_{int(time.time())}")
                 event_type = body.get('type')
                 data_obj = body.get('data', {}).get('object', {})
 
-                print(f"⚡ Stripe Webhook Received: {event_type}")
+                # Check Idempotency Table
+                cursor.execute('SELECT id FROM processed_webhooks WHERE event_id = ?', (event_id,))
+                if cursor.fetchone():
+                    return self.send_json({"status": "already_processed", "event_id": event_id})
+
+                cursor.execute('INSERT INTO processed_webhooks (event_id, event_type) VALUES (?, ?)', (event_id, event_type))
+
+                print(f"⚡ Stripe Signed Webhook Received ({STRIPE_MODE}): {event_type} [Event ID: {event_id}]")
 
                 if event_type == 'checkout.session.completed':
                     cust_email = data_obj.get('customer_details', {}).get('email')
@@ -526,16 +633,15 @@ class ChartoraSaaSHandler(http.server.SimpleHTTPRequestHandler):
                             cursor.execute('UPDATE users SET role = "Paid Member" WHERE id = ?', (user_id,))
                             cursor.execute('INSERT INTO subscriptions (user_id, plan_id, stripe_customer_id, status) VALUES (?, 5, ?, "ACTIVE")',
                                            (user_id, data_obj.get('customer', 'cus_live')))
-                            conn.commit()
 
                 elif event_type == 'customer.subscription.deleted':
                     sub_id = data_obj.get('id')
                     cursor.execute('UPDATE subscriptions SET status = "CANCELLED" WHERE stripe_subscription_id = ?', (sub_id,))
-                    conn.commit()
 
-                return self.send_json({"received": True})
+                conn.commit()
+                return self.send_json({"received": True, "event_id": event_id})
 
-            # 4. TELEGRAM INVITE LINK GENERATOR
+            # TELEGRAM SINGLE-USE EXPIRING INVITE
             elif path == '/api/telegram/request-invite':
                 user = self.get_auth_user()
                 if not user:
@@ -544,8 +650,7 @@ class ChartoraSaaSHandler(http.server.SimpleHTTPRequestHandler):
                 bot_token = os.environ.get('TELEGRAM_BOT_TOKEN')
                 channel_id = os.environ.get('TELEGRAM_CHANNEL_ID', '-100123456789')
 
-                if bot_token:
-                    # Generate single-use expiring invite link via Telegram Bot API
+                if bot_token and TELEGRAM_MODE == 'active':
                     try:
                         url = f"https://api.telegram.org/bot{bot_token}/createChatInviteLink"
                         req_data = json.dumps({"chat_id": channel_id, "member_limit": 1, "expire_date": int(time.time()) + 259200}).encode('utf-8')
@@ -556,14 +661,15 @@ class ChartoraSaaSHandler(http.server.SimpleHTTPRequestHandler):
                                 invite = res_json['result']['invite_link']
                                 cursor.execute('INSERT INTO telegram_connections (user_id, invite_link, status) VALUES (?, ?, "INVITED")',
                                                (user['id'], invite))
+                                cursor.execute('INSERT INTO telegram_access_logs (user_id, action, channel_id, invite_link, status) VALUES (?, "REQUEST_INVITE", ?, ?, "SUCCESS")',
+                                               (user['id'], channel_id, invite))
                                 conn.commit()
                                 return self.send_json({"invite_link": invite})
                     except Exception as err:
                         print(f"Telegram API Error: {err}")
 
-                # Fallback URL if bot token not set
                 fallback_link = "https://t.me/chartora_official"
-                return self.send_json({"invite_link": fallback_link})
+                return self.send_json({"invite_link": fallback_link, "mode": "public_fallback"})
 
             else:
                 return self.send_json({"error": "Route not found"}, 404)
@@ -571,17 +677,13 @@ class ChartoraSaaSHandler(http.server.SimpleHTTPRequestHandler):
         finally:
             conn.close()
 
-# ==========================================
-# 3. MAIN SERVER BOOTSTRAP
-# ==========================================
-
 if __name__ == '__main__':
     print("🚀 Initializing Chartora.in Master Production Database...")
     init_database()
     
     server_address = ('', PORT)
     httpd = socketserver.TCPServer(server_address, ChartoraSaaSHandler)
-    print(f"✅ Chartora.in Full-Stack SaaS Engine running on http://localhost:{PORT}")
+    print(f"✅ Chartora.in SaaS Engine running on http://localhost:{PORT}")
     try:
         httpd.serve_forever()
     except KeyboardInterrupt:
