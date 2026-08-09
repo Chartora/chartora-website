@@ -1,8 +1,9 @@
 # Chartora.in — Production V4 Release Documentation
 
 **Brand**: Chartora.in  
-**Tagline**: *You Cannot Watch Every Market. Chartora Can.*  
-**Final Brand Statement**: *Your markets. Our scanners. Your decision.*  
+**Tagline**: *YOUR MARKETS. OUR SCANNERS. YOUR DECISION.*  
+**Core Problem**: A trader cannot watch every market at the same time. Chartora organizes the systematic scanning, identification, risk planning, and educational workflow.  
+**Primary Business Objective**: Grow Monthly Recurring Revenue (MRR) through high volume, low-friction subscriptions ($14.99–$19.99/mo individual market systems; $79/mo All Access ecosystem).  
 **Production Domain**: `https://chartora.in`  
 **GitHub Repository**: `hemanthranam/chartora.in`  
 **Hosting Architecture**: Cloudflare Pages + Cloudflare DNS  
@@ -19,6 +20,25 @@
 - **Dark Metallic Shadow Green**: `#022C1E` (RGB: 2, 44, 30)
 - **Logo Text Accent Color**: `#0B4F37`
 - **Dark Theme Background**: `#0B0F19`
+
+---
+
+## 🏢 Business Architecture & Revenue Layers
+
+1. **Layer 1: Individual Market Systems ($14.99–$19.99/month)**:
+   - Low-friction category subscriptions for specific traders: Forex, Metals, Indices, US Stocks, Commodities, Crypto, and Swing.
+2. **Layer 2: Chartora All Access ($79/month)**:
+   - Complete recurring ecosystem unlocking multi-market scanning, instant Telegram alerts, watchlists, trade journal, risk calculator, and all 5 Academy courses.
+3. **Layer 3: Custom Trading Technology (From $149–$999+)**:
+   - Bespoke development services: TradingView indicators (From $149), Pine Script strategies (From $249), Market Scanners (From $399), Telegram Alert Bots (From $199), MT5 Expert Advisors (From $499), Complete Systems (From $999). Delivered into private client environments.
+
+---
+
+## 🔄 Core Product & Decision Workflow
+
+```
+SCAN ➔ IDENTIFY ➔ VALIDATE ➔ ALERT ➔ PLAN ➔ ENTER ➔ MANAGE ➔ EXIT ➔ REVIEW ➔ LEARN
+```
 
 ---
 
