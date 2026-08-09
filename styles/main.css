@@ -1,19 +1,24 @@
 /* CHARTORA.IN — V5 Concept 3 Master Production & Mobile-First Stylesheet */
 
 :root {
-    /* Concept 3 Primary Brand Anchor */
-    --brand-emerald: #00B074;
-    --brand-emerald-glow: rgba(0, 176, 116, 0.4);
-    --brand-emerald-dark: #008558;
+    /* Chartora Official Finalized Logo Hex Color Palette */
+    --brand-emerald: #10B981;          /* Official Primary Vibrant Emerald */
+    --brand-emerald-mint: #34D399;     /* Light Mint Gradient Highlight */
+    --brand-emerald-mid: #047857;      /* Mid-tone Rich Emerald Green */
+    --brand-emerald-dark: #064E3B;     /* Deep Metallic Forest Green */
+    --brand-emerald-deep: #022C1E;     /* Darkest Metallic Shadow Green */
+    --brand-emerald-glow: rgba(16, 185, 129, 0.45);
+    --brand-emerald-gradient: linear-gradient(135deg, #34D399 0%, #10B981 35%, #047857 70%, #064E3B 100%);
+    --brand-emerald-btn-grad: linear-gradient(135deg, #10B981 0%, #047857 100%);
 
     /* Base Palette */
     --bg-dark: #0B0F19;
     --bg-card: rgba(18, 26, 42, 0.85);
     --bg-card-hover: rgba(26, 38, 62, 0.92);
-    --border-color: rgba(0, 229, 255, 0.18);
-    --border-hover: rgba(0, 176, 116, 0.45);
+    --border-color: rgba(16, 185, 129, 0.22);
+    --border-hover: rgba(16, 185, 129, 0.55);
 
-    --primary-green: #00B074;
+    --primary-green: #10B981;
     --primary-cyan: #00E5FF;
     --accent-purple: #9D00FF;
     --danger-red: #FF2E63;
@@ -25,7 +30,7 @@
     --cat-indices-primary: #FF2E63;
     --cat-stocks-primary: #9D00FF;
     --cat-commodities-primary: #FF8C00;
-    --cat-crypto-primary: #00FF88;
+    --cat-crypto-primary: #10B981;
 
     /* Neutral Typography Colors */
     --text-main: #FFFFFF;
@@ -36,7 +41,7 @@
     --font-mono: 'JetBrains Mono', monospace;
 
     --glass-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
-    --neon-shadow-emerald: 0 0 25px rgba(0, 176, 116, 0.4);
+    --neon-shadow-emerald: 0 0 25px rgba(16, 185, 129, 0.4);
     --neon-shadow-cyan: 0 0 25px rgba(0, 229, 255, 0.35);
 }
 

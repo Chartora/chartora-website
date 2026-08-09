@@ -9,6 +9,19 @@
 
 ---
 
+## 🎨 Official Brand Identity & Color Hex Palette
+
+- **Official Logo Mark**: CH Bullish Arrow Monogram (combining stylized 'C', 'H', and a rising breakout chart arrow).
+- **Primary Vibrant Emerald**: `#10B981` (RGB: 16, 185, 129)
+- **Light Mint Highlight**: `#34D399` (RGB: 52, 211, 153)
+- **Midtone Rich Emerald**: `#047857` (RGB: 4, 120, 87)
+- **Deep Metallic Forest Green**: `#064E3B` (RGB: 6, 78, 59)
+- **Dark Metallic Shadow Green**: `#022C1E` (RGB: 2, 44, 30)
+- **Logo Text Accent Color**: `#0B4F37`
+- **Dark Theme Background**: `#0B0F19`
+
+---
+
 ## 🚀 Key V4 Product Features
 
 1. **3D Trading Workflow Scene**:

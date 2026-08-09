@@ -66,7 +66,7 @@ function init3DTradingWorkflowScene() {
     geometry.setAttribute('position', new threeEngine.BufferAttribute(positions, 3));
     const material = new threeEngine.PointsMaterial({
         size: isMobile ? 0.04 : 0.035,
-        color: 0x00B074,
+        color: 0x10B981,
         transparent: true,
         opacity: 0.45
     });
@@ -83,7 +83,7 @@ function init3DTradingWorkflowScene() {
             const height = Math.random() * 1.2 + 0.4;
             const candleGeo = new threeEngine.BoxGeometry(0.12, height, 0.12);
             const candleMat = new threeEngine.MeshBasicMaterial({
-                color: isGreen ? 0x00B074 : 0xFF2E63,
+                color: isGreen ? 0x10B981 : 0xFF2E63,
                 wireframe: true,
                 transparent: true,
                 opacity: 0.75
