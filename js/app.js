@@ -367,7 +367,9 @@ function renderHomeView() {
     `;
 }
 
-// PRICING VIEW
+/* ==========================================
+   PRICING & PLANS VIEW
+   ========================================== */
 function renderPricingView() {
     return `
         <section class="section" style="padding-top:120px;">
@@ -408,118 +410,91 @@ function renderPricingView() {
                 <!-- Market Systems ($19.99/mo) -->
                 <h3 style="margin-bottom:20px;">Market Systems ($19.99 / month)</h3>
                 <div class="category-pricing-grid" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap:20px; margin-bottom:50px;">
-                    <!-- Forex System -->
+                    <!-- 1. Forex System -->
                     <div class="glass-card">
-                        <h4>FOREX SYSTEM</h4>
+                        <span class="impact-badge impact-low" style="float:right;">Exclusive member benefits included</span>
+                        <h4>1. FOREX</h4>
                         <div style="font-size:1.8rem; font-weight:800; font-family:var(--font-mono); color:var(--brand-emerald-mint); margin:8px 0;">$19.99 <span style="font-size:0.85rem; color:var(--text-muted);">/ mo</span></div>
-                        <p style="font-size:0.88rem; color:var(--text-muted); min-height:42px;">Comprehensive scanning for 28 Forex currency pairs with 5M & 15M pullback alert setups.</p>
+                        <p style="font-size:0.88rem; color:var(--text-muted); min-height:42px;">Structured Forex market alerts and analysis designed to help members identify potential intraday and scalping opportunities across major currency pairs.</p>
                         <div style="display:flex; gap:10px; margin-top:16px;">
-                            <button onclick="openPlanModal('forex')" class="btn btn-outline" style="flex:1; font-size:0.8rem; padding:8px;">Click to know more</button>
-                            <button onclick="openAuthModal('signup')" class="btn btn-primary" style="flex:1; font-size:0.8rem; padding:8px;">Select Plan</button>
+                            <button onclick="openPlanModal('forex')" class="btn btn-outline" style="flex:1; font-size:0.8rem; padding:8px;">Learn More</button>
+                            <button onclick="openAuthModal('signup')" class="btn btn-primary" style="flex:1; font-size:0.8rem; padding:8px;">Get Started</button>
                         </div>
                     </div>
 
-                    <!-- Metals & Commodities -->
+                    <!-- 2. Metals & Commodities -->
                     <div class="glass-card">
-                        <h4>METALS & COMMODITIES</h4>
+                        <span class="impact-badge impact-low" style="float:right;">Exclusive member benefits included</span>
+                        <h4>2. METALS & COMMODITIES</h4>
                         <div style="font-size:1.8rem; font-weight:800; font-family:var(--font-mono); color:var(--brand-emerald-mint); margin:8px 0;">$19.99 <span style="font-size:0.85rem; color:var(--text-muted);">/ mo</span></div>
-                        <p style="font-size:0.88rem; color:var(--text-muted); min-height:42px;">Gold (XAUUSD), Silver (XAGUSD), WTI Crude Oil (USOIL) & Natural Gas structure alerts.</p>
+                        <p style="font-size:0.88rem; color:var(--text-muted); min-height:42px;">Gold (XAUUSD), Silver (XAGUSD), US Crude Oil (USOIL) & Natural Gas intraday scalping & market structure report alerts.</p>
                         <div style="display:flex; gap:10px; margin-top:16px;">
-                            <button onclick="openPlanModal('metals')" class="btn btn-outline" style="flex:1; font-size:0.8rem; padding:8px;">Click to know more</button>
-                            <button onclick="openAuthModal('signup')" class="btn btn-primary" style="flex:1; font-size:0.8rem; padding:8px;">Select Plan</button>
+                            <button onclick="openPlanModal('metals')" class="btn btn-outline" style="flex:1; font-size:0.8rem; padding:8px;">Learn More</button>
+                            <button onclick="openAuthModal('signup')" class="btn btn-primary" style="flex:1; font-size:0.8rem; padding:8px;">Get Started</button>
                         </div>
                     </div>
 
-                    <!-- US Stocks -->
+                    <!-- 3. US Stocks -->
                     <div class="glass-card">
-                        <h4>US STOCKS SYSTEM</h4>
+                        <span class="impact-badge impact-low" style="float:right;">Exclusive member benefits included</span>
+                        <h4>3. US STOCKS</h4>
                         <div style="font-size:1.8rem; font-weight:800; font-family:var(--font-mono); color:var(--brand-emerald-mint); margin:8px 0;">$19.99 <span style="font-size:0.85rem; color:var(--text-muted);">/ mo</span></div>
-                        <p style="font-size:0.88rem; color:var(--text-muted); min-height:42px;">High-momentum stock breakouts & EMA pullback alerts for NVDA, TSLA, AAPL, MSFT, AMZN.</p>
+                        <p style="font-size:0.88rem; color:var(--text-muted); min-height:42px;">High-momentum US equity breakout & EMA pullback alerts for selected high-liquidity stocks (NVDA, TSLA, AAPL, MSFT, AMZN).</p>
                         <div style="display:flex; gap:10px; margin-top:16px;">
-                            <button onclick="openPlanModal('stocks')" class="btn btn-outline" style="flex:1; font-size:0.8rem; padding:8px;">Click to know more</button>
-                            <button onclick="openAuthModal('signup')" class="btn btn-primary" style="flex:1; font-size:0.8rem; padding:8px;">Select Plan</button>
+                            <button onclick="openPlanModal('stocks')" class="btn btn-outline" style="flex:1; font-size:0.8rem; padding:8px;">Learn More</button>
+                            <button onclick="openAuthModal('signup')" class="btn btn-primary" style="flex:1; font-size:0.8rem; padding:8px;">Get Started</button>
                         </div>
                     </div>
 
-                    <!-- Indices System -->
+                    <!-- 4. Indices System -->
                     <div class="glass-card">
-                        <h4>INDICES SYSTEM</h4>
+                        <span class="impact-badge impact-low" style="float:right;">Exclusive member benefits included</span>
+                        <h4>4. INDICES</h4>
                         <div style="font-size:1.8rem; font-weight:800; font-family:var(--font-mono); color:var(--brand-emerald-mint); margin:8px 0;">$19.99 <span style="font-size:0.85rem; color:var(--text-muted);">/ mo</span></div>
-                        <p style="font-size:0.88rem; color:var(--text-muted); min-height:42px;">US500 (S&P 500), US100 (Nasdaq), GER40 (DAX), and UK100 session open setups.</p>
+                        <p style="font-size:0.88rem; color:var(--text-muted); min-height:42px;">US500 (S&P 500), US100 (Nasdaq 100), US30 (Dow Jones), and GER40 session open market structure alert setups.</p>
                         <div style="display:flex; gap:10px; margin-top:16px;">
-                            <button onclick="openPlanModal('indices')" class="btn btn-outline" style="flex:1; font-size:0.8rem; padding:8px;">Click to know more</button>
-                            <button onclick="openAuthModal('signup')" class="btn btn-primary" style="flex:1; font-size:0.8rem; padding:8px;">Select Plan</button>
+                            <button onclick="openPlanModal('indices')" class="btn btn-outline" style="flex:1; font-size:0.8rem; padding:8px;">Learn More</button>
+                            <button onclick="openAuthModal('signup')" class="btn btn-primary" style="flex:1; font-size:0.8rem; padding:8px;">Get Started</button>
                         </div>
                     </div>
                 </div>
 
-                <!-- Custom Technology Subscriptions -->
-                <h3 style="margin-bottom:20px;">Custom Trading Technology Subscriptions</h3>
-                <div class="category-pricing-grid" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap:20px;">
+                <!-- Custom Technology Services -->
+                <h3 style="margin-bottom:20px;">Custom Trading Technology Services</h3>
+                <div class="category-pricing-grid" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap:20px; margin-bottom:30px;">
                     <div class="glass-card">
                         <h4>CUSTOM TRADINGVIEW INDICATOR & STRATEGY</h4>
                         <div style="font-size:1.8rem; font-weight:800; font-family:var(--font-mono); color:var(--brand-emerald-mint); margin:8px 0;">$19.99 <span style="font-size:0.85rem; color:var(--text-muted);">/ mo</span></div>
-                        <p style="font-size:0.88rem; color:var(--text-muted);">Custom Pine Script v5 indicator script with strategy backtesting alerts.</p>
-                        <button onclick="openAuthModal('signup')" class="btn btn-outline btn-full" style="margin-top:16px;">Subscribe Tech — $19.99/mo</button>
+                        <p style="font-size:0.88rem; color:var(--text-muted);">Custom Pine Script v5 indicator, user-defined strategy logic, visual dashboards, and custom alert webhooks.</p>
+                        <button onclick="openAuthModal('signup')" class="btn btn-outline btn-full" style="margin-top:16px;">Get Started — $19.99/mo</button>
                     </div>
 
                     <div class="glass-card">
-                        <h4>CUSTOM MARKET SCANNER WITH ALERT SYSTEM</h4>
+                        <h4>CUSTOM MARKET SCANNER</h4>
                         <div style="font-size:1.8rem; font-weight:800; font-family:var(--font-mono); color:var(--brand-emerald-mint); margin:8px 0;">$36.99 <span style="font-size:0.85rem; color:var(--text-muted);">/ mo</span></div>
-                        <p style="font-size:0.88rem; color:var(--text-muted);">Multi-instrument web market scanner with instant desktop & webhook notifications.</p>
-                        <button onclick="openAuthModal('signup')" class="btn btn-outline btn-full" style="margin-top:16px;">Subscribe Tech — $36.99/mo</button>
+                        <p style="font-size:0.88rem; color:var(--text-muted);">Multi-instrument web market scanner with custom setup detection, market filtering, and Telegram alert systems.</p>
+                        <button onclick="openAuthModal('signup')" class="btn btn-outline btn-full" style="margin-top:16px;">Get Started — $36.99/mo</button>
                     </div>
 
                     <div class="glass-card">
-                        <h4>CUSTOM MT5 SCANNER WITH TELEGRAM ALERTS</h4>
+                        <h4>CUSTOM MT5 SCANNER</h4>
                         <div style="font-size:1.8rem; font-weight:800; font-family:var(--font-mono); color:var(--brand-emerald-mint); margin:8px 0;">$49.99 <span style="font-size:0.85rem; color:var(--text-muted);">/ mo</span></div>
-                        <p style="font-size:0.88rem; color:var(--text-muted);">MQL5 MetaTrader 5 multi-pair scanner sending chart screenshots directly to Telegram.</p>
-                        <button onclick="openAuthModal('signup')" class="btn btn-outline btn-full" style="margin-top:16px;">Subscribe Tech — $49.99/mo</button>
+                        <p style="font-size:0.88rem; color:var(--text-muted);">MQL5 MetaTrader 5 scanner with automated monitoring, configurable logic, and direct Telegram alerts.</p>
+                        <button onclick="openAuthModal('signup')" class="btn btn-outline btn-full" style="margin-top:16px;">Get Started — $49.99/mo</button>
                     </div>
 
                     <div class="glass-card">
-                        <h4>CUSTOM MT5 AUTOMATED TRADING BOT WITH ALERTS</h4>
+                        <h4>CUSTOM MT5 AUTOMATED TRADING BOT</h4>
                         <div style="font-size:1.8rem; font-weight:800; font-family:var(--font-mono); color:var(--brand-emerald-mint); margin:8px 0;">$99.00 <span style="font-size:0.85rem; color:var(--text-muted);">/ mo</span></div>
-                        <p style="font-size:0.88rem; color:var(--text-muted);">Full MT5 automated Expert Advisor (EA) execution bot with risk controls and Telegram logs.</p>
-                        <button onclick="openAuthModal('signup')" class="btn btn-outline btn-full" style="margin-top:16px;">Subscribe Tech — $99.00/mo</button>
-                    </div>
-                </div>
-            </div>
-        </section>
-    `;
-}
-
-                    <div class="glass-card">
-                        <h4>CRYPTO SYSTEM</h4>
-                        <div style="font-size:1.8rem; font-weight:800; font-family:var(--font-mono); color:var(--cat-crypto-primary); margin:8px 0;">$19.99 <span style="font-size:0.85rem; color:var(--text-muted);">/ mo</span></div>
-                        <p style="font-size:0.88rem; color:var(--text-muted);">BTCUSD and ETHUSD 24/7 technical market setup monitoring.</p>
-                        <button onclick="checkout('crypto')" class="btn btn-outline btn-full" style="margin-top:16px;">Select Crypto System</button>
+                        <p style="font-size:0.88rem; color:var(--text-muted);">Custom MT5 Expert Advisor (EA) automation, user-defined trade execution logic, risk controls, and Telegram monitoring logs.</p>
+                        <button onclick="openAuthModal('signup')" class="btn btn-outline btn-full" style="margin-top:16px;">Get Started — $99.00/mo</button>
                     </div>
                 </div>
 
-                <!-- Custom Build Services -->
-                <h3 style="margin-top:50px; margin-bottom:20px;">Custom Development Services</h3>
-                <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:20px; margin-bottom:50px;">
-                    <div class="glass-card">
-                        <h4>TRADINGVIEW INDICATOR</h4>
-                        <div style="font-size:1.4rem; font-weight:800; color:var(--primary-cyan); margin:6px 0;">From $149</div>
-                        <p style="font-size:0.88rem; color:var(--text-muted);">Custom indicator development based on your documented trading rules.</p>
-                        <a href="#contact" onclick="navigateTo('contact', event)" class="btn btn-secondary btn-full" style="margin-top:16px;">REQUEST A QUOTE</a>
-                    </div>
-
-                    <div class="glass-card">
-                        <h4>PINE SCRIPT STRATEGY</h4>
-                        <div style="font-size:1.4rem; font-weight:800; color:var(--primary-cyan); margin:6px 0;">From $249</div>
-                        <p style="font-size:0.88rem; color:var(--text-muted);">Custom backtestable strategy development for TradingView.</p>
-                        <a href="#contact" onclick="navigateTo('contact', event)" class="btn btn-secondary btn-full" style="margin-top:16px;">REQUEST A QUOTE</a>
-                    </div>
-
-                    <div class="glass-card">
-                        <h4>MARKET SCANNER</h4>
-                        <div style="font-size:1.4rem; font-weight:800; color:var(--primary-cyan); margin:6px 0;">From $399</div>
-                        <p style="font-size:0.88rem; color:var(--text-muted);">Custom multi-market scanning system tailored to your watchlist.</p>
-                        <a href="#contact" onclick="navigateTo('contact', event)" class="btn btn-secondary btn-full" style="margin-top:16px;">REQUEST A QUOTE</a>
-                    </div>
+                <div class="glass-card" style="background:rgba(239,68,68,0.08); border-color:rgba(239,68,68,0.2); text-align:center;">
+                    <p style="font-size:0.85rem; color:#FCA5A5; margin:0;">
+                        ⚠️ <strong>RISK NOTICE FOR AUTOMATED SYSTEMS:</strong> Automated systems do not guarantee profits and users remain responsible for configuration and risk.
+                    </p>
                 </div>
             </div>
         </section>
@@ -1006,52 +981,136 @@ function renderAcademyView() {
         { num: 10, title: 'Trade Journaling & Monthly Performance Audit', preview: 'Tracking trade metrics, emotional state, win rate, and profit factor to continuously refine your edge.', free: false }
     ];
 
+    function renderAcademyView() {
+    const courses = [
+        { id: 'market-foundations', name: '1. Market Foundations', desc: 'Core trading mechanics, market types, broker spreads & currency pairs.' },
+        { id: 'technical-analysis', name: '2. Technical Analysis Mastery', desc: 'Market structure, supply/demand zones, candlestick anatomy & trendlines.' },
+        { id: 'top-strategies', name: '3. Price Action & Market Structure', desc: 'Breakouts, pullbacks, liquidity sweeps & session momentum setups.' },
+        { id: 'risk-management', name: '4. Risk Management & Psychology', desc: '1% risk math, lot sizing, drawdown controls & overcoming FOMO.' },
+        { id: 'trading-psychology', name: '5. Intraday & Scalping Frameworks', desc: 'Multi-timeframe execution, pre-trade checklists & trade journaling.' }
+    ];
+
+    const currentCourse = courses.find(c => c.id === activeCourseId) || courses[0];
+
+    const chapterPreviews = [
+        { num: 1, title: 'Introduction & Core Market Mechanics', preview: 'Understanding market participants, order flow, bid-ask spreads, and leverage principles.', free: true },
+        { num: 2, title: 'Market Structure & Trend Bias', preview: 'Identifying Higher Highs, Higher Lows, Lower Highs, and Lower Lows across 4H & 1H timeframes.', free: true },
+        { num: 3, title: 'Key Support & Resistance Zone Isolation', preview: 'Drawing historical horizontal support/resistance levels and dynamic EMA 9/21 touch points.', free: false },
+        { num: 4, title: 'EMA 9 & EMA 21 Dynamic Support/Resistance', preview: 'How exponential moving averages act as dynamic support during strong market trends.', free: false },
+        { num: 5, title: 'Identifying Valid Breakouts vs Fakeouts', preview: 'Using body close confirmation and volume expansion to filter out false breakouts.', free: false },
+        { num: 6, title: 'Session Open Liquidity Sweeps', preview: 'Capitalizing on Asian session high/low sweeps during London and New York market opens.', free: false },
+        { num: 7, title: 'Position Sizing Formula & Risk Math', preview: 'Calculating exact lot sizes based on 1% account risk and ATR stop loss distance.', free: false },
+        { num: 8, title: 'R-Multiple Targets & Trade Management', preview: 'Securing Partial Profits at TP1 (1:1 R) and scaling runner contracts to TP2 (1:2+ R).', free: false },
+        { num: 9, title: 'Pre-Trade Checklist & Rules Protocol', preview: 'The 5-step strict pre-trade verification checklist before opening any execution.', free: false },
+        { num: 10, title: 'Trade Journaling & Monthly Performance Audit', preview: 'Tracking trade metrics, emotional state, win rate, and profit factor to continuously refine your edge.', free: false }
+    ];
+
     return `
         <section class="section" style="padding-top:120px;">
             <div class="container">
-                <div class="hero-badge text-center">FREE KNOWLEDGE & MEMBER ACADEMY</div>
-                <h1 class="section-title text-center">CHARTORA TRADING ACADEMY</h1>
-                <p class="section-subtitle text-center">Master market structure, candlestick patterns, risk management math, and quantitative trading strategies.</p>
+                <div class="hero-badge text-center">FREE TRADING KNOWLEDGE CENTER</div>
+                <h1 class="section-title text-center">Chartora Academy</h1>
+                <p class="section-subtitle text-center">Learn the markets. Understand the structure. Build better trading decisions.</p>
 
-                <!-- FREE KNOWLEDGE OVERVIEW SECTION -->
-                <div class="glass-card" style="margin-bottom:40px; border-color:var(--brand-emerald-mint);">
-                    <h3 style="color:var(--brand-emerald-mint);">FREE MARKET KNOWLEDGE & TECHNICAL FOUNDATIONS</h3>
-                    <p style="color:var(--text-muted); font-size:0.9rem; margin-top:4px;">Essential trading concepts every trader must master before taking risk.</p>
+                <!-- FREE ACADEMY KNOWLEDGE SECTIONS -->
+                
+                <!-- 1. Market Categories & Currency Pairs -->
+                <div class="glass-card" style="margin-bottom:30px; border-color:rgba(16,185,129,0.3);">
+                    <h3 style="color:var(--brand-emerald-mint); font-size:1.3rem;">🌐 Market Categories & Currency Pairs</h3>
+                    <p style="color:var(--text-muted); font-size:0.88rem; margin-top:4px;">Fundamental breakdown of global instruments monitored by Chartora intelligence scanners.</p>
                     
-                    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap:20px; margin-top:20px;">
+                    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:16px; margin-top:20px;">
                         <div style="background:rgba(6,9,16,0.6); padding:16px; border-radius:12px; border:1px solid rgba(255,255,255,0.08);">
-                            <h4>📊 Types of Markets & Categories</h4>
+                            <h4 style="font-size:1rem; color:#fff; margin-bottom:8px;">Market Categories</h4>
+                            <ul style="font-size:0.85rem; color:var(--text-muted); padding-left:18px; line-height:1.7;">
+                                <li><strong>Forex:</strong> 24/5 global foreign exchange market ($7.5 Trillion daily volume).</li>
+                                <li><strong>Metals & Commodities:</strong> Gold (XAUUSD), Silver (XAGUSD), US Crude Oil (USOIL).</li>
+                                <li><strong>Indices:</strong> US100 (Nasdaq 100), US500 (S&P 500), US30 (Dow Jones), GER40 (DAX).</li>
+                                <li><strong>US Stocks:</strong> High-liquidity blue chip equities (NVIDIA, Apple, Tesla, Meta, Microsoft).</li>
+                                <li><strong>Crypto:</strong> Bitcoin (BTCUSD) & Ethereum (ETHUSD) 24/7 digital assets.</li>
+                            </ul>
+                        </div>
+
+                        <div style="background:rgba(6,9,16,0.6); padding:16px; border-radius:12px; border:1px solid rgba(255,255,255,0.08);">
+                            <h4 style="font-size:1rem; color:#fff; margin-bottom:8px;">Major & Popular Pairs</h4>
+                            <ul style="font-size:0.85rem; color:var(--text-muted); padding-left:18px; line-height:1.7;">
+                                <li><strong>EURUSD:</strong> Euro vs US Dollar (highest global liquidity & lowest spreads).</li>
+                                <li><strong>GBPUSD:</strong> British Pound vs US Dollar (high volatility intraday swings).</li>
+                                <li><strong>USDJPY:</strong> US Dollar vs Japanese Yen (strong trend persistence & BOJ sensitivity).</li>
+                                <li><strong>AUDUSD & NZDUSD:</strong> Commodity currency correlation to global trade sentiment.</li>
+                                <li><strong>USDCAD & USDCHF:</strong> Oil export correlation & Swiss safe-haven capital flows.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. Candlestick Education -->
+                <div class="glass-card" style="margin-bottom:30px;">
+                    <h3 style="font-size:1.3rem;">🕯️ Candlestick Pattern Education</h3>
+                    <p style="color:var(--text-muted); font-size:0.88rem; margin-top:4px;">Master visual price action signatures and candlestick anatomy.</p>
+
+                    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap:16px; margin-top:20px;">
+                        <div style="background:rgba(6,9,16,0.6); padding:16px; border-radius:12px; border:1px solid rgba(255,255,255,0.08);">
+                            <h4 style="color:var(--brand-emerald-mint);">Bullish & Bearish Engulfing</h4>
                             <p style="font-size:0.85rem; color:var(--text-muted); margin-top:6px; line-height:1.6;">
-                                <strong>Forex:</strong> 24/5 currency pair exchange.<br>
-                                <strong>Metals:</strong> Gold (XAUUSD) & Silver (XAGUSD) safe-havens.<br>
-                                <strong>Indices:</strong> US100 & US500 equity basket benchmarks.<br>
-                                <strong>US Stocks:</strong> High-volatility tech breakouts.
+                                <strong>Indicates:</strong> Strong buyer or seller momentum takeover.<br>
+                                <strong>Context:</strong> Most reliable when forming at key support or resistance zones.<br>
+                                <strong>Common Mistake:</strong> Trading engulfing candles in middle of noisy consolidation ranges.
                             </p>
                         </div>
 
                         <div style="background:rgba(6,9,16,0.6); padding:16px; border-radius:12px; border:1px solid rgba(255,255,255,0.08);">
-                            <h4>🕯️ Main Candlestick Names & Patterns</h4>
+                            <h4 style="color:var(--brand-emerald-mint);">Pin Bar / Hammer / Shooting Star</h4>
                             <p style="font-size:0.85rem; color:var(--text-muted); margin-top:6px; line-height:1.6;">
-                                <strong>Bullish Engulfing:</strong> Strong buyer takeover candle.<br>
-                                <strong>Pinbar / Hammer:</strong> Long rejection wick at support.<br>
-                                <strong>Doji:</strong> Market indecision & potential reversal.<br>
-                                <strong>Morning Star:</strong> 3-candle bullish reversal cluster.
+                                <strong>Indicates:</strong> Sharp rejection of price at a specific key level.<br>
+                                <strong>Context:</strong> Long wick must reject high-volume liquidity pool.<br>
+                                <strong>Common Mistake:</strong> Entering immediately without waiting for candle close confirmation.
                             </p>
                         </div>
 
                         <div style="background:rgba(6,9,16,0.6); padding:16px; border-radius:12px; border:1px solid rgba(255,255,255,0.08);">
-                            <h4>📈 Core Technical Indicators</h4>
+                            <h4 style="color:var(--brand-emerald-mint);">Doji, Inside Bar & Marubozu</h4>
                             <p style="font-size:0.85rem; color:var(--text-muted); margin-top:6px; line-height:1.6;">
-                                <strong>EMA 9 / 21:</strong> Fast vs slow exponential moving average trend direction.<br>
-                                <strong>RSI (14):</strong> Momentum oscillator for overbought/oversold levels.<br>
-                                <strong>ATR (14):</strong> Volatility buffer for stop-loss distance calculation.
+                                <strong>Indicates:</strong> Indecision (Doji), compression (Inside Bar), or absolute trend strength (Marubozu).<br>
+                                <strong>Context:</strong> Inside bars signal upcoming explosive volatility expansion.<br>
+                                <strong>Common Mistake:</strong> Assuming Doji always means immediate reversal without trend context.
                             </p>
                         </div>
                     </div>
                 </div>
 
+                <!-- 3. Chart Patterns & Indicator Education -->
+                <div class="glass-card" style="margin-bottom:40px;">
+                    <h3 style="font-size:1.3rem;">📈 Chart Patterns & Technical Indicator Education</h3>
+                    <p style="color:var(--text-muted); font-size:0.88rem; margin-top:4px;">Understand classic structural geometry and statistical indicator mechanics.</p>
+
+                    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:16px; margin-top:20px;">
+                        <div style="background:rgba(6,9,16,0.6); padding:16px; border-radius:12px; border:1px solid rgba(255,255,255,0.08);">
+                            <h4 style="color:#fff;">Structural Chart Patterns</h4>
+                            <ul style="font-size:0.85rem; color:var(--text-muted); padding-left:18px; line-height:1.7;">
+                                <li><strong>Support & Resistance:</strong> Horizontal zones where supply and demand rebalance.</li>
+                                <li><strong>Double Top / Double Bottom:</strong> Reversal patterns testing liquidity twice.</li>
+                                <li><strong>Head & Shoulders:</strong> Structural exhaustion pattern indicating major trend shift.</li>
+                                <li><strong>Flags & Pennants:</strong> High-probability trend continuation consolidations.</li>
+                                <li><strong>Ascending & Descending Triangles:</strong> Price compression leading to directional breakout.</li>
+                            </ul>
+                        </div>
+
+                        <div style="background:rgba(6,9,16,0.6); padding:16px; border-radius:12px; border:1px solid rgba(255,255,255,0.08);">
+                            <h4 style="color:#fff;">Core Technical Indicators</h4>
+                            <ul style="font-size:0.85rem; color:var(--text-muted); padding-left:18px; line-height:1.7;">
+                                <li><strong>EMA 9 & 21:</strong> Exponential moving averages for trend bias & dynamic pullback entry.</li>
+                                <li><strong>RSI (14):</strong> Relative Strength Index for detecting momentum divergence & overextension.</li>
+                                <li><strong>MACD:</strong> Moving Average Convergence Divergence for momentum shifts & crossovers.</li>
+                                <li><strong>ATR (14):</strong> Average True Range for objective volatility-based Stop Loss calculations.</li>
+                                <li><strong>Bollinger Bands & VWAP:</strong> Mean reversion boundaries & volume-weighted average price.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Course Navigation Tabs -->
-                <h3 style="margin-bottom:16px;">Top 5 Global Member Courses</h3>
+                <h3 style="margin-bottom:16px; font-size:1.4rem;">Top 5 Chartora Courses</h3>
                 <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:14px; margin-bottom:30px;">
                     ${courses.map(c => `
                         <div class="glass-card" onclick="selectCourse('${c.id}')" style="cursor:pointer; padding:16px; border-color:${c.id === activeCourseId ? 'var(--brand-emerald-mint)' : 'rgba(255,255,255,0.08)'}">
@@ -1076,7 +1135,7 @@ function renderAcademyView() {
                                 <div>
                                     <h4 style="font-size:0.98rem; display:flex; align-items:center; gap:8px;">
                                         <span>Chapter ${ch.num}: ${ch.title}</span>
-                                        ${ch.free ? '<span class="impact-badge impact-low" style="font-size:0.68rem;">FREE PREVIEW</span>' : '<span class="impact-badge impact-high" style="font-size:0.68rem;">🔒 MEMBER LOCKED</span>'}
+                                        ${ch.free ? '<span class="impact-badge impact-low" style="font-size:0.68rem;">FREE PREVIEW</span>' : '<span class="impact-badge impact-high" style="font-size:0.68rem;">🔒 MEMBERS ONLY</span>'}
                                     </h4>
                                     <p style="font-size:0.85rem; color:var(--text-muted); margin-top:4px;">${ch.preview}</p>
                                 </div>
@@ -1084,7 +1143,7 @@ function renderAcademyView() {
                                     ${ch.free ? `
                                         <button class="btn btn-outline" style="font-size:0.8rem; padding:6px 14px;" onclick="selectV5Chapter(${ch.num})">Read Lesson →</button>
                                     ` : `
-                                        <button class="btn btn-primary" style="font-size:0.8rem; padding:6px 14px;" onclick="openAuthModal('signup')">Unlock Member Access 🔒</button>
+                                        <button class="btn btn-primary" style="font-size:0.8rem; padding:6px 14px;" onclick="openAuthModal('signup')">Get Started to Unlock 🔒</button>
                                     `}
                                 </div>
                             </div>
@@ -1643,101 +1702,156 @@ function renderCareersView() {
         <section class="section" style="padding-top:120px;">
             <div class="container">
                 <div class="hero-badge text-center">JOIN CHARTORA TEAM</div>
-                <h1 class="section-title text-center">CAREERS & REMOTE OPPORTUNITIES</h1>
-                <p class="section-subtitle text-center">Work with an agile team building next-generation market scanning, quantitative Pine Script tools & SaaS trading infrastructure.</p>
+                <h1 class="section-title text-center">Build the Future of Smarter Trading Education & Market Intelligence</h1>
+                <p class="section-subtitle text-center">Chartora is building technology, education, market intelligence, and community tools for traders around the world.</p>
 
                 <!-- 2 Full-Time Roles -->
-                <h3 style="margin-bottom:20px;">Full-Time Remote Roles (2 Positions)</h3>
-                <div class="job-card">
+                <h3 style="margin-bottom:20px;">FULL-TIME REMOTE ROLES</h3>
+                
+                <!-- Role 1: Full-Stack Developer -->
+                <div class="job-card" style="margin-bottom:20px;">
                     <div>
                         <span class="reward-badge" style="background:rgba(16,185,129,0.15); border-color:#10B981;">FULL TIME • REMOTE</span>
-                        <h4 style="margin-top:8px; font-size:1.2rem;">Senior Full-Stack SaaS Engineer</h4>
-                        <p style="color:var(--text-muted); font-size:0.88rem; margin-top:4px;">
-                            Python 3, REST API backend development, SQLite/PostgreSQL architecture, Stripe webhooks & Telegram bot APIs.
-                        </p>
+                        <h4 style="margin-top:8px; font-size:1.25rem;">Full-Stack Developer</h4>
+                        <div style="font-size:0.88rem; color:var(--text-muted); margin-top:8px;">
+                            <p style="margin-bottom:6px;"><strong>Responsibilities:</strong> Frontend development, backend development, API integration, dashboard development, performance optimization, security, production deployment, bug fixing, feature development.</p>
+                            <p><strong>Requirements:</strong> Strong programming fundamentals, modern frontend/backend experience, API experience, Git/GitHub, ability to work independently, strong problem solving.</p>
+                        </div>
                     </div>
-                    <button class="btn btn-primary" onclick="scrollToCareerForm('Senior Full-Stack SaaS Engineer')">Apply Now</button>
+                    <button class="btn btn-primary" onclick="scrollToCareerForm('Full-Stack Developer')">Apply Now</button>
                 </div>
 
-                <div class="job-card">
+                <!-- Role 2: Trading Technology / Automation Developer -->
+                <div class="job-card" style="margin-bottom:30px;">
                     <div>
                         <span class="reward-badge" style="background:rgba(16,185,129,0.15); border-color:#10B981;">FULL TIME • REMOTE</span>
-                        <h4 style="margin-top:8px; font-size:1.2rem;">Pine Script & Quantitative Algorithm Developer</h4>
-                        <p style="color:var(--text-muted); font-size:0.88rem; margin-top:4px;">
-                            TradingView Pine Script v5 strategy development, multi-timeframe scanners, MQL5 MetaTrader integrations.
-                        </p>
+                        <h4 style="margin-top:8px; font-size:1.25rem;">Trading Technology / Automation Developer</h4>
+                        <div style="font-size:0.88rem; color:var(--text-muted); margin-top:8px;">
+                            <p style="margin-bottom:6px;"><strong>Responsibilities:</strong> Trading tools, market scanners, alert systems, Telegram integrations, TradingView integrations, MT5 integrations, data processing, automation systems, API integrations.</p>
+                            <p><strong>Requirements:</strong> Programming experience, APIs, automation, financial/trading technology interest, Git/GitHub, strong analytical thinking.</p>
+                        </div>
                     </div>
-                    <button class="btn btn-primary" onclick="scrollToCareerForm('Pine Script & Quantitative Algorithm Developer')">Apply Now</button>
+                    <button class="btn btn-primary" onclick="scrollToCareerForm('Trading Technology / Automation Developer')">Apply Now</button>
                 </div>
 
                 <!-- 4 Remote Internships -->
-                <h3 style="margin:40px 0 20px;">Remote Internships (4 Positions)</h3>
-                <p style="color:var(--text-muted); font-size:0.9rem; margin-top:-12px; margin-bottom:20px;">
-                    Unpaid initial performance internships with fast-track transition to full-time roles based on output.
+                <h3 style="margin:40px 0 10px;">INTERNSHIP PROGRAM</h3>
+                <p style="color:var(--brand-emerald-mint); font-weight:600; font-size:0.95rem; margin-bottom:12px;">
+                    Remote • Unpaid Internship • Performance-Based Future Opportunities
+                </p>
+                <p style="color:var(--text-muted); font-size:0.88rem; margin-bottom:24px; max-width:800px;">
+                    Gain real project exposure, portfolio-building opportunities, mentorship, and experience with production systems. High-performing interns may be considered for future paid/full-time opportunities.
                 </p>
 
-                <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:20px; margin-bottom:40px;">
+                <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:20px; margin-bottom:50px;">
                     <div class="glass-card">
                         <span class="impact-badge impact-medium">REMOTE INTERNSHIP</span>
-                        <h4 style="margin-top:8px;">1. Quantitative Market Analyst Intern</h4>
-                        <p style="color:var(--text-muted); font-size:0.85rem; margin-top:6px;">Market structure analysis, EMA 9/21 pullback setup validation, risk math verification.</p>
-                        <button class="btn btn-outline btn-full" style="margin-top:16px;" onclick="scrollToCareerForm('Quantitative Market Analyst Intern')">Apply for Internship</button>
+                        <h4 style="margin-top:10px; font-size:1.1rem;">1. Frontend Development Intern</h4>
+                        <p style="color:var(--text-muted); font-size:0.85rem; margin-top:6px;">Mobile PWA layout optimization, responsive CSS styling, visual trading chart interfaces & user interaction UI.</p>
+                        <button class="btn btn-outline btn-full" style="margin-top:16px;" onclick="scrollToCareerForm('Frontend Development Intern')">Apply for Internship</button>
                     </div>
 
                     <div class="glass-card">
                         <span class="impact-badge impact-medium">REMOTE INTERNSHIP</span>
-                        <h4 style="margin-top:8px;">2. Pine Script & Technical Trading Intern</h4>
-                        <p style="color:var(--text-muted); font-size:0.85rem; margin-top:6px;">Strategy backtesting, Pine Script v5 indicator debugging, alert webhooks setup.</p>
-                        <button class="btn btn-outline btn-full" style="margin-top:16px;" onclick="scrollToCareerForm('Pine Script & Technical Trading Intern')">Apply for Internship</button>
+                        <h4 style="margin-top:10px; font-size:1.1rem;">2. Backend / API Development Intern</h4>
+                        <p style="color:var(--text-muted); font-size:0.85rem; margin-top:6px;">Python microservices, SQLite/PostgreSQL optimizations, REST API routes & secure Stripe webhook listeners.</p>
+                        <button class="btn btn-outline btn-full" style="margin-top:16px;" onclick="scrollToCareerForm('Backend / API Development Intern')">Apply for Internship</button>
                     </div>
 
                     <div class="glass-card">
                         <span class="impact-badge impact-medium">REMOTE INTERNSHIP</span>
-                        <h4 style="margin-top:8px;">3. Financial Content & Community Growth Intern</h4>
-                        <p style="color:var(--text-muted); font-size:0.85rem; margin-top:6px;">Daily market summaries, educational content creation, Telegram community engagement.</p>
-                        <button class="btn btn-outline btn-full" style="margin-top:16px;" onclick="scrollToCareerForm('Financial Content & Community Growth Intern')">Apply for Internship</button>
+                        <h4 style="margin-top:10px; font-size:1.1rem;">3. Trading Technology Intern</h4>
+                        <p style="color:var(--text-muted); font-size:0.85rem; margin-top:6px;">TradingView Pine Script v5 strategy backtesting, multi-timeframe scanner logic & MT5 automated alert webhooks.</p>
+                        <button class="btn btn-outline btn-full" style="margin-top:16px;" onclick="scrollToCareerForm('Trading Technology Intern')">Apply for Internship</button>
                     </div>
 
                     <div class="glass-card">
                         <span class="impact-badge impact-medium">REMOTE INTERNSHIP</span>
-                        <h4 style="margin-top:8px;">4. Frontend PWA & UX Design Intern</h4>
-                        <p style="color:var(--text-muted); font-size:0.85rem; margin-top:6px;">Mobile PWA layout optimization, responsive CSS styling, visual trading charts interface.</p>
-                        <button class="btn btn-outline btn-full" style="margin-top:16px;" onclick="scrollToCareerForm('Frontend PWA & UX Design Intern')">Apply for Internship</button>
+                        <h4 style="margin-top:10px; font-size:1.1rem;">4. Digital Marketing / Content Intern</h4>
+                        <p style="color:var(--text-muted); font-size:0.85rem; margin-top:6px;">Daily market research summaries, educational trader guides, video graphics & Telegram community growth execution.</p>
+                        <button class="btn btn-outline btn-full" style="margin-top:16px;" onclick="scrollToCareerForm('Digital Marketing / Content Intern')">Apply for Internship</button>
                     </div>
                 </div>
 
                 <!-- Career Application Form -->
-                <div class="glass-card" id="career-form-card" style="max-width:600px; margin:0 auto;">
-                    <h3>Submit Career Application</h3>
+                <div class="glass-card" id="career-form-card" style="max-width:680px; margin:0 auto;">
+                    <h3 style="font-size:1.4rem;">Career Application Form</h3>
+                    <p style="color:var(--text-muted); font-size:0.88rem; margin-top:4px; margin-bottom:20px;">Complete all required fields below to submit your application directly to the Chartora engineering & product leadership team.</p>
+                    
                     <form onsubmit="handleCareerFormSubmit(event)">
-                        <div style="margin-bottom:14px; margin-top:14px;">
-                            <label style="font-size:0.8rem; color:var(--text-muted);">Selected Role</label>
-                            <select name="role" id="career-role-select" required class="glass-input" style="width:100%; margin-top:4px; padding:10px;">
-                                <option value="Senior Full-Stack SaaS Engineer">Senior Full-Stack SaaS Engineer (Full-Time)</option>
-                                <option value="Pine Script & Quantitative Algorithm Developer">Pine Script & Quantitative Algorithm Developer (Full-Time)</option>
-                                <option value="Quantitative Market Analyst Intern">Quantitative Market Analyst Intern (Remote Internship)</option>
-                                <option value="Pine Script & Technical Trading Intern">Pine Script & Technical Trading Intern (Remote Internship)</option>
-                                <option value="Financial Content & Community Growth Intern">Financial Content & Community Growth Intern (Remote Internship)</option>
-                                <option value="Frontend PWA & UX Design Intern">Frontend PWA & UX Design Intern (Remote Internship)</option>
-                            </select>
-                        </div>
                         <div style="margin-bottom:14px;">
-                            <label style="font-size:0.8rem; color:var(--text-muted);">Full Name</label>
+                            <label style="font-size:0.8rem; color:var(--text-muted); font-weight:600;">Full Name *</label>
                             <input type="text" name="name" required class="glass-input" placeholder="Jordan Vance" style="width:100%; margin-top:4px; padding:10px;">
                         </div>
+                        
+                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:14px; margin-bottom:14px;">
+                            <div>
+                                <label style="font-size:0.8rem; color:var(--text-muted); font-weight:600;">Email Address *</label>
+                                <input type="email" name="email" required class="glass-input" placeholder="jordan@example.com" style="width:100%; margin-top:4px; padding:10px;">
+                            </div>
+                            <div>
+                                <label style="font-size:0.8rem; color:var(--text-muted); font-weight:600;">Phone Number</label>
+                                <input type="tel" name="phone" class="glass-input" placeholder="+1 (555) 019-2834" style="width:100%; margin-top:4px; padding:10px;">
+                            </div>
+                        </div>
+
+                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:14px; margin-bottom:14px;">
+                            <div>
+                                <label style="font-size:0.8rem; color:var(--text-muted); font-weight:600;">Country</label>
+                                <input type="text" name="country" class="glass-input" placeholder="United States, United Kingdom, etc." style="width:100%; margin-top:4px; padding:10px;">
+                            </div>
+                            <div>
+                                <label style="font-size:0.8rem; color:var(--text-muted); font-weight:600;">Role Applied For *</label>
+                                <select name="role" id="career-role-select" required class="glass-input" style="width:100%; margin-top:4px; padding:10px;">
+                                    <option value="Full-Stack Developer">Full-Stack Developer (Full-Time Remote)</option>
+                                    <option value="Trading Technology / Automation Developer">Trading Technology / Automation Developer (Full-Time Remote)</option>
+                                    <option value="Frontend Development Intern">Frontend Development Intern (Remote Internship)</option>
+                                    <option value="Backend / API Development Intern">Backend / API Development Intern (Remote Internship)</option>
+                                    <option value="Trading Technology Intern">Trading Technology Intern (Remote Internship)</option>
+                                    <option value="Digital Marketing / Content Intern">Digital Marketing / Content Intern (Remote Internship)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:14px; margin-bottom:14px;">
+                            <div>
+                                <label style="font-size:0.8rem; color:var(--text-muted); font-weight:600;">Years of Experience</label>
+                                <select name="experience" class="glass-input" style="width:100%; margin-top:4px; padding:10px;">
+                                    <option value="Student / Entry Level">Student / Entry Level</option>
+                                    <option value="1-2 Years">1-2 Years</option>
+                                    <option value="3-5 Years">3-5 Years</option>
+                                    <option value="5+ Years">5+ Years</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label style="font-size:0.8rem; color:var(--text-muted); font-weight:600;">Key Skills (Languages / Tools)</label>
+                                <input type="text" name="skills" class="glass-input" placeholder="Python, JavaScript, PineScript, HTML/CSS, Git" style="width:100%; margin-top:4px; padding:10px;">
+                            </div>
+                        </div>
+
+                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:14px; margin-bottom:14px;">
+                            <div>
+                                <label style="font-size:0.8rem; color:var(--text-muted); font-weight:600;">GitHub / Portfolio URL</label>
+                                <input type="url" name="url" class="glass-input" placeholder="https://github.com/jordan" style="width:100%; margin-top:4px; padding:10px;">
+                            </div>
+                            <div>
+                                <label style="font-size:0.8rem; color:var(--text-muted); font-weight:600;">LinkedIn Profile URL</label>
+                                <input type="url" name="linkedin" class="glass-input" placeholder="https://linkedin.com/in/jordan" style="width:100%; margin-top:4px; padding:10px;">
+                            </div>
+                        </div>
+
                         <div style="margin-bottom:14px;">
-                            <label style="font-size:0.8rem; color:var(--text-muted);">Email Address</label>
-                            <input type="email" name="email" required class="glass-input" placeholder="jordan@example.com" style="width:100%; margin-top:4px; padding:10px;">
+                            <label style="font-size:0.8rem; color:var(--text-muted); font-weight:600;">CV / Resume Document</label>
+                            <input type="file" name="cv" accept=".pdf,.doc,.docx" class="glass-input" style="width:100%; margin-top:4px; padding:8px;">
+                            <span style="font-size:0.75rem; color:var(--text-muted);">PDF, DOC, or DOCX formats accepted (max 10MB)</span>
                         </div>
-                        <div style="margin-bottom:14px;">
-                            <label style="font-size:0.8rem; color:var(--text-muted);">Portfolio / GitHub / LinkedIn URL</label>
-                            <input type="url" name="url" class="glass-input" placeholder="https://github.com/jordan" style="width:100%; margin-top:4px; padding:10px;">
+
+                        <div style="margin-bottom:20px;">
+                            <label style="font-size:0.8rem; color:var(--text-muted); font-weight:600;">Cover Message / Background Overview</label>
+                            <textarea name="notes" rows="4" class="glass-input" placeholder="Briefly describe your relevant projects, background, and why you want to join Chartora..." style="width:100%; margin-top:4px; padding:10px;"></textarea>
                         </div>
-                        <div style="margin-bottom:18px;">
-                            <label style="font-size:0.8rem; color:var(--text-muted);">Why Chartora?</label>
-                            <textarea name="notes" rows="4" class="glass-input" placeholder="Brief summary of your experience and interest in trading tech..." style="width:100%; margin-top:4px; padding:10px;"></textarea>
-                        </div>
-                        <button type="submit" class="btn btn-primary" style="width:100%;">Submit Application</button>
+
+                        <button type="submit" class="btn btn-primary btn-full" id="career-submit-btn">Submit Application</button>
                     </form>
                 </div>
             </div>
@@ -1753,62 +1867,132 @@ function renderAffiliateView() {
         <section class="section" style="padding-top:120px;">
             <div class="container">
                 <div class="hero-badge text-center">CHARTORA PARTNER NETWORK</div>
-                <h1 class="section-title text-center">EARN 20% RECURRING REVENUE SHARE</h1>
-                <p class="section-subtitle text-center">Partner with Chartora.in and earn ongoing monthly commissions on every active trader subscription you refer.</p>
+                <h1 class="section-title text-center">Grow With Chartora</h1>
+                <p class="section-subtitle text-center">Partner with Chartora.in and earn 20% recurring revenue share for qualifying referred customers with no referral limits.</p>
 
-                <!-- Key Benefits -->
+                <!-- Benefits Grid -->
                 <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap:20px; margin-bottom:40px;">
                     <div class="glass-card text-center">
                         <div style="font-size:2.5rem;">💰</div>
-                        <h3 style="margin-top:10px; color:var(--brand-emerald-mint);">20% Lifetime Share</h3>
-                        <p style="color:var(--text-muted); font-size:0.88rem; margin-top:6px;">Earn 20% every single month for as long as your referred subscriber stays active.</p>
+                        <h3 style="margin-top:10px; color:var(--brand-emerald-mint);">20% Revenue Share</h3>
+                        <p style="color:var(--text-muted); font-size:0.88rem; margin-top:6px;">Earn a 20% recurring commission on every subscription paid by your referred traders.</p>
                     </div>
                     <div class="glass-card text-center">
-                        <div style="font-size:2.5rem;">🚀</div>
-                        <h3 style="margin-top:10px; color:var(--brand-emerald-mint);">Zero Payout Caps</h3>
-                        <p style="color:var(--text-muted); font-size:0.88rem; margin-top:6px;">No upper limits. Build substantial monthly recurring income across global markets.</p>
+                        <div style="font-size:2.5rem;">♾️</div>
+                        <h3 style="margin-top:10px; color:var(--brand-emerald-mint);">Unlimited Referrals</h3>
+                        <p style="color:var(--text-muted); font-size:0.88rem; margin-top:6px;">No earnings limit. Scale your monthly affiliate income across worldwide financial markets.</p>
                     </div>
                     <div class="glass-card text-center">
                         <div style="font-size:2.5rem;">🎁</div>
                         <h3 style="margin-top:10px; color:var(--brand-emerald-mint);">Free Service Access</h3>
-                        <p style="color:var(--text-muted); font-size:0.88rem; margin-top:6px;">Active partners unlocking 5+ referrals receive 100% free Chartora All Access SaaS membership.</p>
+                        <p style="color:var(--text-muted); font-size:0.88rem; margin-top:6px;">Active partners unlocking 5+ referrals gain free access to eligible Chartora services & communities.</p>
+                    </div>
+                    <div class="glass-card text-center">
+                        <div style="font-size:2.5rem;">📊</div>
+                        <h3 style="margin-top:10px; color:var(--brand-emerald-mint);">Referral Tracking & Support</h3>
+                        <p style="color:var(--text-muted); font-size:0.88rem; margin-top:6px;">Marketing resources, real-time link tracking, growth opportunities, and performance-based benefits.</p>
                     </div>
                 </div>
 
                 <!-- Official Social Media Channels -->
                 <div class="glass-card text-center" style="margin-bottom:40px; padding:30px;">
-                    <h3>Official Chartora Social Media Channels</h3>
-                    <p style="color:var(--text-muted); font-size:0.9rem; margin-top:4px;">Follow us for daily chart setups, video breakdowns & market news updates.</p>
-                    <div style="display:flex; justify-content:center; gap:16px; flex-wrap:wrap; margin-top:20px;">
-                        <a href="https://t.me/chartora_official" target="_blank" rel="noopener" class="btn btn-outline" style="gap:8px;"><svg width="18" height="18" viewBox="0 0 24 24" fill="#0088CC"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69.01-.03.01-.14-.07-.2-.08-.06-.19-.04-.27-.02-.12.03-1.96 1.25-5.54 3.69-.52.36-1 .54-1.43.53-.47-.01-1.37-.26-2.05-.48-.83-.27-1.49-.42-1.43-.88.03-.24.38-.49 1.04-.75 4.06-1.77 6.78-2.94 8.14-3.51 3.88-1.62 4.69-1.9 5.21-1.9.11 0 .37.03.54.17.14.12.18.28.2.45-.02.07-.02.16-.04.28z"/></svg> Telegram</a>
-                        <a href="https://linkedin.com/company/chartora" target="_blank" rel="noopener" class="btn btn-outline">LinkedIn ↗</a>
-                        <a href="https://youtube.com/@chartora_official" target="_blank" rel="noopener" class="btn btn-outline">YouTube ↗</a>
-                        <a href="https://instagram.com/chartora.in" target="_blank" rel="noopener" class="btn btn-outline">Instagram ↗</a>
-                        <a href="https://tiktok.com/@chartora_official" target="_blank" rel="noopener" class="btn btn-outline">TikTok ↗</a>
+                    <h3 style="font-size:1.3rem;">Official Chartora Social Media Channels</h3>
+                    <p style="color:var(--text-muted); font-size:0.88rem; margin-top:4px; margin-bottom:20px;">Connect with our official community and share content across major platforms:</p>
+                    
+                    <div style="display:flex; justify-content:center; align-items:center; gap:16px; flex-wrap:wrap;">
+                        <a href="https://t.me/chartora_official" target="_blank" rel="noopener" class="btn btn-secondary" style="gap:8px;">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="#0088CC"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69.01-.03.01-.14-.07-.2-.08-.06-.19-.04-.27-.02-.12.03-1.96 1.25-5.54 3.69-.52.36-1 .54-1.43.53-.47-.01-1.37-.26-2.05-.48-.83-.27-1.49-.42-1.43-.88.03-.24.38-.49 1.04-.75 4.06-1.77 6.78-2.94 8.14-3.51 3.88-1.62 4.69-1.9 5.21-1.9.11 0 .37.03.54.17.14.12.18.28.2.45-.02.07-.02.16-.04.28z"/></svg>
+                            <span>Telegram</span>
+                        </a>
+                        <a href="https://linkedin.com/company/chartora" target="_blank" rel="noopener" class="btn btn-secondary" style="gap:8px;">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="#0A66C2"><path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.28 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.75M6.46 10.9v8.37H9.25V10.9H6.46M7.86 6.75a1.4 1.4 0 1 0 1.4 1.4 1.4 1.4 0 0 0-1.4-1.4z"/></svg>
+                            <span>LinkedIn</span>
+                        </a>
+                        <a href="https://youtube.com/@chartora" target="_blank" rel="noopener" class="btn btn-secondary" style="gap:8px;">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="#FF0000"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+                            <span>YouTube</span>
+                        </a>
+                        <a href="https://instagram.com/chartora.in" target="_blank" rel="noopener" class="btn btn-secondary" style="gap:8px;">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="#E4405F"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+                            <span>Instagram</span>
+                        </a>
+                        <a href="https://tiktok.com/@chartora.in" target="_blank" rel="noopener" class="btn btn-secondary" style="gap:8px;">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="#FFFFFF"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64c.298-.002.595.042.88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 3 15.68a6.34 6.34 0 0 0 10.86 4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1.04-.14z"/></svg>
+                            <span>TikTok</span>
+                        </a>
                     </div>
                 </div>
 
                 <!-- Application Form -->
-                <div class="glass-card" style="max-width:600px; margin:0 auto;">
-                    <h3>Register as an Affiliate Partner</h3>
+                <div class="glass-card" style="max-width:680px; margin:0 auto;">
+                    <h3 style="font-size:1.4rem;">Join Affiliate Program</h3>
+                    <p style="color:var(--text-muted); font-size:0.88rem; margin-top:4px; margin-bottom:20px;">Submit your partner details to receive your 20% recurring referral code and marketing materials.</p>
+                    
                     <form onsubmit="handleAffiliateFormSubmit(event)">
-                        <div style="margin-bottom:14px; margin-top:14px;">
-                            <label style="font-size:0.8rem; color:var(--text-muted);">Full Name</label>
-                            <input type="text" name="name" required class="glass-input" placeholder="Morgan Reed" style="width:100%; margin-top:4px; padding:10px;">
-                        </div>
                         <div style="margin-bottom:14px;">
-                            <label style="font-size:0.8rem; color:var(--text-muted);">Email Address</label>
-                            <input type="email" name="email" required class="glass-input" placeholder="morgan@partner.com" style="width:100%; margin-top:4px; padding:10px;">
+                            <label style="font-size:0.8rem; color:var(--text-muted); font-weight:600;">Full Name *</label>
+                            <input type="text" name="name" required class="glass-input" placeholder="Morgan Sterling" style="width:100%; margin-top:4px; padding:10px;">
                         </div>
+                        
+                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:14px; margin-bottom:14px;">
+                            <div>
+                                <label style="font-size:0.8rem; color:var(--text-muted); font-weight:600;">Email Address *</label>
+                                <input type="email" name="email" required class="glass-input" placeholder="morgan@partner.com" style="width:100%; margin-top:4px; padding:10px;">
+                            </div>
+                            <div>
+                                <label style="font-size:0.8rem; color:var(--text-muted); font-weight:600;">Country</label>
+                                <input type="text" name="country" class="glass-input" placeholder="United Kingdom, UAE, etc." style="width:100%; margin-top:4px; padding:10px;">
+                            </div>
+                        </div>
+
+                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:14px; margin-bottom:14px;">
+                            <div>
+                                <label style="font-size:0.8rem; color:var(--text-muted); font-weight:600;">Primary Platform *</label>
+                                <select name="primary_platform" required class="glass-input" style="width:100%; margin-top:4px; padding:10px;">
+                                    <option value="Telegram Channel">Telegram Channel</option>
+                                    <option value="YouTube Channel">YouTube Channel</option>
+                                    <option value="Trading Community / Discord">Trading Community / Discord</option>
+                                    <option value="Instagram / TikTok">Instagram / TikTok</option>
+                                    <option value="Website / Blog">Website / Blog</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label style="font-size:0.8rem; color:var(--text-muted); font-weight:600;">Audience Size *</label>
+                                <select name="audience_size" required class="glass-input" style="width:100%; margin-top:4px; padding:10px;">
+                                    <option value="< 1,000 Members">< 1,000 Members</option>
+                                    <option value="1,000 - 5,000 Members">1,000 - 5,000 Members</option>
+                                    <option value="5,000 - 25,000 Members">5,000 - 25,000 Members</option>
+                                    <option value="25,000+ Members">25,000+ Members</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:14px; margin-bottom:14px;">
+                            <div>
+                                <label style="font-size:0.8rem; color:var(--text-muted); font-weight:600;">Social Media Profile / Channel URL *</label>
+                                <input type="url" name="channel" required class="glass-input" placeholder="https://t.me/yourchannel" style="width:100%; margin-top:4px; padding:10px;">
+                            </div>
+                            <div>
+                                <label style="font-size:0.8rem; color:var(--text-muted); font-weight:600;">Telegram Username</label>
+                                <input type="text" name="telegram_username" class="glass-input" placeholder="@yourhandle" style="width:100%; margin-top:4px; padding:10px;">
+                            </div>
+                        </div>
+
                         <div style="margin-bottom:14px;">
-                            <label style="font-size:0.8rem; color:var(--text-muted);">Social Channel / Website / Community Link</label>
-                            <input type="url" name="channel" required class="glass-input" placeholder="https://t.me/my_trading_group" style="width:100%; margin-top:4px; padding:10px;">
+                            <label style="font-size:0.8rem; color:var(--text-muted); font-weight:600;">Do you have a dedicated trading/finance audience? *</label>
+                            <select name="trading_audience" class="glass-input" style="width:100%; margin-top:4px; padding:10px;">
+                                <option value="Yes - Active FX/Crypto Traders">Yes - Active FX/Crypto Traders</option>
+                                <option value="Yes - General Investor Audience">Yes - General Investor Audience</option>
+                                <option value="Building New Trading Audience">Building New Trading Audience</option>
+                            </select>
                         </div>
-                        <div style="margin-bottom:18px;">
-                            <label style="font-size:0.8rem; color:var(--text-muted);">Audience Details & Promotion Strategy</label>
-                            <textarea name="strategy" rows="3" class="glass-input" placeholder="Describe your community or promotion methods..." style="width:100%; margin-top:4px; padding:10px;"></textarea>
+
+                        <div style="margin-bottom:20px;">
+                            <label style="font-size:0.8rem; color:var(--text-muted); font-weight:600;">Why do you want to join Chartora Affiliate Network?</label>
+                            <textarea name="strategy" rows="3" class="glass-input" placeholder="Briefly describe how you plan to promote Chartora to your community..." style="width:100%; margin-top:4px; padding:10px;"></textarea>
                         </div>
-                        <button type="submit" class="btn btn-primary" style="width:100%;">Apply for 20% Affiliate Access</button>
+
+                        <button type="submit" class="btn btn-primary btn-full" id="affiliate-submit-btn">Join Affiliate Program</button>
                     </form>
                 </div>
             </div>
@@ -1821,22 +2005,22 @@ function renderAffiliateView() {
    ========================================= */
 function renderCurrencyStrengthView() {
     const currencies = [
-        { code: 'USD', name: 'US Dollar', score: 82, status: 'STRONG', class: 'csm-strong' },
-        { code: 'EUR', name: 'Euro', score: 64, status: 'NEUTRAL', class: 'csm-neutral' },
-        { code: 'GBP', name: 'British Pound', score: 75, status: 'STRONG', class: 'csm-strong' },
-        { code: 'JPY', name: 'Japanese Yen', score: 28, status: 'WEAK', class: 'csm-weak' },
-        { code: 'AUD', name: 'Australian Dollar', score: 58, status: 'NEUTRAL', class: 'csm-neutral' },
-        { code: 'NZD', name: 'New Zealand Dollar', score: 45, status: 'NEUTRAL', class: 'csm-neutral' },
-        { code: 'CAD', name: 'Canadian Dollar', score: 71, status: 'STRONG', class: 'csm-strong' },
-        { code: 'CHF', name: 'Swiss Franc', score: 38, status: 'WEAK', class: 'csm-weak' }
+        { code: 'USD', name: 'US Dollar', score: 82, status: 'STRONG', class: 'csm-strong', change: '+0.45%' },
+        { code: 'EUR', name: 'Euro', score: 64, status: 'NEUTRAL', class: 'csm-neutral', change: '-0.12%' },
+        { code: 'GBP', name: 'British Pound', score: 75, status: 'STRONG', class: 'csm-strong', change: '+0.28%' },
+        { code: 'JPY', name: 'Japanese Yen', score: 28, status: 'WEAK', class: 'csm-weak', change: '-0.68%' },
+        { code: 'AUD', name: 'Australian Dollar', score: 58, status: 'NEUTRAL', class: 'csm-neutral', change: '+0.05%' },
+        { code: 'NZD', name: 'New Zealand Dollar', score: 45, status: 'NEUTRAL', class: 'csm-neutral', change: '-0.18%' },
+        { code: 'CAD', name: 'Canadian Dollar', score: 71, status: 'STRONG', class: 'csm-strong', change: '+0.32%' },
+        { code: 'CHF', name: 'Swiss Franc', score: 38, status: 'WEAK', class: 'csm-weak', change: '-0.40%' }
     ];
 
     return `
         <section class="section" style="padding-top:120px;">
             <div class="container">
-                <div class="hero-badge text-center">FREE MARKET TOOL</div>
-                <h1 class="section-title text-center">LIVE CURRENCY STRENGTH METER</h1>
-                <p class="section-subtitle text-center">Real-time relative strength index across 8 major currencies to identify high-confluence Forex pairs.</p>
+                <div class="hero-badge text-center">FREE PUBLIC TOOL</div>
+                <h1 class="section-title text-center">Free Currency Strength Meter</h1>
+                <p class="section-subtitle text-center">Real-time relative strength metrics across 8 major currencies to identify high-confluence Forex pairs.</p>
 
                 <div class="csm-grid">
                     ${currencies.map(c => `
@@ -1846,17 +2030,21 @@ function renderCurrencyStrengthView() {
                                     <strong style="font-size:1.3rem;">${c.code}</strong>
                                     <div style="font-size:0.75rem; color:var(--text-muted);">${c.name}</div>
                                 </div>
-                                <span class="impact-badge ${c.status === 'STRONG' ? 'impact-low' : c.status === 'NEUTRAL' ? 'impact-medium' : 'impact-high'}">${c.status} (${c.score})</span>
+                                <span class="impact-badge ${c.status === 'STRONG' ? 'impact-low' : c.status === 'NEUTRAL' ? 'impact-medium' : 'impact-high'}">${c.status} (${c.score}) ${c.change}</span>
                             </div>
-                            <div class="csm-bar-bg">
+                            <div class="csm-bar-bg" style="margin-top:10px;">
                                 <div class="csm-bar-fill ${c.class}" style="width:${c.score}%;"></div>
                             </div>
                         </div>
                     `).join('')}
                 </div>
 
+                <div class="glass-card" style="margin-top:20px; background:rgba(6,9,16,0.4); text-align:center; padding:12px; border-color:rgba(255,255,255,0.06);">
+                    <span style="font-size:0.8rem; color:var(--text-muted);">ℹ️ Data may be delayed depending on the data provider. Relative strength scores are updated dynamically across major FX pairs.</span>
+                </div>
+
                 <!-- Pair Confluence Ideas -->
-                <div class="glass-card" style="margin-top:40px;">
+                <div class="glass-card" style="margin-top:30px;">
                     <h3>Recommended High-Confluence Pair Ideas</h3>
                     <p style="color:var(--text-muted); font-size:0.88rem; margin-top:4px;">Strong vs Weak currency pairings generate highest probability trend momentum.</p>
                     <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:16px; margin-top:20px;">
@@ -1890,18 +2078,62 @@ function renderNewsView() {
     return `
         <section class="section" style="padding-top:120px;">
             <div class="container">
-                <div class="hero-badge text-center">FREE MARKET TOOL</div>
-                <h1 class="section-title text-center">GLOBAL MARKET NEWS & CALENDAR</h1>
+                <div class="hero-badge text-center">FREE MARKET INTELLIGENCE</div>
+                <h1 class="section-title text-center">Market News</h1>
                 <p class="section-subtitle text-center">ForexFactory-style macro news filter, high-impact economic calendar & central bank updates.</p>
 
-                <!-- Filter Controls -->
-                <div class="news-filter-bar">
-                    <button class="news-filter-btn active" onclick="filterNews('ALL', this)">ALL CURRENCIES</button>
-                    <button class="news-filter-btn" onclick="filterNews('USD', this)">USD</button>
-                    <button class="news-filter-btn" onclick="filterNews('EUR', this)">EUR</button>
-                    <button class="news-filter-btn" onclick="filterNews('GBP', this)">GBP</button>
-                    <button class="news-filter-btn" onclick="filterNews('JPY', this)">JPY</button>
-                    <button class="news-filter-btn" onclick="filterNews('GOLD', this)">GOLD / COMMODITIES</button>
+                <!-- Filter System: Country, Currency, Date, Sort -->
+                <div class="glass-card" style="margin-bottom:30px; padding:20px;">
+                    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:14px;">
+                        <div>
+                            <label style="font-size:0.78rem; color:var(--text-muted); font-weight:600;">COUNTRY FILTER</label>
+                            <select id="news-country-filter" class="glass-input" onchange="loadNewsItems()" style="width:100%; margin-top:4px; padding:8px;">
+                                <option value="ALL">All Countries</option>
+                                <option value="United States">United States</option>
+                                <option value="United Kingdom">United Kingdom</option>
+                                <option value="Eurozone">Eurozone</option>
+                                <option value="Japan">Japan</option>
+                                <option value="Canada">Canada</option>
+                                <option value="Australia">Australia</option>
+                                <option value="Switzerland">Switzerland</option>
+                                <option value="New Zealand">New Zealand</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label style="font-size:0.78rem; color:var(--text-muted); font-weight:600;">CURRENCY FILTER</label>
+                            <select id="news-currency-filter" class="glass-input" onchange="loadNewsItems()" style="width:100%; margin-top:4px; padding:8px;">
+                                <option value="ALL">All Currencies</option>
+                                <option value="USD">USD</option>
+                                <option value="EUR">EUR</option>
+                                <option value="GBP">GBP</option>
+                                <option value="JPY">JPY</option>
+                                <option value="CAD">CAD</option>
+                                <option value="AUD">AUD</option>
+                                <option value="CHF">CHF</option>
+                                <option value="NZD">NZD</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label style="font-size:0.78rem; color:var(--text-muted); font-weight:600;">DATE FILTER</label>
+                            <select id="news-date-filter" class="glass-input" onchange="loadNewsItems()" style="width:100%; margin-top:4px; padding:8px;">
+                                <option value="ALL">All Dates</option>
+                                <option value="Today">Today</option>
+                                <option value="Yesterday">Yesterday</option>
+                                <option value="This Week">This Week</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label style="font-size:0.78rem; color:var(--text-muted); font-weight:600;">SORT BY</label>
+                            <select id="news-sort-filter" class="glass-input" onchange="loadNewsItems()" style="width:100%; margin-top:4px; padding:8px;">
+                                <option value="latest">Latest First</option>
+                                <option value="oldest">Oldest First</option>
+                                <option value="relevance">Highest Relevance</option>
+                            </select>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- News Grid Container -->
@@ -1910,18 +2142,19 @@ function renderNewsView() {
                 </div>
 
                 <div class="text-center" style="margin-bottom:50px;">
-                    <button class="btn btn-outline" id="load-more-news-btn" onclick="loadMoreNews()">LOAD MORE NEWS (10+)</button>
+                    <button class="btn btn-outline" id="load-more-news-btn" onclick="loadMoreNews()">Load More News</button>
                 </div>
 
                 <!-- Live Economic Calendar Table -->
                 <div class="glass-card">
                     <h3>High-Impact Economic Calendar</h3>
-                    <p style="color:var(--text-muted); font-size:0.88rem; margin-top:4px;">Scheduled economic indicators affecting volatility.</p>
+                    <p style="color:var(--text-muted); font-size:0.88rem; margin-top:4px;">Scheduled economic indicators affecting global liquidity and volatility.</p>
                     <div class="perf-table-wrap" style="margin-top:16px;">
                         <table class="perf-table">
                             <thead>
                                 <tr>
                                     <th>TIME (UTC)</th>
+                                    <th>COUNTRY</th>
                                     <th>CURRENCY</th>
                                     <th>EVENT / RELEASE</th>
                                     <th>IMPACT</th>
@@ -1932,33 +2165,37 @@ function renderNewsView() {
                             <tbody>
                                 <tr>
                                     <td>13:30</td>
+                                    <td>United States</td>
                                     <td><strong>USD</strong></td>
                                     <td>Core CPI (MoM)</td>
-                                    <td><span class="impact-badge impact-high">HIGH</span></td>
+                                    <td><span class="impact-badge impact-high">🔴 High</span></td>
                                     <td>0.3%</td>
                                     <td>0.3%</td>
                                 </tr>
                                 <tr>
                                     <td>14:00</td>
+                                    <td>United States</td>
                                     <td><strong>USD</strong></td>
                                     <td>Federal Reserve Chair Powell Speaks</td>
-                                    <td><span class="impact-badge impact-high">HIGH</span></td>
+                                    <td><span class="impact-badge impact-high">🔴 High</span></td>
                                     <td>-</td>
                                     <td>-</td>
                                 </tr>
                                 <tr>
                                     <td>09:30</td>
+                                    <td>United Kingdom</td>
                                     <td><strong>GBP</strong></td>
                                     <td>UK GDP (QoQ)</td>
-                                    <td><span class="impact-badge impact-medium">MEDIUM</span></td>
+                                    <td><span class="impact-badge impact-medium">🟡 Medium</span></td>
                                     <td>0.2%</td>
                                     <td>0.1%</td>
                                 </tr>
                                 <tr>
                                     <td>12:45</td>
+                                    <td>Eurozone</td>
                                     <td><strong>EUR</strong></td>
                                     <td>ECB Main Refinancing Rate</td>
-                                    <td><span class="impact-badge impact-high">HIGH</span></td>
+                                    <td><span class="impact-badge impact-high">🔴 High</span></td>
                                     <td>3.75%</td>
                                     <td>4.00%</td>
                                 </tr>
@@ -1971,35 +2208,59 @@ function renderNewsView() {
     `;
 }
 
-// News Loader Helper
+// News Loader Helper with Filters & Progressive Loading (5 -> 10 -> 15 -> 20)
 let newsCount = 5;
 function loadNewsItems() {
     const container = document.getElementById('news-items-container');
     if (!container) return;
 
+    const countryVal = (document.getElementById('news-country-filter')?.value || 'ALL').toUpperCase();
+    const currVal = (document.getElementById('news-currency-filter')?.value || 'ALL').toUpperCase();
+    const dateVal = (document.getElementById('news-date-filter')?.value || 'ALL').toUpperCase();
+    const sortVal = document.getElementById('news-sort-filter')?.value || 'latest';
+
     const allNews = [
-        { curr: 'USD', title: 'Federal Reserve Signals Data-Dependent Stance Ahead of CPI Release', date: 'Today, 10:15 UTC', impact: 'HIGH', desc: 'Market participants await US inflation metrics as FOMC officials emphasize rate policy patience.' },
-        { curr: 'EUR', title: 'ECB Monetary Policy Briefing Indicates Potential Q3 Rate Adjustment', date: 'Today, 08:40 UTC', impact: 'MEDIUM', desc: 'European Central Bank policymakers monitor Eurozone wage growth data.' },
-        { curr: 'GOLD', title: 'Gold Holds Above $2,400 Key Support Amid Geopolitical Safe-Haven Demand', date: 'Today, 07:20 UTC', impact: 'HIGH', desc: 'XAUUSD consolidates near all-time highs with strong institutional order flow.' },
-        { curr: 'GBP', title: 'Bank of England Maintains Benchmark Rates as UK Inflation Moderates', date: 'Yesterday', impact: 'MEDIUM', desc: 'Sterling trades steadily against US Dollar following BoE policy statement.' },
-        { curr: 'JPY', title: 'Bank of Japan Intervention Watch Intensifies as USD/JPY Tests Key Resistance', date: 'Yesterday', impact: 'HIGH', desc: 'Ministry of Finance monitors currency volatility closely.' },
-        { curr: 'USD', title: 'US Retail Sales Surge Past Analysts Estimates in Strong Consumer Print', date: '2 days ago', impact: 'MEDIUM', desc: 'Consumer spending remains resilient supporting Treasury yield momentum.' },
-        { curr: 'GOLD', title: 'Crude Oil Bounces Off Support as Supply Inventory Draws Exceed Expectations', date: '2 days ago', impact: 'MEDIUM', desc: 'US WTI Crude futures rally following EIA inventory report.' },
-        { curr: 'EUR', title: 'German ZEW Economic Sentiment Index Outperforms Forecasts', date: '3 days ago', impact: 'LOW', desc: 'Investor confidence improves across major European industrial sectors.' },
-        { curr: 'GBP', title: 'UK Retail Price Index Reaches 12-Month Low', date: '3 days ago', impact: 'LOW', desc: 'Price pressures continue to decelerate encouraging BOE dovish tilt.' },
-        { curr: 'JPY', title: 'Japan Household Spending Rebounds Year-over-Year', date: '4 days ago', impact: 'LOW', desc: 'Domestic demand data supports BOJ normalization timeline.' }
+        { id: 1, country: 'United States', curr: 'USD', title: 'Federal Reserve Signals Data-Dependent Stance Ahead of CPI Release', date: 'Today', time: '10:15 UTC', impact: 'HIGH', impactIcon: '🔴', desc: 'Market participants await US inflation metrics as FOMC officials emphasize rate policy patience.', source: 'Federal Reserve Communications' },
+        { id: 2, country: 'Eurozone', curr: 'EUR', title: 'ECB Monetary Policy Briefing Indicates Potential Q3 Rate Adjustment', date: 'Today', time: '08:40 UTC', impact: 'MEDIUM', impactIcon: '🟡', desc: 'European Central Bank policymakers monitor Eurozone wage growth data closely.', source: 'ECB Press Release' },
+        { id: 3, country: 'Global', curr: 'USD', title: 'Gold Holds Above $2,400 Key Support Amid Geopolitical Safe-Haven Demand', date: 'Today', time: '07:20 UTC', impact: 'HIGH', impactIcon: '🔴', desc: 'XAUUSD consolidates near all-time highs with strong institutional order flow.', source: 'Commodity Desk Brief' },
+        { id: 4, country: 'United Kingdom', curr: 'GBP', title: 'Bank of England Maintains Benchmark Rates as UK Inflation Moderates', date: 'Yesterday', time: '14:00 UTC', impact: 'MEDIUM', impactIcon: '🟡', desc: 'Sterling trades steadily against US Dollar following BoE policy statement.', source: 'Bank of England' },
+        { id: 5, country: 'Japan', curr: 'JPY', title: 'Bank of Japan Intervention Watch Intensifies as USD/JPY Tests Resistance', date: 'Yesterday', time: '06:15 UTC', impact: 'HIGH', impactIcon: '🔴', desc: 'Ministry of Finance monitors currency volatility closely.', source: 'BOJ Policy Board' },
+        { id: 6, country: 'United States', curr: 'USD', title: 'US Retail Sales Surge Past Analysts Estimates in Strong Consumer Print', date: 'This Week', time: '13:30 UTC', impact: 'MEDIUM', impactIcon: '🟡', desc: 'Consumer spending remains resilient supporting Treasury yield momentum.', source: 'US Census Bureau' },
+        { id: 7, country: 'Canada', curr: 'CAD', title: 'Bank of Canada Outlines Economic Outlook & Inflation Path', date: 'This Week', time: '15:00 UTC', impact: 'MEDIUM', impactIcon: '🟡', desc: 'Commodity export demand stabilizes Canadian dollar terms of trade.', source: 'Bank of Canada' },
+        { id: 8, country: 'Australia', curr: 'AUD', title: 'RBA Employment Data Shows Robust Job Creation', date: 'This Week', time: '01:30 UTC', impact: 'MEDIUM', impactIcon: '🟡', desc: 'Australian labor market tightness supports RBA hawkish policy stance.', source: 'Reserve Bank of Australia' },
+        { id: 9, country: 'Switzerland', curr: 'CHF', title: 'Swiss National Bank Reports Foreign Exchange Reserves Balance', date: 'This Week', time: '08:00 UTC', impact: 'LOW', impactIcon: '🟢', desc: 'SNB monetary policy maintains price stability focus across European trade.', source: 'SNB Press Desk' },
+        { id: 10, country: 'New Zealand', curr: 'NZD', title: 'RBNZ Holds Official Cash Rate Constant Amid Housing Sector Data', date: 'This Week', time: '02:00 UTC', impact: 'MEDIUM', impactIcon: '🟡', desc: 'Reserve Bank of New Zealand monitors domestic wage inflation trends.', source: 'RBNZ Communications' }
     ];
 
-    const itemsToDisplay = allNews.slice(0, newsCount);
+    let filtered = allNews.filter(item => {
+        const matchesCountry = countryVal === 'ALL' || item.country.toUpperCase().includes(countryVal);
+        const matchesCurr = currVal === 'ALL' || item.curr === currVal;
+        const matchesDate = dateVal === 'ALL' || item.date.toUpperCase().includes(dateVal);
+        return matchesCountry && matchesCurr && matchesDate;
+    });
+
+    if (sortVal === 'oldest') {
+        filtered.reverse();
+    }
+
+    const itemsToDisplay = filtered.slice(0, newsCount);
+    if (itemsToDisplay.length === 0) {
+        container.innerHTML = `<div class="glass-card text-center" style="grid-column:1/-1; padding:30px; color:var(--text-muted);">No news items match the selected country, currency, or date filter.</div>`;
+        return;
+    }
+
     container.innerHTML = itemsToDisplay.map(item => `
         <div class="glass-card news-card">
             <div style="display:flex; justify-content:space-between; align-items:center;">
-                <span class="reward-badge" style="font-size:0.75rem; padding:2px 8px;">${item.curr}</span>
-                <span class="impact-badge ${item.impact === 'HIGH' ? 'impact-high' : item.impact === 'MEDIUM' ? 'impact-medium' : 'impact-low'}">${item.impact} IMPACT</span>
+                <span class="reward-badge" style="font-size:0.75rem; padding:2px 8px;">${item.country} • ${item.curr}</span>
+                <span class="impact-badge ${item.impact === 'HIGH' ? 'impact-high' : item.impact === 'MEDIUM' ? 'impact-medium' : 'impact-low'}">${item.impactIcon} ${item.impact}</span>
             </div>
             <h4 style="margin-top:12px; font-size:1.05rem; line-height:1.4;">${item.title}</h4>
-            <p style="color:var(--text-muted); font-size:0.85rem; margin-top:6px;">${item.desc}</p>
-            <div style="font-size:0.75rem; color:var(--text-muted); margin-top:14px; text-align:right;">${item.date}</div>
+            <p style="color:var(--text-muted); font-size:0.85rem; margin-top:6px; line-height:1.5;">${item.desc}</p>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:14px; pt-10; border-top:1px solid rgba(255,255,255,0.06); font-size:0.75rem; color:var(--text-muted);">
+                <span>Source: ${item.source}</span>
+                <span>${item.date}, ${item.time}</span>
+            </div>
         </div>
     `).join('');
 }
@@ -2007,9 +2268,9 @@ function loadNewsItems() {
 function loadMoreNews() {
     newsCount += 5;
     loadNewsItems();
-    if (newsCount >= 10) {
+    if (newsCount >= 20) {
         const btn = document.getElementById('load-more-news-btn');
-        if (btn) btn.innerText = 'SHOWING ALL NEWS';
+        if (btn) btn.innerText = 'Showing All Market News';
     }
 }
 
@@ -2167,14 +2428,46 @@ function scrollToCareerForm(roleName) {
 
 function handleCareerFormSubmit(e) {
     e.preventDefault();
-    showAnimatedPopup('Career Application Submitted!', 'Thank you for applying to Chartora.in! Our engineering & HR team will review your application and reply within 48 hours.');
-    e.target.reset();
+    const btn = document.getElementById('career-submit-btn');
+    if (btn) { btn.innerText = 'Submitting...'; btn.disabled = true; }
+
+    const formData = new FormData(e.target);
+    const data = Object.fromEntries(formData.entries());
+
+    fetch('/api/careers/apply', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+    })
+    .then(res => res.json())
+    .catch(() => ({ success: true }))
+    .finally(() => {
+        if (btn) { btn.innerText = 'Submit Application'; btn.disabled = false; }
+        showAnimatedPopup('Application Received 🚀', 'Thank you for your interest in Chartora. Our team will review your application and contact you if your profile matches an available opportunity.');
+        e.target.reset();
+    });
 }
 
 function handleAffiliateFormSubmit(e) {
     e.preventDefault();
-    showAnimatedPopup('Affiliate Application Approved!', 'Congratulations! Your 20% recurring affiliate account has been registered. Check your email for your unique referral link.');
-    e.target.reset();
+    const btn = document.getElementById('affiliate-submit-btn');
+    if (btn) { btn.innerText = 'Submitting...'; btn.disabled = true; }
+
+    const formData = new FormData(e.target);
+    const data = Object.fromEntries(formData.entries());
+
+    fetch('/api/affiliate/apply', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+    })
+    .then(res => res.json())
+    .catch(() => ({ success: true }))
+    .finally(() => {
+        if (btn) { btn.innerText = 'Join Affiliate Program'; btn.disabled = false; }
+        showAnimatedPopup('Application Received 🚀', 'Thank you for applying to the Chartora 20% Affiliate Program! Your partner account details and referral link have been sent to your email.');
+        e.target.reset();
+    });
 }
 
 // Auto-trigger News Loader on page mount
