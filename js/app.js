@@ -38,7 +38,7 @@ document.addEventListener('DOMContentLoaded', () => {
 // 2. LIGHTWEIGHT 3D TRADING WORKFLOW SCENE (WITH MOBILE FALLBACK)
 function init3DTradingWorkflowScene() {
     const canvas = document.getElementById('bg-3d-canvas');
-    if (!canvas || typeof Three === 'undefined' && typeof THREE === 'undefined') return;
+    if (!canvas || (typeof Three === 'undefined' && typeof THREE === 'undefined')) return;
     
     const threeEngine = window.THREE || window.Three;
     if (!threeEngine) return;
@@ -46,90 +46,119 @@ function init3DTradingWorkflowScene() {
     // Check prefers-reduced-motion
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
-    const scene = new threeEngine.Scene();
-    const camera = new threeEngine.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-    const renderer = new threeEngine.WebGLRenderer({ canvas: canvas, alpha: true, antialias: true });
+    try {
+        const scene = new threeEngine.Scene();
+        const camera = new threeEngine.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new threeEngine.WebGLRenderer({ canvas: canvas, alpha: true, antialias: true });
 
-    const isMobile = window.innerWidth <= 768;
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, isMobile ? 1 : 2));
-
-    // Digital Data Stream Particles
-    const particleCount = isMobile ? 120 : 350;
-    const geometry = new threeEngine.BufferGeometry();
-    const positions = new Float32Array(particleCount * 3);
-
-    for (let i = 0; i < particleCount * 3; i++) {
-        positions[i] = (Math.random() - 0.5) * 20;
-    }
-
-    geometry.setAttribute('position', new threeEngine.BufferAttribute(positions, 3));
-    const material = new threeEngine.PointsMaterial({
-        size: isMobile ? 0.04 : 0.035,
-        color: 0x10B981,
-        transparent: true,
-        opacity: 0.45
-    });
-
-    const particles = new threeEngine.Points(geometry, material);
-    scene.add(particles);
-
-    // 3D Candlestick Group (Hidden on low mobile to save GPU battery)
-    const chartGroup = new threeEngine.Group();
-    if (!isMobile) {
-        const candleCount = 14;
-        for (let i = 0; i < candleCount; i++) {
-            const isGreen = i % 3 !== 0;
-            const height = Math.random() * 1.2 + 0.4;
-            const candleGeo = new threeEngine.BoxGeometry(0.12, height, 0.12);
-            const candleMat = new threeEngine.MeshBasicMaterial({
-                color: isGreen ? 0x10B981 : 0xFF2E63,
-                wireframe: true,
-                transparent: true,
-                opacity: 0.75
-            });
-
-            const candle = new threeEngine.Mesh(candleGeo, candleMat);
-            candle.position.x = (i - candleCount / 2) * 0.45;
-            candle.position.y = Math.sin(i * 0.4) * 0.8;
-            candle.position.z = -1.5;
-            chartGroup.add(candle);
-        }
-        scene.add(chartGroup);
-    }
-
-    camera.position.z = 4.8;
-
-    // Mouse Parallax
-    let mouseX = 0, mouseY = 0;
-    document.addEventListener('mousemove', (e) => {
-        mouseX = (e.clientX / window.innerWidth) - 0.5;
-        mouseY = (e.clientY / window.innerHeight) - 0.5;
-    });
-
-    function animate() {
-        requestAnimationFrame(animate);
-
-        particles.rotation.y += 0.0004;
-        if (!isMobile) {
-            chartGroup.rotation.y = Math.sin(Date.now() * 0.0005) * 0.12;
-            chartGroup.position.y = Math.sin(Date.now() * 0.001) * 0.08;
-        }
-
-        camera.position.x += (mouseX * 0.4 - camera.position.x) * 0.05;
-        camera.position.y += (-mouseY * 0.4 - camera.position.y) * 0.05;
-        camera.lookAt(scene.position);
-
-        renderer.render(scene, camera);
-    }
-
-    animate();
-
-    window.addEventListener('resize', () => {
-        camera.aspect = window.innerWidth / window.innerHeight;
-        camera.updateProjectionMatrix();
+        const isMobile = window.innerWidth <= 768;
         renderer.setSize(window.innerWidth, window.innerHeight);
-    });
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, isMobile ? 1 : 2));
+
+        // Digital Data Stream Particles
+        const particleCount = isMobile ? 100 : 380;
+        const geometry = new threeEngine.BufferGeometry();
+        const positions = new Float32Array(particleCount * 3);
+
+        for (let i = 0; i < particleCount * 3; i++) {
+            positions[i] = (Math.random() - 0.5) * 22;
+        }
+
+        geometry.setAttribute('position', new threeEngine.BufferAttribute(positions, 3));
+        const material = new threeEngine.PointsMaterial({
+            size: isMobile ? 0.04 : 0.038,
+            color: 0x10B981,
+            transparent: true,
+            opacity: 0.5
+        });
+
+        const particles = new threeEngine.Points(geometry, material);
+        scene.add(particles);
+
+        // 3D Floating Crystal / Glass Geometries
+        const crystalGroup = new threeEngine.Group();
+        if (!isMobile) {
+            const crystalCount = 5;
+            for (let i = 0; i < crystalCount; i++) {
+                const crystalGeo = new threeEngine.OctahedronGeometry(0.35 + Math.random() * 0.2, 0);
+                const crystalMat = new threeEngine.MeshBasicMaterial({
+                    color: i % 2 === 0 ? 0x34D399 : 0x3B82F6,
+                    wireframe: true,
+                    transparent: true,
+                    opacity: 0.35
+                });
+                const crystal = new threeEngine.Mesh(crystalGeo, crystalMat);
+                crystal.position.x = (Math.random() - 0.5) * 12;
+                crystal.position.y = (Math.random() - 0.5) * 6;
+                crystal.position.z = -2 - Math.random() * 3;
+                crystalGroup.add(crystal);
+            }
+            scene.add(crystalGroup);
+        }
+
+        // 3D Candlestick Group (Hidden on low mobile to save GPU battery)
+        const chartGroup = new threeEngine.Group();
+        if (!isMobile) {
+            const candleCount = 16;
+            for (let i = 0; i < candleCount; i++) {
+                const isGreen = i % 3 !== 0;
+                const height = Math.random() * 1.3 + 0.4;
+                const candleGeo = new threeEngine.BoxGeometry(0.14, height, 0.14);
+                const candleMat = new threeEngine.MeshBasicMaterial({
+                    color: isGreen ? 0x10B981 : 0xFF2E63,
+                    wireframe: true,
+                    transparent: true,
+                    opacity: 0.8
+                });
+
+                const candle = new threeEngine.Mesh(candleGeo, candleMat);
+                candle.position.x = (i - candleCount / 2) * 0.48;
+                candle.position.y = Math.sin(i * 0.4) * 0.9;
+                candle.position.z = -1.8;
+                chartGroup.add(candle);
+            }
+            scene.add(chartGroup);
+        }
+
+        camera.position.z = 5.0;
+
+        // Subtle Mouse Cursor Parallax on Desktop
+        let mouseX = 0, mouseY = 0;
+        if (!isMobile) {
+            document.addEventListener('mousemove', (e) => {
+                mouseX = (e.clientX / window.innerWidth) - 0.5;
+                mouseY = (e.clientY / window.innerHeight) - 0.5;
+            });
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            particles.rotation.y += 0.0003;
+            if (!isMobile) {
+                chartGroup.rotation.y = Math.sin(Date.now() * 0.0004) * 0.15;
+                chartGroup.position.y = Math.sin(Date.now() * 0.0008) * 0.1;
+                crystalGroup.rotation.x += 0.001;
+                crystalGroup.rotation.y += 0.0015;
+
+                camera.position.x += (mouseX * 0.45 - camera.position.x) * 0.05;
+                camera.position.y += (-mouseY * 0.45 - camera.position.y) * 0.05;
+                camera.lookAt(scene.position);
+            }
+
+            renderer.render(scene, camera);
+        }
+
+        animate();
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    } catch (err) {
+        console.log('3D WebGL fallback gracefully handled:', err);
+    }
 }
 
 // 10-STAGE STORYTELLING LOOP
@@ -256,6 +285,15 @@ function toggleDropdown(e) {
     if (e) e.preventDefault();
     const menu = document.getElementById('more-dropdown-menu');
     if (menu) menu.classList.toggle('show');
+}
+
+function toggleFooterAccordion(btn) {
+    if (!btn) return;
+    const parentCol = btn.closest('.footer-col');
+    if (parentCol) {
+        parentCol.classList.toggle('open');
+        btn.classList.toggle('active');
+    }
 }
 
 function toggleMobileMenu() {
@@ -962,279 +1000,413 @@ function renderCommunityView() {
     `;
 }
 
-// ACADEMY VIEW (FREE KNOWLEDGE & 5 GLOBAL MEMBER COURSES)
+// CANDLESTICK SVG ARTWORK GENERATOR
+function getCandlestickSVG(type) {
+    switch (type) {
+        case 'doji':
+            return `<svg width="80" height="80" viewBox="0 0 100 100"><line x1="50" y1="15" x2="50" y2="85" stroke="#34D399" stroke-width="2.5"/><line x1="22" y1="50" x2="78" y2="50" stroke="#34D399" stroke-width="3.5"/></svg>`;
+        case 'hammer':
+            return `<svg width="80" height="80" viewBox="0 0 100 100"><line x1="50" y1="20" x2="50" y2="85" stroke="#10B981" stroke-width="2.5"/><rect x="36" y="20" width="28" height="24" fill="#10B981" rx="3"/></svg>`;
+        case 'inverted-hammer':
+            return `<svg width="80" height="80" viewBox="0 0 100 100"><line x1="50" y1="15" x2="50" y2="80" stroke="#10B981" stroke-width="2.5"/><rect x="36" y="56" width="28" height="24" fill="#10B981" rx="3"/></svg>`;
+        case 'shooting-star':
+            return `<svg width="80" height="80" viewBox="0 0 100 100"><line x1="50" y1="15" x2="50" y2="80" stroke="#EF4444" stroke-width="2.5"/><rect x="36" y="56" width="28" height="24" fill="#EF4444" rx="3"/></svg>`;
+        case 'bullish-engulfing':
+            return `<svg width="80" height="80" viewBox="0 0 100 100"><g opacity="0.6"><line x1="30" y1="40" x2="30" y2="70" stroke="#EF4444" stroke-width="2"/><rect x="23" y="46" width="14" height="18" fill="#EF4444" rx="1.5"/></g><g><line x1="68" y1="15" x2="68" y2="85" stroke="#10B981" stroke-width="2.5"/><rect x="57" y="22" width="22" height="56" fill="#10B981" rx="3"/></g></svg>`;
+        case 'bearish-engulfing':
+            return `<svg width="80" height="80" viewBox="0 0 100 100"><g opacity="0.6"><line x1="30" y1="30" x2="30" y2="60" stroke="#10B981" stroke-width="2"/><rect x="23" y="36" width="14" height="18" fill="#10B981" rx="1.5"/></g><g><line x1="68" y1="15" x2="68" y2="85" stroke="#EF4444" stroke-width="2.5"/><rect x="57" y="20" width="22" height="58" fill="#EF4444" rx="3"/></g></svg>`;
+        case 'morning-star':
+            return `<svg width="80" height="80" viewBox="0 0 100 100"><rect x="16" y="22" width="14" height="38" fill="#EF4444" rx="2"/><rect x="43" y="68" width="14" height="12" fill="#FBBF24" rx="2"/><rect x="70" y="26" width="14" height="40" fill="#10B981" rx="2"/></svg>`;
+        case 'evening-star':
+            return `<svg width="80" height="80" viewBox="0 0 100 100"><rect x="16" y="30" width="14" height="40" fill="#10B981" rx="2"/><rect x="43" y="16" width="14" height="12" fill="#FBBF24" rx="2"/><rect x="70" y="24" width="14" height="40" fill="#EF4444" rx="2"/></svg>`;
+        case 'pin-bar':
+            return `<svg width="80" height="80" viewBox="0 0 100 100"><line x1="10" y1="75" x2="90" y2="75" stroke="#3B82F6" stroke-width="1.5" stroke-dasharray="4,4"/><line x1="50" y1="20" x2="50" y2="85" stroke="#10B981" stroke-width="2.5"/><rect x="36" y="20" width="28" height="20" fill="#10B981" rx="2"/></svg>`;
+        case 'inside-bar':
+            return `<svg width="80" height="80" viewBox="0 0 100 100"><rect x="20" y="15" width="22" height="70" fill="#3B82F6" opacity="0.85" rx="3"/><rect x="58" y="34" width="16" height="32" fill="#10B981" rx="2"/></svg>`;
+        case 'marubozu':
+            return `<svg width="80" height="80" viewBox="0 0 100 100"><rect x="34" y="15" width="32" height="70" fill="#10B981" rx="3"/></svg>`;
+        default:
+            return `<svg width="80" height="80" viewBox="0 0 100 100"><rect x="35" y="20" width="30" height="60" fill="#10B981" rx="2"/></svg>`;
+    }
+}
+
+function openLockedCourseModal(courseTitle, chapterNum, chapterTitle) {
+    showAnimatedPopup(
+        "Unlock Chartora Academy 🔒",
+        `Chapter ${chapterNum}: "${chapterTitle}" is exclusive to Chartora Members.<br><br>Access the complete course, member resources, community and additional Chartora quantitative services.`,
+        "Get Started to Unlock 🔒",
+        () => openAuthModal('signup')
+    );
+}
+
+function toggleAcademyAccordion(id) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const isHidden = el.style.display === 'none' || !el.style.display;
+    el.style.display = isHidden ? 'block' : 'none';
+}
+
+function filterAcademyByTag(chipEl, tag) {
+    document.querySelectorAll('.academy-chip').forEach(c => c.classList.remove('active'));
+    if (chipEl) chipEl.classList.add('active');
+
+    const sections = document.querySelectorAll('.academy-section-block');
+    sections.forEach(sec => {
+        if (tag === 'all') {
+            sec.style.display = 'block';
+        } else {
+            const secTag = sec.getAttribute('data-tag') || '';
+            sec.style.display = secTag.includes(tag) ? 'block' : 'none';
+        }
+    });
+}
+
+function searchAcademyContent() {
+    const query = (document.getElementById('academy-search-input')?.value || '').toLowerCase().trim();
+    const cards = document.querySelectorAll('.academy-card-item');
+
+    cards.forEach(card => {
+        const text = card.innerText.toLowerCase();
+        if (!query || text.includes(query)) {
+            card.style.display = 'block';
+        } else {
+            card.style.display = 'none';
+        }
+    });
+}
+
+// ACADEMY VIEW (VISUAL KNOWLEDGE LIBRARY & 5 MEMBER COURSES)
 function renderAcademyView() {
     const courses = [
-        { id: 'market-foundations', name: '1. Trading Foundations', desc: 'Core trading mechanics, market structure, CFDs, leverage & broker spreads.' },
-        { id: 'technical-analysis', name: '2. Technical Analysis Mastery', desc: 'Support & resistance, trendlines, EMA 9/21 pullbacks, ATR stop buffers & breakouts.' },
-        { id: 'top-strategies', name: '3. Price Action & Market Structure', desc: 'Candlestick anatomy, chart geometry, liquidity sweeps & session momentum setups.' },
-        { id: 'risk-management', name: '4. Risk Management & Trading Psychology', desc: '1% risk rule, lot sizing math, drawdown controls & overcoming emotional FOMO.' },
-        { id: 'trading-psychology', name: '5. Intraday & Scalping Frameworks', desc: 'Multi-timeframe execution, pre-trade checklists, R-multiple targets & trade journaling.' }
+        { id: 'market-foundations', name: '1. Trading Foundations', desc: 'Core market mechanics, CFDs, leverage & broker spreads.', modules: 10 },
+        { id: 'technical-analysis', name: '2. Technical Analysis Mastery', desc: 'S/R zones, trendlines, EMA pullbacks & ATR stop buffers.', modules: 12 },
+        { id: 'top-strategies', name: '3. Price Action & Market Structure', desc: 'Candlestick anatomy, chart geometry & session sweeps.', modules: 10 },
+        { id: 'risk-management', name: '4. Risk Management & Psychology', desc: '1% risk math, lot sizing, drawdown controls & FOMO.', modules: 10 },
+        { id: 'trading-psychology', name: '5. Intraday & Scalping Frameworks', desc: 'Multi-timeframe execution, pre-trade checklists & journaling.', modules: 10 }
     ];
 
     const currentCourse = courses.find(c => c.id === activeCourseId) || courses[0];
 
     const chapterPreviews = [
-        { num: 1, title: 'Introduction & Core Market Mechanics', preview: 'Understanding market participants, order flow, bid-ask spreads, and leverage principles.', free: true },
-        { num: 2, title: 'Market Structure & Trend Bias', preview: 'Identifying Higher Highs, Higher Lows, Lower Highs, and Lower Lows across 4H & 1H timeframes.', free: true },
-        { num: 3, title: 'Key Support & Resistance Zone Isolation', preview: 'Drawing historical horizontal support/resistance levels and dynamic EMA 9/21 touch points.', free: false },
-        { num: 4, title: 'EMA 9 & EMA 21 Dynamic Support/Resistance', preview: 'How exponential moving averages act as dynamic support during strong market trends.', free: false },
-        { num: 5, title: 'Identifying Valid Breakouts vs Fakeouts', preview: 'Using body close confirmation and volume expansion to filter out false breakouts.', free: false },
-        { num: 6, title: 'Session Open Liquidity Sweeps', preview: 'Capitalizing on Asian session high/low sweeps during London and New York market opens.', free: false },
-        { num: 7, title: 'Position Sizing Formula & Risk Math', preview: 'Calculating exact lot sizes based on 1% account risk and ATR stop loss distance.', free: false },
-        { num: 8, title: 'R-Multiple Targets & Trade Management', preview: 'Securing Partial Profits at TP1 (1:1 R) and scaling runner contracts to TP2 (1:2+ R).', free: false },
-        { num: 9, title: 'Pre-Trade Checklist & Rules Protocol', preview: 'The 5-step strict pre-trade verification checklist before opening any execution.', free: false },
-        { num: 10, title: 'Trade Journaling & Monthly Performance Audit', preview: 'Tracking trade metrics, emotional state, win rate, and profit factor to continuously refine your edge.', free: false }
+        { num: 1, title: 'Introduction & Core Market Mechanics', preview: 'Understanding market participants, order flow, bid-ask spreads & leverage.', free: true },
+        { num: 2, title: 'Market Structure & Trend Bias', preview: 'Higher Highs, Higher Lows, Lower Highs & Lower Lows across 4H/1H timeframes.', free: true },
+        { num: 3, title: 'Key Support & Resistance Zone Isolation', preview: 'Drawing historical horizontal support/resistance levels & dynamic touch points.', free: false },
+        { num: 4, title: 'EMA 9 & EMA 21 Dynamic Support/Resistance', preview: 'How exponential moving averages act as dynamic support in trending markets.', free: false },
+        { num: 5, title: 'Identifying Valid Breakouts vs Fakeouts', preview: 'Using body close confirmation & volume expansion to filter false breakouts.', free: false },
+        { num: 6, title: 'Session Open Liquidity Sweeps', preview: 'Capitalizing on Asian session high/low sweeps during London and NY opens.', free: false },
+        { num: 7, title: 'Position Sizing Formula & Risk Math', preview: 'Calculating exact lot sizes based on 1% account risk & ATR stop loss distance.', free: false },
+        { num: 8, title: 'R-Multiple Targets & Trade Management', preview: 'Securing Partial Profits at TP1 (1:1 R) & scaling runners to TP2 (1:2+ R).', free: false },
+        { num: 9, title: 'Pre-Trade Checklist & Rules Protocol', preview: 'The 5-step strict pre-trade verification checklist before opening execution.', free: false },
+        { num: 10, title: 'Trade Journaling & Monthly Performance Audit', preview: 'Tracking trade metrics, emotional state, win rate & profit factor.', free: false }
+    ];
+
+    const candlesticks = [
+        { type: 'doji', name: 'Doji', short: 'Open and close prices are equal. Signals indecision.', means: 'Market equilibrium between buyers and sellers.', context: 'High importance after an extended trend leg.', confirm: 'Wait for next candle body direction.', mistake: 'Reversing trades immediately without confirmation.' },
+        { type: 'hammer', name: 'Hammer', short: 'Long lower wick rejecting lower prices.', means: 'Buyers aggressively pushed price back up from lows.', context: 'Forms at structural support touch points.', confirm: 'Bullish body close above hammer high.', mistake: 'Buying hammers during strong bearish momentum.' },
+        { type: 'inverted-hammer', name: 'Inverted Hammer', short: 'Long upper wick with body near low.', means: 'Price attempted upward expansion before pull back.', context: 'Bottom of downtrend at support.', confirm: 'Follow-up bullish candle close.', mistake: 'Confusing with shooting star at resistance.' },
+        { type: 'shooting-star', name: 'Shooting Star', short: 'Long upper wick rejecting higher prices.', means: 'Sellers rejected higher liquidity pool.', context: 'Occurs at key resistance after an uptrend.', confirm: 'Bearish body close on next candle.', mistake: 'Shorting without checking higher timeframe trend.' },
+        { type: 'bullish-engulfing', name: 'Bullish Engulfing', short: 'Large green body completely covers previous red bar.', means: 'Aggressive buyer momentum takeover.', context: 'Effective at EMA 9/21 dynamic pullback zones.', confirm: 'Sustained volume expansion on breakout.', mistake: 'Trading small engulfing bars in tight ranges.' },
+        { type: 'bearish-engulfing', name: 'Bearish Engulfing', short: 'Large red body completely covers previous green bar.', means: 'Aggressive seller dominance.', context: 'Forms at supply zones or lower high retests.', confirm: 'Body close below previous swing low.', mistake: 'Selling into major historical horizontal support.' },
+        { type: 'morning-star', name: 'Morning Star', short: '3-bar pattern: bearish bar, indecision star, bullish bar.', means: 'High-confluence structural reversal pattern.', context: '4H/1D key support level retest.', confirm: 'Third candle closes deep into first candle body.', mistake: 'Entering before 3rd candle closes.' },
+        { type: 'evening-star', name: 'Evening Star', short: '3-bar pattern: bullish bar, indecision star, bearish bar.', means: 'Top reversal signature after an advance.', context: '4H/1D major supply zone rejection.', confirm: 'Bearish close below middle star low.', mistake: 'Setting stop loss too tight above star wick.' },
+        { type: 'pin-bar', name: 'Pin Bar', short: 'Distinctive tail probing past key liquidity level.', means: 'Institutional liquidity sweep and fast rejection.', context: 'Asian high/low sweep during London open.', confirm: 'Clean close back inside previous range.', mistake: 'Entering mid-candle before clock expires.' },
+        { type: 'inside-bar', name: 'Inside Bar', short: 'Candle fully contained within mother bar range.', means: 'Volatility compression pre-breakout.', context: 'Consolidation phase before news expansion.', confirm: 'Breakout close beyond mother bar high/low.', mistake: 'Trading inside bar breakouts in low-volume sessions.' },
+        { type: 'marubozu', name: 'Marubozu', short: 'Solid full body candle with zero wicks.', means: 'Pure directional momentum dominance.', context: 'Initiating major trend leg expansion.', confirm: 'Continuation candle in same direction.', mistake: 'Chasing trade at extended extreme without pullback.' }
     ];
 
     return `
-        <section class="section" style="padding-top:120px;">
+        <section class="section" style="padding-top:110px;">
             <div class="container">
-                <div class="hero-badge text-center">FREE TRADING KNOWLEDGE CENTER</div>
-                <h1 class="section-title text-center">Chartora Academy</h1>
-                <p class="section-subtitle text-center">Learn the markets. Understand the structure. Build better trading decisions.</p>
-
-                <!-- FREE ACADEMY KNOWLEDGE SECTIONS -->
-                
-                <!-- 1. Market Categories & Currency Pairs -->
-                <div class="glass-card" style="margin-bottom:30px; border-color:rgba(16,185,129,0.3);">
-                    <h3 style="color:var(--brand-emerald-mint); font-size:1.3rem;">🌐 Market Categories & Currency Pairs</h3>
-                    <p style="color:var(--text-muted); font-size:0.88rem; margin-top:4px;">Fundamental breakdown of global instruments monitored by Chartora intelligence scanners.</p>
-                    
-                    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:16px; margin-top:20px;">
-                        <div style="background:rgba(6,9,16,0.6); padding:16px; border-radius:12px; border:1px solid rgba(255,255,255,0.08);">
-                            <h4 style="font-size:1rem; color:#fff; margin-bottom:8px;">Market Foundations</h4>
-                            <ul style="font-size:0.85rem; color:var(--text-muted); padding-left:18px; line-height:1.7;">
-                                <li><strong>What is Forex?</strong> 24/5 global foreign exchange market ($7.5 Trillion daily volume).</li>
-                                <li><strong>What are CFDs?</strong> Contracts for Difference allowing long/short speculation without physical delivery.</li>
-                                <li><strong>What are Stocks?</strong> Ownership shares in publicly traded companies like NVIDIA, Apple & Tesla.</li>
-                                <li><strong>What are Indices?</strong> Weighted benchmark baskets like US100, US500, and GER40.</li>
-                                <li><strong>What are Commodities?</strong> Gold (XAUUSD), Silver (XAGUSD), and US Crude Oil (USOIL).</li>
-                                <li><strong>What is Crypto?</strong> Decoupled 24/7 digital assets like Bitcoin (BTCUSD) & Ethereum.</li>
-                            </ul>
-                        </div>
-
-                        <div style="background:rgba(6,9,16,0.6); padding:16px; border-radius:12px; border:1px solid rgba(255,255,255,0.08);">
-                            <h4 style="font-size:1rem; color:#fff; margin-bottom:8px;">Major & Popular Pairs</h4>
-                            <ul style="font-size:0.85rem; color:var(--text-muted); padding-left:18px; line-height:1.7;">
-                                <li><strong>EURUSD:</strong> Euro vs US Dollar (highest global liquidity & lowest spreads).</li>
-                                <li><strong>GBPUSD:</strong> British Pound vs US Dollar (high volatility intraday swings).</li>
-                                <li><strong>USDJPY:</strong> US Dollar vs Japanese Yen (strong trend persistence & BOJ sensitivity).</li>
-                                <li><strong>AUDUSD & NZDUSD:</strong> Commodity currency correlation to global trade sentiment.</li>
-                                <li><strong>USDCAD & USDCHF:</strong> Oil export correlation & Swiss safe-haven capital flows.</li>
-                            </ul>
-                        </div>
+                <!-- Compact Hero -->
+                <div class="academy-hero-bg text-center">
+                    <span class="hero-badge" style="margin-bottom:8px;">INTERACTIVE KNOWLEDGE HUB</span>
+                    <h1 class="section-title" style="margin-bottom:8px;">Chartora Academy</h1>
+                    <p class="section-subtitle" style="margin-bottom:20px;">Learn markets. Understand structure. Build better trading knowledge.</p>
+                    <div style="display:flex; justify-content:center; gap:14px; flex-wrap:wrap;">
+                        <a href="#academy-categories" class="btn btn-primary" onclick="document.getElementById('academy-categories').scrollIntoView({behavior:'smooth'}); return false;">Explore Topics ↓</a>
+                        <a href="#academy-courses" class="btn btn-outline" onclick="document.getElementById('academy-courses').scrollIntoView({behavior:'smooth'}); return false;">View Courses 🎓</a>
                     </div>
                 </div>
 
-                <!-- 2. Candlestick Education -->
-                <div class="glass-card" style="margin-bottom:30px;">
-                    <h3 style="font-size:1.3rem;">🕯️ Candlestick Pattern Education</h3>
-                    <p style="color:var(--text-muted); font-size:0.88rem; margin-top:4px;">Master visual price action signatures, candle anatomy, and structural context.</p>
+                <!-- Search & Filters -->
+                <div id="academy-search-filter-section" style="margin-bottom:30px;">
+                    <div class="academy-search-bar">
+                        <input type="text" id="academy-search-input" class="glass-input" oninput="searchAcademyContent()" placeholder="Search Academy topics (e.g. Doji, EMA, RSI, Structure, Risk)..." style="width:100%; padding:12px 18px; font-size:0.9rem; border-radius:24px;">
+                    </div>
 
-                    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap:16px; margin-top:20px;">
-                        <!-- Doji -->
-                        <div style="background:rgba(6,9,16,0.6); padding:16px; border-radius:12px; border:1px solid rgba(255,255,255,0.08);">
-                            <div style="font-size:1.5rem; margin-bottom:4px;">➕ <strong>Doji</strong></div>
-                            <p style="font-size:0.85rem; color:var(--text-muted); line-height:1.6;">
-                                <strong>Explanation:</strong> Open and close prices are virtually equal.<br>
-                                <strong>Indicates:</strong> Temporary market equilibrium and indecision.<br>
-                                <strong>Context:</strong> High importance after an extended trend leg.<br>
-                                <strong>Common Mistake:</strong> Reversing trades immediately without candle confirmation.<br>
-                                <span style="color:#FCA5A5;">⚠️ Risk Warning: Dojis in consolidation ranges signal low liquidity noise.</span>
-                            </p>
-                        </div>
-
-                        <!-- Hammer & Inverted Hammer -->
-                        <div style="background:rgba(6,9,16,0.6); padding:16px; border-radius:12px; border:1px solid rgba(255,255,255,0.08);">
-                            <div style="font-size:1.5rem; margin-bottom:4px;">🔨 <strong>Hammer & Inverted Hammer</strong></div>
-                            <p style="font-size:0.85rem; color:var(--text-muted); line-height:1.6;">
-                                <strong>Explanation:</strong> Small body with a lower/upper wick at least 2x body length.<br>
-                                <strong>Indicates:</strong> Rejection of lower/higher prices by aggressive buyers/sellers.<br>
-                                <strong>Context:</strong> Forms at key structural support/resistance touch points.<br>
-                                <strong>Common Mistake:</strong> Buying hammers during strong bearish momentum.<br>
-                                <span style="color:#FCA5A5;">⚠️ Risk Warning: Wicks require body-close confirmation on next candle.</span>
-                            </p>
-                        </div>
-
-                        <!-- Shooting Star -->
-                        <div style="background:rgba(6,9,16,0.6); padding:16px; border-radius:12px; border:1px solid rgba(255,255,255,0.08);">
-                            <div style="font-size:1.5rem; margin-bottom:4px;">🌠 <strong>Shooting Star</strong></div>
-                            <p style="font-size:0.85rem; color:var(--text-muted); line-height:1.6;">
-                                <strong>Explanation:</strong> Long upper wick with a small body near the candle low.<br>
-                                <strong>Indicates:</strong> Bearish rejection of higher liquidity zones.<br>
-                                <strong>Context:</strong> Occurs at resistance after an uptrend expansion.<br>
-                                <strong>Common Mistake:</strong> Shorting without waiting for structural trend breakdown.<br>
-                                <span style="color:#FCA5A5;">⚠️ Risk Warning: Must be evaluated against higher timeframe trend bias.</span>
-                            </p>
-                        </div>
-
-                        <!-- Engulfing (Bullish & Bearish) -->
-                        <div style="background:rgba(6,9,16,0.6); padding:16px; border-radius:12px; border:1px solid rgba(255,255,255,0.08);">
-                            <div style="font-size:1.5rem; margin-bottom:4px;">📊 <strong>Bullish & Bearish Engulfing</strong></div>
-                            <p style="font-size:0.85rem; color:var(--text-muted); line-height:1.6;">
-                                <strong>Explanation:</strong> A large candle body completely covers previous candle range.<br>
-                                <strong>Indicates:</strong> Aggressive momentum reversal or breakout.<br>
-                                <strong>Context:</strong> Highly effective at dynamic EMA 9/21 pullback zones.<br>
-                                <strong>Common Mistake:</strong> Trading small engulfing bars in low-volume sessions.<br>
-                                <span style="color:#FCA5A5;">⚠️ Risk Warning: Always calculate ATR stop loss buffer behind engulfing low.</span>
-                            </p>
-                        </div>
-
-                        <!-- Pin Bar -->
-                        <div style="background:rgba(6,9,16,0.6); padding:16px; border-radius:12px; border:1px solid rgba(255,255,255,0.08);">
-                            <div style="font-size:1.5rem; margin-bottom:4px;">📍 <strong>Pin Bar</strong></div>
-                            <p style="font-size:0.85rem; color:var(--text-muted); line-height:1.6;">
-                                <strong>Explanation:</strong> Distinctive tail probing past key level and closing back inside range.<br>
-                                <strong>Indicates:</strong> Institutional liquidity sweep & fast rejection.<br>
-                                <strong>Context:</strong> Asian session high/low sweep during London open.<br>
-                                <strong>Common Mistake:</strong> Entering before candle timer closes.<br>
-                                <span style="color:#FCA5A5;">⚠️ Risk Warning: High-impact news can invalidate pinbars rapidly.</span>
-                            </p>
-                        </div>
-
-                        <!-- Morning Star & Evening Star -->
-                        <div style="background:rgba(6,9,16,0.6); padding:16px; border-radius:12px; border:1px solid rgba(255,255,255,0.08);">
-                            <div style="font-size:1.5rem; margin-bottom:4px;">🌅 <strong>Morning Star & Evening Star</strong></div>
-                            <p style="font-size:0.85rem; color:var(--text-muted); line-height:1.6;">
-                                <strong>Explanation:</strong> 3-candle structural pattern: impulse candle, indecision star, reversal candle.<br>
-                                <strong>Indicates:</strong> High-confluence major reversal confirmation.<br>
-                                <strong>Context:</strong> Best when aligned with 4H market structure breaks.<br>
-                                <strong>Common Mistake:</strong> Misidentifying 2-candle patterns as full stars.<br>
-                                <span style="color:#FCA5A5;">⚠️ Risk Warning: Requires wide stop loss placement above/below star tip.</span>
-                            </p>
-                        </div>
-
-                        <!-- Inside Bar & Marubozu -->
-                        <div style="background:rgba(6,9,16,0.6); padding:16px; border-radius:12px; border:1px solid rgba(255,255,255,0.08);">
-                            <div style="font-size:1.5rem; margin-bottom:4px;">📦 <strong>Inside Bar & Marubozu</strong></div>
-                            <p style="font-size:0.85rem; color:var(--text-muted); line-height:1.6;">
-                                <strong>Explanation:</strong> Inside bar is fully contained within mother bar; Marubozu has no wicks.<br>
-                                <strong>Indicates:</strong> Volatility compression (Inside Bar) or pure trend dominance (Marubozu).<br>
-                                <strong>Context:</strong> Pre-breakout consolidation setup.<br>
-                                <strong>Common Mistake:</strong> Trading inside bar breakouts before body closes outside mother bar.<br>
-                                <span style="color:#FCA5A5;">⚠️ Risk Warning: Consolidation breaks can produce double-sided whipsaws.</span>
-                            </p>
-                        </div>
+                    <div class="academy-chip-group">
+                        <button class="academy-chip active" onclick="filterAcademyByTag(this, 'all')">All Topics</button>
+                        <button class="academy-chip" onclick="filterAcademyByTag(this, 'markets')">📈 Markets</button>
+                        <button class="academy-chip" onclick="filterAcademyByTag(this, 'pairs')">💱 Currency Pairs</button>
+                        <button class="academy-chip" onclick="filterAcademyByTag(this, 'technical')">📊 Technical</button>
+                        <button class="academy-chip" onclick="filterAcademyByTag(this, 'fundamental')">🌎 Fundamental</button>
+                        <button class="academy-chip" onclick="filterAcademyByTag(this, 'candlesticks')">🕯 Candlesticks</button>
+                        <button class="academy-chip" onclick="filterAcademyByTag(this, 'patterns')">📐 Patterns</button>
+                        <button class="academy-chip" onclick="filterAcademyByTag(this, 'indicators')">📉 Indicators</button>
+                        <button class="academy-chip" onclick="filterAcademyByTag(this, 'risk')">🧮 Risk</button>
+                        <button class="academy-chip" onclick="filterAcademyByTag(this, 'psychology')">🧠 Psychology</button>
+                        <button class="academy-chip" onclick="filterAcademyByTag(this, 'courses')">🎓 Courses</button>
                     </div>
                 </div>
 
-                <!-- 3. Chart Patterns Education -->
-                <div class="glass-card" style="margin-bottom:30px;">
-                    <h3 style="font-size:1.3rem;">📐 Chart Patterns & Structural Geometry</h3>
-                    <p style="color:var(--text-muted); font-size:0.88rem; margin-top:4px;">Understand structural geometry, trendlines, breakouts, and pullbacks.</p>
+                <!-- 10 MAIN VISUAL CATEGORIES -->
+                <div id="academy-categories">
 
-                    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:16px; margin-top:20px;">
-                        <div style="background:rgba(6,9,16,0.6); padding:16px; border-radius:12px; border:1px solid rgba(255,255,255,0.08);">
-                            <h4 style="color:var(--brand-emerald-mint);">Support & Resistance & Trendlines</h4>
-                            <p style="font-size:0.85rem; color:var(--text-muted); margin-top:6px; line-height:1.6;">
-                                Horizontal support/resistance levels mark historical supply/demand rebalancing zones. Trendlines connect consecutive higher lows in uptrends or lower highs in downtrends.
-                            </p>
-                        </div>
-
-                        <div style="background:rgba(6,9,16,0.6); padding:16px; border-radius:12px; border:1px solid rgba(255,255,255,0.08);">
-                            <h4 style="color:var(--brand-emerald-mint);">Breakouts & Pullbacks</h4>
-                            <p style="font-size:0.85rem; color:var(--text-muted); margin-top:6px; line-height:1.6;">
-                                A valid breakout requires price closing beyond a key level with volume expansion. The subsequent pullback retests the broken zone as new support/resistance before trend continuation.
-                            </p>
-                        </div>
-
-                        <div style="background:rgba(6,9,16,0.6); padding:16px; border-radius:12px; border:1px solid rgba(255,255,255,0.08);">
-                            <h4 style="color:var(--brand-emerald-mint);">Double Top / Bottom & Head & Shoulders</h4>
-                            <p style="font-size:0.85rem; color:var(--text-muted); margin-top:6px; line-height:1.6;">
-                                Reversal patterns testing key liquidity zones. Double tops/bottoms fail to make new extreme highs/lows. Head & shoulders displays structural exhaustion and neckline breakdown.
-                            </p>
-                        </div>
-
-                        <div style="background:rgba(6,9,16,0.6); padding:16px; border-radius:12px; border:1px solid rgba(255,255,255,0.08);">
-                            <h4 style="color:var(--brand-emerald-mint);">Flags, Pennants, Triangles & Channels</h4>
-                            <p style="font-size:0.85rem; color:var(--text-muted); margin-top:6px; line-height:1.6;">
-                                Continuation patterns reflecting orderly consolidation during an active trend leg. Ascending/descending triangles compress price toward explosive directional breakouts.
-                            </p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 4. Technical Indicators Education -->
-                <div class="glass-card" style="margin-bottom:40px;">
-                    <h3 style="font-size:1.3rem;">📉 Indicator Education & Limitations</h3>
-                    <p style="color:var(--text-muted); font-size:0.88rem; margin-top:4px;">Statistical indicator mechanics, strengths, limitations, and realistic expectations (never profit guarantees).</p>
-
-                    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:16px; margin-top:20px;">
-                        <div style="background:rgba(6,9,16,0.6); padding:16px; border-radius:12px; border:1px solid rgba(255,255,255,0.08);">
-                            <h4 style="color:#fff;">EMA (9 & 21) & SMA (50 & 200)</h4>
-                            <p style="font-size:0.85rem; color:var(--text-muted); margin-top:6px; line-height:1.6;">
-                                <strong>What it is:</strong> Exponential & Simple Moving Averages.<br>
-                                <strong>How it works:</strong> Smooths past price data to highlight trend direction.<br>
-                                <strong>Strengths:</strong> Excellent dynamic support/resistance in trending markets.<br>
-                                <strong>Limitations:</strong> Lags in choppy range-bound markets.<br>
-                                <strong>Common Mistake:</strong> Treating moving average crossovers as automatic buy/sell signals.
-                            </p>
-                        </div>
-
-                        <div style="background:rgba(6,9,16,0.6); padding:16px; border-radius:12px; border:1px solid rgba(255,255,255,0.08);">
-                            <h4 style="color:#fff;">RSI (14), MACD & ATR (14)</h4>
-                            <p style="font-size:0.85rem; color:var(--text-muted); margin-top:6px; line-height:1.6;">
-                                <strong>What it is:</strong> Momentum oscillators and volatility indicators.<br>
-                                <strong>How it works:</strong> RSI measures overextension; MACD measures momentum velocity; ATR calculates average price range.<br>
-                                <strong>Strengths:</strong> Objective Stop Loss sizing (1.5x ATR) and divergence detection.<br>
-                                <strong>Limitations:</strong> RSI can remain overbought during massive institutional trends.<br>
-                                <strong>Common Mistake:</strong> Shorting solely because RSI is above 70.
-                            </p>
-                        </div>
-
-                        <div style="background:rgba(6,9,16,0.6); padding:16px; border-radius:12px; border:1px solid rgba(255,255,255,0.08);">
-                            <h4 style="color:#fff;">Bollinger Bands, Volume, VWAP & Fibonacci</h4>
-                            <p style="font-size:0.85rem; color:var(--text-muted); margin-top:6px; line-height:1.6;">
-                                <strong>What it is:</strong> Mean reversion bands, institutional volume, and mathematical ratio retracements.<br>
-                                <strong>How it works:</strong> VWAP anchors volume-weighted price benchmark; Fibonacci 61.8% marks Golden Ratio retest.<br>
-                                <strong>Strengths:</strong> Isolates institutional fair value and key reversal confluence.<br>
-                                <strong>Limitations:</strong> Fib levels require proper swing high/low anchoring.<br>
-                                <strong>Common Mistake:</strong> Relying on indicators alone without price action confirmation.
-                            </p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Course Navigation Tabs -->
-                <h3 style="margin-bottom:16px; font-size:1.4rem;">Top 5 Chartora Courses</h3>
-                <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:14px; margin-bottom:30px;">
-                    ${courses.map(c => `
-                        <div class="glass-card" onclick="selectCourse('${c.id}')" style="cursor:pointer; padding:16px; border-color:${c.id === activeCourseId ? 'var(--brand-emerald-mint)' : 'rgba(255,255,255,0.08)'}">
-                            <h4 style="font-size:0.88rem; color:${c.id === activeCourseId ? 'var(--brand-emerald-mint)' : '#fff'};">${c.name}</h4>
-                        </div>
-                    `).join('')}
-                </div>
-
-                <!-- Active Course Chapters List -->
-                <div class="glass-card">
-                    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:20px; border-bottom:1px solid rgba(255,255,255,0.08); padding-bottom:16px;">
-                        <div>
-                            <span class="reward-badge" style="font-size:0.75rem;">${currentCourse.name.toUpperCase()}</span>
-                            <p style="color:var(--text-muted); font-size:0.9rem; margin-top:6px;">${currentCourse.desc}</p>
-                        </div>
-                    </div>
-
-                    <!-- 10+ Chapter Modules List -->
-                    <div style="display:grid; gap:12px;">
-                        ${chapterPreviews.map(ch => `
-                            <div class="glass-card" style="padding:16px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; background:rgba(6,9,16,0.6); ${!ch.free ? 'border-color:rgba(255,255,255,0.06);' : 'border-color:var(--brand-emerald-mint);'}">
-                                <div>
-                                    <h4 style="font-size:0.98rem; display:flex; align-items:center; gap:8px;">
-                                        <span>Chapter ${ch.num}: ${ch.title}</span>
-                                        ${ch.free ? '<span class="impact-badge impact-low" style="font-size:0.68rem;">FREE PREVIEW</span>' : '<span class="impact-badge impact-high" style="font-size:0.68rem;">🔒 MEMBERS ONLY</span>'}
-                                    </h4>
-                                    <p style="font-size:0.85rem; color:var(--text-muted); margin-top:4px;">${ch.preview}</p>
-                                </div>
-                                <div>
-                                    ${ch.free ? `
-                                        <button class="btn btn-outline" style="font-size:0.8rem; padding:6px 14px;" onclick="selectV5Chapter(${ch.num})">Read Lesson →</button>
-                                    ` : `
-                                        <button class="btn btn-primary" style="font-size:0.8rem; padding:6px 14px;" onclick="openAuthModal('signup')">Get Started to Unlock 🔒</button>
-                                    `}
+                    <!-- 1. MARKETS -->
+                    <div class="academy-section-block" data-tag="markets" style="margin-bottom:30px;">
+                        <h3 style="font-size:1.3rem; margin-bottom:12px;">📈 Understand the Markets</h3>
+                        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:14px;">
+                            <div class="glass-card academy-card-item" onclick="toggleAcademyAccordion('m-forex')">
+                                <h4 style="color:#10B981; display:flex; justify-content:space-between; align-items:center;">
+                                    <span>🌐 Forex (Foreign Exchange)</span><span style="font-size:0.8rem; color:var(--text-muted);">Expand ▾</span>
+                                </h4>
+                                <p style="font-size:0.85rem; color:var(--text-muted); margin-top:4px;">Global currency exchange market trading $7.5 Trillion daily.</p>
+                                <div id="m-forex" style="display:none; margin-top:10px; font-size:0.82rem; color:var(--text-muted); border-top:1px solid rgba(255,255,255,0.06); padding-top:8px;">
+                                    Operates 24/5 across Asian, London & New York sessions. Traded in pairs (Base/Quote) with high liquidity and tight spreads.
                                 </div>
                             </div>
+
+                            <div class="glass-card academy-card-item" onclick="toggleAcademyAccordion('m-metals')">
+                                <h4 style="color:#10B981; display:flex; justify-content:space-between; align-items:center;">
+                                    <span>🥇 Metals & Gold (XAUUSD)</span><span style="font-size:0.8rem; color:var(--text-muted);">Expand ▾</span>
+                                </h4>
+                                <p style="font-size:0.85rem; color:var(--text-muted); margin-top:4px;">Precious metals acting as safe-haven inflation hedges.</p>
+                                <div id="m-metals" style="display:none; margin-top:10px; font-size:0.82rem; color:var(--text-muted); border-top:1px solid rgba(255,255,255,0.06); padding-top:8px;">
+                                    Gold (XAUUSD) & Silver (XAGUSD) exhibit high intraday ATR volatility and strong inverse correlation to US Treasury yields.
+                                </div>
+                            </div>
+
+                            <div class="glass-card academy-card-item" onclick="toggleAcademyAccordion('m-indices')">
+                                <h4 style="color:#10B981; display:flex; justify-content:space-between; align-items:center;">
+                                    <span>📊 Equity Indices</span><span style="font-size:0.8rem; color:var(--text-muted);">Expand ▾</span>
+                                </h4>
+                                <p style="font-size:0.85rem; color:var(--text-muted); margin-top:4px;">Benchmark equity baskets (US100, US500, US30, GER40).</p>
+                                <div id="m-indices" style="display:none; margin-top:10px; font-size:0.82rem; color:var(--text-muted); border-top:1px solid rgba(255,255,255,0.06); padding-top:8px;">
+                                    Reflects macro economy sentiment. Nasdaq (US100) & S&P 500 (US500) drive institutional equity risk-on/risk-off cycles.
+                                </div>
+                            </div>
+
+                            <div class="glass-card academy-card-item" onclick="toggleAcademyAccordion('m-stocks')">
+                                <h4 style="color:#10B981; display:flex; justify-content:space-between; align-items:center;">
+                                    <span>🏢 US Equities & Stocks</span><span style="font-size:0.8rem; color:var(--text-muted);">Expand ▾</span>
+                                </h4>
+                                <p style="font-size:0.85rem; color:var(--text-muted); margin-top:4px;">Individual blue-chip stocks (NVIDIA, Apple, Tesla, Meta).</p>
+                                <div id="m-stocks" style="display:none; margin-top:10px; font-size:0.82rem; color:var(--text-muted); border-top:1px solid rgba(255,255,255,0.06); padding-top:8px;">
+                                    Traded during US exchange hours (14:30-21:00 UTC). Highly sensitive to quarterly earnings reports & tech sector momentum.
+                                </div>
+                            </div>
+
+                            <div class="glass-card academy-card-item" onclick="toggleAcademyAccordion('m-comm')">
+                                <h4 style="color:#10B981; display:flex; justify-content:space-between; align-items:center;">
+                                    <span>🛢 Commodities (USOIL)</span><span style="font-size:0.8rem; color:var(--text-muted);">Expand ▾</span>
+                                </h4>
+                                <p style="font-size:0.85rem; color:var(--text-muted); margin-top:4px;">WTI Crude Oil & energy contracts.</p>
+                                <div id="m-comm" style="display:none; margin-top:10px; font-size:0.82rem; color:var(--text-muted); border-top:1px solid rgba(255,255,255,0.06); padding-top:8px;">
+                                    Driven by OPEC production quotas, EIA inventory reports, and global industrial demand balances.
+                                </div>
+                            </div>
+
+                            <div class="glass-card academy-card-item" onclick="toggleAcademyAccordion('m-crypto')">
+                                <h4 style="color:#10B981; display:flex; justify-content:space-between; align-items:center;">
+                                    <span>⚡ Digital Assets (Crypto)</span><span style="font-size:0.8rem; color:var(--text-muted);">Expand ▾</span>
+                                </h4>
+                                <p style="font-size:0.85rem; color:var(--text-muted); margin-top:4px;">24/7 decentralized assets (Bitcoin & Ethereum).</p>
+                                <div id="m-crypto" style="display:none; margin-top:10px; font-size:0.82rem; color:var(--text-muted); border-top:1px solid rgba(255,255,255,0.06); padding-top:8px;">
+                                    Decoupled global digital assets offering round-the-clock trading liquidity and halving supply cycle dynamics.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 2. TOP PAIRS -->
+                    <div class="academy-section-block" data-tag="pairs" style="margin-bottom:30px;">
+                        <h3 style="font-size:1.3rem; margin-bottom:12px;">💱 Top Considered Currency Pairs</h3>
+                        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap:14px;">
+                            ${[
+                                { pair: 'EURUSD', tag: 'Euro / US Dollar', text: 'Highest global volume pair with tightest spreads. Key sessions: London & NY overlap.' },
+                                { pair: 'GBPUSD', tag: 'British Pound / US Dollar', text: 'Known as "Cable". High intraday volatility and wide pip swings.' },
+                                { pair: 'USDJPY', tag: 'US Dollar / Japanese Yen', text: 'Sensitive to US Treasury yields & BOJ monetary policy announcements.' },
+                                { pair: 'AUDUSD', tag: 'Aussie / US Dollar', text: 'Commodity currency correlated with global industrial growth & iron ore export demand.' },
+                                { pair: 'NZDUSD', tag: 'Kiwi / US Dollar', text: 'Correlated to agricultural trade sentiment and RBNZ interest rate differentials.' },
+                                { pair: 'USDCAD', tag: 'US Dollar / Loonie', text: 'Strong inverse correlation to WTI Crude Oil commodity export prices.' },
+                                { pair: 'USDCHF', tag: 'US Dollar / Swiss Franc', text: 'Traditional safe-haven currency pair backed by Swiss banking reserves.' }
+                            ].map(p => `
+                                <div class="glass-card academy-card-item" onclick="toggleAcademyAccordion('p-${p.pair}')">
+                                    <h4 style="font-size:1rem; color:#fff; display:flex; justify-content:space-between; align-items:center;">
+                                        <span><strong>${p.pair}</strong> (${p.tag})</span>
+                                        <span style="font-size:0.75rem; color:var(--brand-emerald-mint);">Details ▾</span>
+                                    </h4>
+                                    <div id="p-${p.pair}" style="display:none; margin-top:8px; font-size:0.82rem; color:var(--text-muted); border-top:1px solid rgba(255,255,255,0.06); padding-top:8px;">
+                                        ${p.text}
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+
+                    <!-- 3. CANDLESTICKS - DEDICATED VISUAL LEARNING AREA -->
+                    <div class="academy-section-block" data-tag="candlesticks" style="margin-bottom:35px;">
+                        <div style="margin-bottom:16px;">
+                            <span class="reward-badge" style="font-size:0.75rem;">VISUAL PATTERN RECOGNITION</span>
+                            <h3 style="font-size:1.4rem; margin-top:4px;">🕯 Read the Market One Candle at a Time</h3>
+                            <p style="color:var(--text-muted); font-size:0.88rem;">Custom visual illustrations detailing candle anatomy, structural context & confirmation.</p>
+                        </div>
+
+                        <div class="candlestick-grid">
+                            ${candlesticks.map((c, i) => `
+                                <div class="candlestick-card academy-card-item">
+                                    <div class="candlestick-svg-wrap">
+                                        ${getCandlestickSVG(c.type)}
+                                    </div>
+                                    <h4 style="font-size:1.05rem; color:#fff;">${c.name}</h4>
+                                    <p style="font-size:0.82rem; color:var(--text-muted); margin-top:4px; line-height:1.4;">${c.short}</p>
+                                    <button class="btn btn-outline" style="width:100%; font-size:0.78rem; padding:6px; margin-top:10px;" onclick="toggleAcademyAccordion('cs-detail-${i}')">View Analysis ▾</button>
+                                    
+                                    <div id="cs-detail-${i}" style="display:none; margin-top:10px; font-size:0.8rem; color:var(--text-muted); border-top:1px solid rgba(255,255,255,0.08); padding-top:8px; line-height:1.5;">
+                                        <div><strong>What it means:</strong> ${c.means}</div>
+                                        <div style="margin-top:4px;"><strong>Context:</strong> ${c.context}</div>
+                                        <div style="margin-top:4px;"><strong>Confirmation:</strong> ${c.confirm}</div>
+                                        <div style="margin-top:4px; color:#FCA5A5;"><strong>Common Mistake:</strong> ${c.mistake}</div>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+
+                    <!-- 4. TECHNICAL ANALYSIS & CHART PATTERNS -->
+                    <div class="academy-section-block" data-tag="technical patterns" style="margin-bottom:30px;">
+                        <h3 style="font-size:1.3rem; margin-bottom:12px;">📐 Technical Geometry & Chart Patterns</h3>
+                        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:14px;">
+                            ${[
+                                { title: 'Support & Resistance', desc: 'Horizontal price boundaries where demand or supply pools accumulate.' },
+                                { title: 'Double Top / Double Bottom', desc: 'Reversal pattern testing liquidity levels twice before reversing direction.' },
+                                { title: 'Head & Shoulders', desc: 'Structural trend exhaustion signature with left shoulder, head, right shoulder & neckline.' },
+                                { title: 'Flags & Pennants', desc: 'Orderly continuation consolidations following impulse move expansions.' },
+                                { title: 'Ascending & Descending Triangles', desc: 'Price volatility compression pushing toward explosive directional breakouts.' }
+                            ].map((p, idx) => `
+                                <div class="glass-card academy-card-item" onclick="toggleAcademyAccordion('tp-${idx}')">
+                                    <h4 style="color:var(--brand-emerald-mint); display:flex; justify-content:space-between; align-items:center;">
+                                        <span>${p.title}</span><span style="font-size:0.75rem; color:var(--text-muted);">Expand ▾</span>
+                                    </h4>
+                                    <p style="font-size:0.85rem; color:var(--text-muted); margin-top:4px;">${p.desc}</p>
+                                    <div id="tp-${idx}" style="display:none; margin-top:8px; font-size:0.82rem; color:var(--text-muted); border-top:1px solid rgba(255,255,255,0.06); padding-top:8px;">
+                                        Always wait for structural body-close confirmation outside pattern geometry before taking entry risk.
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+
+                    <!-- 5. TECHNICAL INDICATORS -->
+                    <div class="academy-section-block" data-tag="indicators" style="margin-bottom:30px;">
+                        <h3 style="font-size:1.3rem; margin-bottom:12px;">📉 Indicators & Limitations</h3>
+                        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:14px;">
+                            <div class="glass-card academy-card-item">
+                                <h4 style="color:#fff;">EMA 9 & 21 (Exponential Moving Averages)</h4>
+                                <p style="font-size:0.85rem; color:var(--text-muted); margin-top:4px;">
+                                    <strong>Usage:</strong> Dynamic support/resistance during trending market phases.<br>
+                                    <strong>Limitations:</strong> Produces false whipsaws during sideways consolidation ranges.
+                                </p>
+                            </div>
+
+                            <div class="glass-card academy-card-item">
+                                <h4 style="color:#fff;">RSI 14 & MACD</h4>
+                                <p style="font-size:0.85rem; color:var(--text-muted); margin-top:4px;">
+                                    <strong>Usage:</strong> Detects momentum velocity & price/momentum divergences.<br>
+                                    <strong>Limitations:</strong> RSI can remain overbought (>70) indefinitely during institutional trends.
+                                </p>
+                            </div>
+
+                            <div class="glass-card academy-card-item">
+                                <h4 style="color:#fff;">ATR 14 (Average True Range)</h4>
+                                <p style="font-size:0.85rem; color:var(--text-muted); margin-top:4px;">
+                                    <strong>Usage:</strong> Objective Stop Loss placement (e.g. 1.5x ATR buffer).<br>
+                                    <strong>Limitations:</strong> Measures volatility range width, not market trend direction.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 6. FUNDAMENTAL ANALYSIS -->
+                    <div class="academy-section-block" data-tag="fundamental" style="margin-bottom:30px;">
+                        <h3 style="font-size:1.3rem; margin-bottom:12px;">🌎 Fundamental Analysis & Central Banks</h3>
+                        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:14px;">
+                            <div class="glass-card academy-card-item">
+                                <h4 style="color:#fff;">Interest Rates & Inflation (CPI)</h4>
+                                <p style="font-size:0.85rem; color:var(--text-muted); margin-top:4px;">Central bank interest rate decisions drive global currency yields and institutional capital flows.</p>
+                            </div>
+                            <div class="glass-card academy-card-item">
+                                <h4 style="color:#fff;">Employment (NFP) & GDP</h4>
+                                <p style="font-size:0.85rem; color:var(--text-muted); margin-top:4px;">Non-Farm Payrolls & GDP growth figures dictate economic health & central bank policy pivots.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 7. RISK & PSYCHOLOGY -->
+                    <div class="academy-section-block" data-tag="risk psychology" style="margin-bottom:35px;">
+                        <h3 style="font-size:1.3rem; margin-bottom:12px;">🧮 Risk Management & 🧠 Psychology</h3>
+                        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:14px;">
+                            <div class="glass-card academy-card-item">
+                                <h4 style="color:#FBBF24;">1% Account Risk Rule</h4>
+                                <p style="font-size:0.85rem; color:var(--text-muted); margin-top:4px;">Never risk more than 1% of total capital per trade to survive drawdown streaks.</p>
+                            </div>
+                            <div class="glass-card academy-card-item">
+                                <h4 style="color:#FBBF24;">Overcoming FOMO & Revenge Trading</h4>
+                                <p style="font-size:0.85rem; color:var(--text-muted); margin-top:4px;">Stick to strict pre-trade checklists and accept that missing a setup is part of trading.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 8. COURSES & LOCKED CONTENT UX -->
+                <div id="academy-courses" class="academy-section-block" data-tag="courses" style="margin-top:40px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:16px;">
+                        <div>
+                            <span class="reward-badge" style="font-size:0.75rem;">MEMBER ACADEMY COURSES</span>
+                            <h3 style="font-size:1.4rem; margin-top:4px;">🎓 Top 5 Chartora Courses</h3>
+                        </div>
+                    </div>
+
+                    <!-- Course Navigation Tabs -->
+                    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:12px; margin-bottom:24px;">
+                        ${courses.map(c => `
+                            <div class="glass-card" onclick="selectCourse('${c.id}')" style="cursor:pointer; padding:14px; border-color:${c.id === activeCourseId ? 'var(--brand-emerald-mint)' : 'rgba(255,255,255,0.08)'}">
+                                <h4 style="font-size:0.88rem; color:${c.id === activeCourseId ? 'var(--brand-emerald-mint)' : '#fff'};">${c.name}</h4>
+                            </div>
                         `).join('')}
+                    </div>
+
+                    <!-- Selected Course Chapters List -->
+                    <div class="glass-card">
+                        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:16px; border-bottom:1px solid rgba(255,255,255,0.08); padding-bottom:14px;">
+                            <div>
+                                <h4 style="font-size:1.1rem; color:#fff;">${currentCourse.name}</h4>
+                                <p style="color:var(--text-muted); font-size:0.85rem; margin-top:2px;">${currentCourse.desc}</p>
+                            </div>
+                            <span class="impact-badge impact-low" style="font-size:0.75rem;">10 MODULES INCLUDED</span>
+                        </div>
+
+                        <!-- 10 Modules List -->
+                        <div style="display:grid; gap:10px;">
+                            ${chapterPreviews.map(ch => `
+                                <div class="glass-card" style="padding:14px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; background:rgba(6,9,16,0.6); ${!ch.free ? 'border-color:rgba(255,255,255,0.06);' : 'border-color:var(--brand-emerald-mint);'}">
+                                    <div>
+                                        <h4 style="font-size:0.95rem; display:flex; align-items:center; gap:8px;">
+                                            <span>Chapter ${ch.num}: ${ch.title}</span>
+                                            ${ch.free ? '<span class="impact-badge impact-low" style="font-size:0.65rem;">FREE PREVIEW</span>' : '<span class="impact-badge impact-high" style="font-size:0.65rem;">🔒 MEMBERS ONLY</span>'}
+                                        </h4>
+                                        <p style="font-size:0.82rem; color:var(--text-muted); margin-top:2px;">${ch.preview}</p>
+                                    </div>
+                                    <div>
+                                        ${ch.free ? `
+                                            <button class="btn btn-outline" style="font-size:0.78rem; padding:6px 12px;" onclick="selectV5Chapter(${ch.num})">Read Lesson →</button>
+                                        ` : `
+                                            <button class="btn btn-primary" style="font-size:0.78rem; padding:6px 12px;" onclick="openLockedCourseModal('${currentCourse.name}', ${ch.num}, '${ch.title}')">Unlock Chapter 🔒</button>
+                                        `}
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
                     </div>
                 </div>
             </div>

@@ -235,10 +235,11 @@
     <footer class="footer">
         <div class="container">
             <div class="footer-grid">
-                <div class="footer-col" style="grid-column: span 1;">
+                <!-- Column 1: Brand -->
+                <div class="footer-col footer-col-brand">
                     <a href="#home" class="brand-logo" onclick="navigateTo('home', event)">
                         <span class="logo-mark-c3">
-                            <svg width="28" height="28" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <svg width="26" height="26" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <defs>
                                     <linearGradient id="ftr-logo-grad" x1="0%" y1="0%" x2="100%" y2="100%">
                                         <stop offset="0%" stop-color="#34D399"/>
@@ -257,45 +258,79 @@
                     </a>
                     <p class="footer-tagline">Discover the market. Learn the structure. Track the opportunity. Build better trading decisions.</p>
                     <p class="footer-philosophy"><em>"Your markets. Our scanners. Your decision."</em></p>
-                    <p style="margin-top:10px; font-size:0.85rem; color:var(--text-muted);">Official Contact: <a href="mailto:info@chartora.in" style="color:var(--brand-emerald-mint)">info@chartora.in</a></p>
+                    <p style="font-size:0.8rem; color:var(--text-muted); margin-top:8px;">Contact: <a href="mailto:info@chartora.in" style="color:var(--brand-emerald-mint); text-decoration:none;">info@chartora.in</a></p>
                 </div>
 
+                <!-- Column 2: Platform -->
                 <div class="footer-col">
                     <h4>Platform</h4>
-                    <a href="#scanner" onclick="navigateTo('scanner', event)">Markets</a>
-                    <a href="#academy" onclick="navigateTo('academy', event)">Academy</a>
-                    <a href="#community" onclick="navigateTo('community', event)">Community</a>
-                    <a href="#pricing" onclick="navigateTo('pricing', event)">Plans</a>
-                    <a href="#alerts" onclick="navigateTo('alerts', event)">Trading Alerts</a>
-                    <a href="#currency-strength" onclick="navigateTo('currency-strength', event)">Currency Strength</a>
-                    <a href="#news" onclick="navigateTo('news', event)">Market News</a>
+                    <button class="footer-accordion-trigger" onclick="toggleFooterAccordion(this)">
+                        <span>Platform</span><span class="chevron">▾</span>
+                    </button>
+                    <div class="footer-accordion-content">
+                        <a href="#scanner" onclick="navigateTo('scanner', event)">Markets</a>
+                        <a href="#academy" onclick="navigateTo('academy', event)">Academy</a>
+                        <a href="#community" onclick="navigateTo('community', event)">Community</a>
+                        <a href="#pricing" onclick="navigateTo('pricing', event)">Plans</a>
+                    </div>
                 </div>
 
+                <!-- Column 3: Tools -->
+                <div class="footer-col">
+                    <h4>Tools</h4>
+                    <button class="footer-accordion-trigger" onclick="toggleFooterAccordion(this)">
+                        <span>Tools</span><span class="chevron">▾</span>
+                    </button>
+                    <div class="footer-accordion-content">
+                        <a href="#alerts" onclick="navigateTo('alerts', event)">Trading Alerts</a>
+                        <a href="#currency-strength" onclick="navigateTo('currency-strength', event)">Currency Strength</a>
+                        <a href="#news" onclick="navigateTo('news', event)">Market News</a>
+                    </div>
+                </div>
+
+                <!-- Column 4: Company -->
                 <div class="footer-col">
                     <h4>Company</h4>
-                    <a href="#careers" onclick="navigateTo('careers', event)">Careers</a>
-                    <a href="#affiliate" onclick="navigateTo('affiliate', event)">Affiliate Program</a>
+                    <button class="footer-accordion-trigger" onclick="toggleFooterAccordion(this)">
+                        <span>Company</span><span class="chevron">▾</span>
+                    </button>
+                    <div class="footer-accordion-content">
+                        <a href="#careers" onclick="navigateTo('careers', event)">Careers</a>
+                        <a href="#affiliate" onclick="navigateTo('affiliate', event)">Affiliate Program</a>
+                    </div>
                 </div>
 
+                <!-- Column 5: Legal -->
                 <div class="footer-col">
                     <h4>Legal</h4>
-                    <a href="#disclaimer" onclick="navigateTo('disclaimer', event)">Risk Disclaimer</a>
-                    <a href="#privacy" onclick="navigateTo('privacy', event)">Privacy Policy</a>
-                    <a href="#terms" onclick="navigateTo('terms', event)">Terms & Conditions</a>
-                    <a href="#privacy" onclick="navigateTo('privacy', event)">Cookie Policy</a>
+                    <button class="footer-accordion-trigger" onclick="toggleFooterAccordion(this)">
+                        <span>Legal</span><span class="chevron">▾</span>
+                    </button>
+                    <div class="footer-accordion-content">
+                        <a href="#disclaimer" onclick="navigateTo('disclaimer', event)">Risk Disclaimer</a>
+                        <a href="#privacy" onclick="navigateTo('privacy', event)">Privacy Policy</a>
+                        <a href="#terms" onclick="navigateTo('terms', event)">Terms & Conditions</a>
+                        <a href="#privacy" onclick="navigateTo('privacy', event)">Cookie Policy</a>
+                    </div>
                 </div>
 
+                <!-- Column 6: Connect -->
                 <div class="footer-col">
                     <h4>Connect</h4>
-                    <a href="https://t.me/chartora_official" target="_blank" rel="noopener">Telegram ↗</a>
-                    <a href="https://linkedin.com/company/chartora" target="_blank" rel="noopener">LinkedIn ↗</a>
-                    <a href="https://youtube.com/@chartora" target="_blank" rel="noopener">YouTube ↗</a>
-                    <a href="https://instagram.com/chartora.in" target="_blank" rel="noopener">Instagram ↗</a>
-                    <a href="https://tiktok.com/@chartora.in" target="_blank" rel="noopener">TikTok ↗</a>
+                    <button class="footer-accordion-trigger" onclick="toggleFooterAccordion(this)">
+                        <span>Connect</span><span class="chevron">▾</span>
+                    </button>
+                    <div class="footer-accordion-content">
+                        <a href="https://t.me/chartora_official" target="_blank" rel="noopener">✈️ Telegram</a>
+                        <a href="https://linkedin.com/company/chartora" target="_blank" rel="noopener">💼 LinkedIn</a>
+                        <a href="https://youtube.com/@chartora" target="_blank" rel="noopener">▶️ YouTube</a>
+                        <a href="https://instagram.com/chartora.in" target="_blank" rel="noopener">📷 Instagram</a>
+                        <a href="https://tiktok.com/@chartora.in" target="_blank" rel="noopener">🎵 TikTok</a>
+                    </div>
                 </div>
             </div>
 
-            <div class="disclaimer-box" style="margin-top: 40px;">
+            <div class="disclaimer-box">
                 <h4>RESPONSIBLE TRADING & RISK DISCLAIMER</h4>
                 <p>
                     Trading financial markets involves substantial risk and may not be suitable for everyone. Chartora provides educational content, market analysis, technical tools and alerts for informational purposes only. No setup, strategy or alert guarantees profits. Past performance does not guarantee future results. Users remain responsible for their own trading decisions, account activity and risk management.
@@ -304,10 +339,10 @@
 
             <div class="footer-bottom">
                 <p>&copy; 2026 Chartora.in. All rights reserved.</p>
-                <div class="footer-links">
-                    <a href="#disclaimer" onclick="navigateTo('disclaimer', event)">Risk Disclaimer</a> | 
-                    <a href="#privacy" onclick="navigateTo('privacy', event)">Privacy Policy</a> | 
-                    <a href="#terms" onclick="navigateTo('terms', event)">Terms & Conditions</a>
+                <div class="footer-bottom-links">
+                    <a href="#privacy" onclick="navigateTo('privacy', event)">Privacy</a> •
+                    <a href="#terms" onclick="navigateTo('terms', event)">Terms</a> •
+                    <a href="#disclaimer" onclick="navigateTo('disclaimer', event)">Risk Disclaimer</a>
                 </div>
             </div>
         </div>
