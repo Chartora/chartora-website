@@ -176,10 +176,7 @@ function navigateTo(route, event) {
 }
 
 function handleRoute() {
-    let rawRoute = window.location.hash.replace('#', '');
-    if (!rawRoute && window.location.pathname && window.location.pathname !== '/' && window.location.pathname !== '/index.html') {
-        rawRoute = window.location.pathname.replace(/^\//, '');
-    }
+    let rawRoute = window.location.hash.replace(/^#\/?/, '');
     const hash = rawRoute || 'home';
     currentRoute = hash;
 
