@@ -83,6 +83,34 @@ class TestChartoraSaaSPlatform(unittest.TestCase):
         blocked = server.is_rate_limited(test_ip, max_reqs=5, window_sec=60)
         self.assertTrue(blocked)
 
+    def test_career_application_submission(self):
+        """Verifies career application database insertion"""
+        cursor = self.conn.cursor()
+        cursor.execute('''
+            INSERT INTO career_applications (role, name, email, phone, country, skills, url, linkedin, notes)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''', ('Full-Stack Developer', 'Alex Test', 'alex.test@example.com', '+1234567890', 'United States', 'Python, JS', 'https://github.com/alex', 'https://linkedin.com/in/alex', 'Great candidate'))
+        self.conn.commit()
+
+        cursor.execute('SELECT * FROM career_applications WHERE email = ?', ('alex.test@example.com',))
+        record = cursor.fetchone()
+        self.assertIsNotNone(record)
+        self.assertEqual(record['role'], 'Full-Stack Developer')
+
+    def test_affiliate_application_submission(self):
+        """Verifies 20% affiliate application database insertion"""
+        cursor = self.conn.cursor()
+        cursor.execute('''
+            INSERT INTO affiliate_applications (name, email, country, social_channel, audience_size, primary_platform, telegram_username, strategy)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        ''', ('Partner Test', 'partner@example.com', 'United Kingdom', 'https://t.me/partnerchan', '5,000+', 'Telegram', '@partner', 'Daily FX Analysis'))
+        self.conn.commit()
+
+        cursor.execute('SELECT * FROM affiliate_applications WHERE email = ?', ('partner@example.com',))
+        record = cursor.fetchone()
+        self.assertIsNotNone(record)
+        self.assertEqual(record['revenue_share'], 20.0)
+
     def test_link_and_route_audit_script(self):
         """Executes the HTML/JS navigation route audit"""
         import scripts.audit_links
@@ -95,3 +123,4 @@ class TestChartoraSaaSPlatform(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+

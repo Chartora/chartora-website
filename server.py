@@ -762,7 +762,7 @@ class ChartoraSaaSHandler(http.server.SimpleHTTPRequestHandler):
                 return self.send_json({"success": True, "message": "Application Received 🚀. Thank you for your interest in Chartora."})
 
             # AFFILIATE APPLICATION FORM SUBMISSION
-            elif path == '/api/affiliate/apply':
+            elif path in ['/api/affiliate/apply', '/api/affiliates/apply']:
                 name = body.get('name', '').strip()
                 email = body.get('email', '').strip().lower()
                 country = body.get('country', '')
