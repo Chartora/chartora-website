@@ -56,7 +56,7 @@ class TestChartoraSaaSPlatform(unittest.TestCase):
     def test_stripe_webhook_idempotency(self):
         """Verifies duplicate Stripe webhooks are blocked via idempotency table"""
         cursor = self.conn.cursor()
-        event_id = "evt_test_idempotency_123"
+        event_id = f"evt_test_idempotency_{int(time.time() * 1000)}"
 
         # 1. First event insertion
         cursor.execute('INSERT INTO processed_webhooks (event_id, event_type) VALUES (?, ?)',
