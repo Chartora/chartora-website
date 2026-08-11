@@ -68,7 +68,7 @@ html, body {
     left: 0;
     width: 100vw;
     height: 100vh;
-    z-index: -2;
+    z-index: 0;
     pointer-events: none;
 }
 
@@ -79,18 +79,23 @@ html, body {
     height: clamp(300px, 50vw, 600px);
     border-radius: 50%;
     filter: blur(150px);
-    z-index: -1;
+    z-index: 0;
     pointer-events: none;
 }
 .bg-glow-1 {
     top: -150px;
     left: -150px;
-    background: radial-gradient(circle, rgba(0, 176, 116, 0.18) 0%, rgba(0,0,0,0) 70%);
+    background: radial-gradient(circle, rgba(0, 176, 116, 0.22) 0%, rgba(0,0,0,0) 70%);
 }
 .bg-glow-2 {
     bottom: -150px;
     right: -150px;
-    background: radial-gradient(circle, rgba(0, 229, 255, 0.15) 0%, rgba(0,0,0,0) 70%);
+    background: radial-gradient(circle, rgba(0, 229, 255, 0.18) 0%, rgba(0,0,0,0) 70%);
+}
+
+#app-view-container {
+    position: relative;
+    z-index: 1;
 }
 
 /* Telegram Floating Contact Button */

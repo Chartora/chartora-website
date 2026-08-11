@@ -35,92 +35,167 @@ document.addEventListener('DOMContentLoaded', () => {
     initMobileMenuHandlers();
 });
 
-// 2. LIGHTWEIGHT 3D TRADING WORKFLOW SCENE (WITH MOBILE FALLBACK)
+// 2. PREMIUM 3D FINANCIAL MARKET ENVIRONMENT (THREE.JS WEBGL ENGINE WITH 2D FALLBACK)
+let update3DSceneForRoute = null;
+
 function init3DTradingWorkflowScene() {
     const canvas = document.getElementById('bg-3d-canvas');
-    if (!canvas || (typeof Three === 'undefined' && typeof THREE === 'undefined')) return;
-    
-    const threeEngine = window.THREE || window.Three;
-    if (!threeEngine) return;
+    if (!canvas) return;
 
+    const threeEngine = window.THREE || window.Three;
+    
     // Check prefers-reduced-motion
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
+    // FALLBACK IF THREE.JS NOT LOADED
+    if (!threeEngine) {
+        init2DCanvasFallback(canvas);
+        return;
+    }
+
     try {
         const scene = new threeEngine.Scene();
-        const camera = new threeEngine.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const camera = new threeEngine.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 1000);
         const renderer = new threeEngine.WebGLRenderer({ canvas: canvas, alpha: true, antialias: true });
+
+        renderer.setClearColor(0x000000, 0);
 
         const isMobile = window.innerWidth <= 768;
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, isMobile ? 1 : 2));
 
-        // Digital Data Stream Particles
-        const particleCount = isMobile ? 100 : 380;
+        // 1. ABSTRACT DIGITAL FINANCIAL GLOBE (HERO FOCUS)
+        const globeGroup = new threeEngine.Group();
+        if (!isMobile) {
+            const globeGeo = new threeEngine.SphereGeometry(2.6, 22, 22);
+            const globeMat = new threeEngine.MeshBasicMaterial({
+                color: 0x10B981,
+                wireframe: true,
+                transparent: true,
+                opacity: 0.35
+            });
+            const globeMesh = new threeEngine.Mesh(globeGeo, globeMat);
+            globeGroup.add(globeMesh);
+
+            // Latitude/Longitude Orbit Rings
+            const ringGeo = new threeEngine.RingGeometry(2.85, 2.89, 64);
+            const ringMat = new threeEngine.MeshBasicMaterial({
+                color: 0x34D399,
+                side: threeEngine.DoubleSide,
+                transparent: true,
+                opacity: 0.45
+            });
+            const ringMesh = new threeEngine.Mesh(ringGeo, ringMat);
+            ringMesh.rotation.x = Math.PI / 3;
+            globeGroup.add(ringMesh);
+
+            globeGroup.position.set(2.2, -0.2, -3.8);
+            scene.add(globeGroup);
+        }
+
+        // 2. CURRENCY SYMBOL TEXTURE SPRITES ($ € £ ¥)
+        const currencyGroup = new threeEngine.Group();
+        const createCurrencySprite = (symbol, colorHex) => {
+            const c = document.createElement('canvas');
+            c.width = 256; c.height = 256;
+            const ctx = c.getContext('2d');
+            ctx.font = '700 100px Outfit, sans-serif';
+            ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+            ctx.fillStyle = colorHex || '#10B981';
+            ctx.shadowColor = colorHex || '#10B981'; ctx.shadowBlur = 18;
+            ctx.fillText(symbol, 128, 128);
+            const tex = new threeEngine.CanvasTexture(c);
+            const mat = new threeEngine.SpriteMaterial({ map: tex, transparent: true, opacity: 0.75 });
+            const sprite = new threeEngine.Sprite(mat);
+            sprite.scale.set(0.95, 0.95, 1);
+            return sprite;
+        };
+
+        const symbols = ['$', '€', '£', '¥', '$', '€', '£', '¥', '$', '€'];
+        const colors = ['#10B981', '#34D399', '#00E5FF', '#FBBF24', '#10B981'];
+        symbols.forEach((sym, idx) => {
+            const spr = createCurrencySprite(sym, colors[idx % colors.length]);
+            spr.position.x = (Math.random() - 0.5) * 18;
+            spr.position.y = (Math.random() - 0.5) * 11;
+            spr.position.z = -1.2 - Math.random() * 4;
+            currencyGroup.add(spr);
+        });
+        scene.add(currencyGroup);
+
+        // 3. MARKET DATA PARTICLES & NETWORK NODES
+        const particleCount = isMobile ? 100 : 350;
         const geometry = new threeEngine.BufferGeometry();
         const positions = new Float32Array(particleCount * 3);
 
         for (let i = 0; i < particleCount * 3; i++) {
-            positions[i] = (Math.random() - 0.5) * 22;
+            positions[i] = (Math.random() - 0.5) * 24;
         }
 
         geometry.setAttribute('position', new threeEngine.BufferAttribute(positions, 3));
         const material = new threeEngine.PointsMaterial({
-            size: isMobile ? 0.04 : 0.038,
-            color: 0x10B981,
+            size: isMobile ? 0.05 : 0.065,
+            color: 0x34D399,
             transparent: true,
-            opacity: 0.5
+            opacity: 0.65
         });
 
         const particles = new threeEngine.Points(geometry, material);
         scene.add(particles);
 
-        // 3D Floating Crystal / Glass Geometries
-        const crystalGroup = new threeEngine.Group();
+        // 4. GOLD / SILVER / METALLIC POLYHEDRONS (METALS & COMMODITIES)
+        const metalGroup = new threeEngine.Group();
         if (!isMobile) {
-            const crystalCount = 5;
-            for (let i = 0; i < crystalCount; i++) {
-                const crystalGeo = new threeEngine.OctahedronGeometry(0.35 + Math.random() * 0.2, 0);
-                const crystalMat = new threeEngine.MeshBasicMaterial({
-                    color: i % 2 === 0 ? 0x34D399 : 0x3B82F6,
-                    wireframe: true,
-                    transparent: true,
-                    opacity: 0.35
-                });
-                const crystal = new threeEngine.Mesh(crystalGeo, crystalMat);
-                crystal.position.x = (Math.random() - 0.5) * 12;
-                crystal.position.y = (Math.random() - 0.5) * 6;
-                crystal.position.z = -2 - Math.random() * 3;
-                crystalGroup.add(crystal);
-            }
-            scene.add(crystalGroup);
+            const goldMat = new threeEngine.MeshBasicMaterial({ color: 0xFBBF24, wireframe: true, transparent: true, opacity: 0.45 });
+            const silverMat = new threeEngine.MeshBasicMaterial({ color: 0x38BDF8, wireframe: true, transparent: true, opacity: 0.45 });
+            
+            const g1 = new threeEngine.Mesh(new threeEngine.OctahedronGeometry(0.55, 0), goldMat);
+            g1.position.set(-4.2, 2.0, -3.2);
+            metalGroup.add(g1);
+
+            const s1 = new threeEngine.Mesh(new threeEngine.DodecahedronGeometry(0.48, 0), silverMat);
+            s1.position.set(4.0, -1.8, -3.0);
+            metalGroup.add(s1);
+
+            scene.add(metalGroup);
         }
 
-        // 3D Candlestick Group (Hidden on low mobile to save GPU battery)
+        // 5. 3D CANDLESTICK CHART STRUCTURES
         const chartGroup = new threeEngine.Group();
         if (!isMobile) {
             const candleCount = 16;
             for (let i = 0; i < candleCount; i++) {
                 const isGreen = i % 3 !== 0;
-                const height = Math.random() * 1.3 + 0.4;
-                const candleGeo = new threeEngine.BoxGeometry(0.14, height, 0.14);
+                const height = Math.random() * 1.3 + 0.5;
+                const candleGeo = new threeEngine.BoxGeometry(0.18, height, 0.18);
                 const candleMat = new threeEngine.MeshBasicMaterial({
                     color: isGreen ? 0x10B981 : 0xFF2E63,
                     wireframe: true,
                     transparent: true,
-                    opacity: 0.8
+                    opacity: 0.85
                 });
 
                 const candle = new threeEngine.Mesh(candleGeo, candleMat);
                 candle.position.x = (i - candleCount / 2) * 0.48;
-                candle.position.y = Math.sin(i * 0.4) * 0.9;
-                candle.position.z = -1.8;
+                candle.position.y = Math.sin(i * 0.4) * 0.85;
+                candle.position.z = -2.2;
                 chartGroup.add(candle);
             }
             scene.add(chartGroup);
         }
 
-        camera.position.z = 5.0;
+        // 6. EMERALD SCANNER BEAM SWEEP LINE
+        const beamGeo = new threeEngine.PlaneGeometry(28, 0.08);
+        const beamMat = new threeEngine.MeshBasicMaterial({
+            color: 0x34D399,
+            side: threeEngine.DoubleSide,
+            transparent: true,
+            opacity: 0.55
+        });
+        const beamMesh = new threeEngine.Mesh(beamGeo, beamMat);
+        beamMesh.position.set(0, 0, -3.2);
+        scene.add(beamMesh);
+
+        camera.position.z = 4.8;
 
         // Subtle Mouse Cursor Parallax on Desktop
         let mouseX = 0, mouseY = 0;
@@ -131,18 +206,61 @@ function init3DTradingWorkflowScene() {
             });
         }
 
+        // Section-Aware Camera Target Shift
+        let targetCamX = 0, targetCamY = 0, targetCamZ = 4.8;
+        update3DSceneForRoute = function(hash) {
+            if (isMobile) return;
+            switch (hash) {
+                case 'markets':
+                case 'scanner':
+                    targetCamX = 0.8; targetCamY = -0.2; targetCamZ = 4.4;
+                    break;
+                case 'academy':
+                    targetCamX = -0.6; targetCamY = 0.3; targetCamZ = 4.6;
+                    break;
+                case 'community':
+                    targetCamX = 0.5; targetCamY = 0.2; targetCamZ = 5.0;
+                    break;
+                case 'pricing':
+                    targetCamX = 0; targetCamY = -0.4; targetCamZ = 5.0;
+                    break;
+                default:
+                    targetCamX = 0; targetCamY = 0; targetCamZ = 4.8;
+                    break;
+            }
+        };
+
+        // Render Loop with Tab Inactivity Guard
+        let isTabActive = true;
+        document.addEventListener('visibilitychange', () => {
+            isTabActive = !document.hidden;
+        });
+
         function animate() {
             requestAnimationFrame(animate);
 
-            particles.rotation.y += 0.0003;
+            if (!isTabActive) return;
+
+            particles.rotation.y += 0.0004;
+            currencyGroup.rotation.y += 0.0005;
+
+            // Scanner beam vertical sweep
+            beamMesh.position.y = Math.sin(Date.now() * 0.0009) * 3.8;
+
             if (!isMobile) {
+                globeGroup.rotation.y += 0.0012;
+                globeGroup.rotation.x = Math.sin(Date.now() * 0.0005) * 0.12;
                 chartGroup.rotation.y = Math.sin(Date.now() * 0.0004) * 0.15;
                 chartGroup.position.y = Math.sin(Date.now() * 0.0008) * 0.1;
-                crystalGroup.rotation.x += 0.001;
-                crystalGroup.rotation.y += 0.0015;
+                metalGroup.rotation.x += 0.0012;
+                metalGroup.rotation.y += 0.0018;
 
-                camera.position.x += (mouseX * 0.45 - camera.position.x) * 0.05;
-                camera.position.y += (-mouseY * 0.45 - camera.position.y) * 0.05;
+                // Smooth camera interpolation towards route target + mouse parallax
+                const finalCamX = targetCamX + (mouseX * 0.45);
+                const finalCamY = targetCamY + (-mouseY * 0.45);
+                camera.position.x += (finalCamX - camera.position.x) * 0.05;
+                camera.position.y += (finalCamY - camera.position.y) * 0.05;
+                camera.position.z += (targetCamZ - camera.position.z) * 0.05;
                 camera.lookAt(scene.position);
             }
 
@@ -157,8 +275,60 @@ function init3DTradingWorkflowScene() {
             renderer.setSize(window.innerWidth, window.innerHeight);
         });
     } catch (err) {
-        console.log('3D WebGL fallback gracefully handled:', err);
+        console.log('3D WebGL engine graceful fallback:', err);
+        init2DCanvasFallback(canvas);
     }
+}
+
+// 2D ANIMATED CANVAS FALLBACK SYSTEM
+function init2DCanvasFallback(canvas) {
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    let width = canvas.width = window.innerWidth;
+    let height = canvas.height = window.innerHeight;
+
+    window.addEventListener('resize', () => {
+        width = canvas.width = window.innerWidth;
+        height = canvas.height = window.innerHeight;
+    });
+
+    const particles = [];
+    const particleCount = 80;
+
+    for (let i = 0; i < particleCount; i++) {
+        particles.push({
+            x: Math.random() * width,
+            y: Math.random() * height,
+            vx: (Math.random() - 0.5) * 0.4,
+            vy: (Math.random() - 0.5) * 0.4,
+            size: Math.random() * 2.5 + 1,
+            alpha: Math.random() * 0.5 + 0.2
+        });
+    }
+
+    function render2DFallback() {
+        requestAnimationFrame(render2DFallback);
+        ctx.clearRect(0, 0, width, height);
+
+        ctx.fillStyle = '#10B981';
+        particles.forEach(p => {
+            p.x += p.vx;
+            p.y += p.vy;
+
+            if (p.x < 0) p.x = width;
+            if (p.x > width) p.x = 0;
+            if (p.y < 0) p.y = height;
+            if (p.y > height) p.y = 0;
+
+            ctx.globalAlpha = p.alpha;
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+            ctx.fill();
+        });
+    }
+
+    render2DFallback();
 }
 
 // 10-STAGE STORYTELLING LOOP
@@ -208,6 +378,10 @@ function handleRoute() {
     let rawRoute = window.location.hash.replace(/^#\/?/, '');
     const hash = rawRoute || 'home';
     currentRoute = hash;
+
+    if (typeof update3DSceneForRoute === 'function') {
+        update3DSceneForRoute(hash);
+    }
 
     // Highlight navbar link
     document.querySelectorAll('.nav-links a').forEach(a => {
