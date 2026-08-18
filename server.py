@@ -796,6 +796,7 @@ if __name__ == '__main__':
     init_database()
     
     server_address = ('', PORT)
+    socketserver.TCPServer.allow_reuse_address = True
     httpd = socketserver.TCPServer(server_address, ChartoraSaaSHandler)
     print(f"✅ Chartora.in SaaS Engine running on http://localhost:{PORT}")
     try:
