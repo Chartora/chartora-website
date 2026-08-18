@@ -64,36 +64,7 @@ function init3DTradingWorkflowScene() {
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, isMobile ? 1 : 2));
 
-        // 1. ABSTRACT DIGITAL FINANCIAL GLOBE (HERO FOCUS)
-        const globeGroup = new threeEngine.Group();
-        if (!isMobile) {
-            const globeGeo = new threeEngine.SphereGeometry(2.6, 22, 22);
-            const globeMat = new threeEngine.MeshBasicMaterial({
-                color: 0x10B981,
-                wireframe: true,
-                transparent: true,
-                opacity: 0.35
-            });
-            const globeMesh = new threeEngine.Mesh(globeGeo, globeMat);
-            globeGroup.add(globeMesh);
-
-            // Latitude/Longitude Orbit Rings
-            const ringGeo = new threeEngine.RingGeometry(2.85, 2.89, 64);
-            const ringMat = new threeEngine.MeshBasicMaterial({
-                color: 0x34D399,
-                side: threeEngine.DoubleSide,
-                transparent: true,
-                opacity: 0.45
-            });
-            const ringMesh = new threeEngine.Mesh(ringGeo, ringMat);
-            ringMesh.rotation.x = Math.PI / 3;
-            globeGroup.add(ringMesh);
-
-            globeGroup.position.set(2.2, -0.2, -3.8);
-            scene.add(globeGroup);
-        }
-
-        // 2. CURRENCY SYMBOL TEXTURE SPRITES ($ € £ ¥)
+        // 1. CURRENCY SYMBOL TEXTURE SPRITES ($ € £ ¥)
         const currencyGroup = new threeEngine.Group();
         const createCurrencySprite = (symbol, colorHex) => {
             const c = document.createElement('canvas');
@@ -122,7 +93,7 @@ function init3DTradingWorkflowScene() {
         });
         scene.add(currencyGroup);
 
-        // 3. MARKET DATA PARTICLES & NETWORK NODES
+        // 2. MARKET DATA PARTICLES & NETWORK NODES
         const particleCount = isMobile ? 100 : 350;
         const geometry = new threeEngine.BufferGeometry();
         const positions = new Float32Array(particleCount * 3);
@@ -142,7 +113,7 @@ function init3DTradingWorkflowScene() {
         const particles = new threeEngine.Points(geometry, material);
         scene.add(particles);
 
-        // 4. GOLD / SILVER / METALLIC POLYHEDRONS (METALS & COMMODITIES)
+        // 3. GOLD / SILVER / METALLIC POLYHEDRONS (METALS & COMMODITIES)
         const metalGroup = new threeEngine.Group();
         if (!isMobile) {
             const goldMat = new threeEngine.MeshBasicMaterial({ color: 0xFBBF24, wireframe: true, transparent: true, opacity: 0.45 });
@@ -159,7 +130,7 @@ function init3DTradingWorkflowScene() {
             scene.add(metalGroup);
         }
 
-        // 5. 3D CANDLESTICK CHART STRUCTURES
+        // 4. 3D CANDLESTICK CHART STRUCTURES
         const chartGroup = new threeEngine.Group();
         if (!isMobile) {
             const candleCount = 16;
@@ -182,18 +153,6 @@ function init3DTradingWorkflowScene() {
             }
             scene.add(chartGroup);
         }
-
-        // 6. EMERALD SCANNER BEAM SWEEP LINE
-        const beamGeo = new threeEngine.PlaneGeometry(28, 0.08);
-        const beamMat = new threeEngine.MeshBasicMaterial({
-            color: 0x34D399,
-            side: threeEngine.DoubleSide,
-            transparent: true,
-            opacity: 0.55
-        });
-        const beamMesh = new threeEngine.Mesh(beamGeo, beamMat);
-        beamMesh.position.set(0, 0, -3.2);
-        scene.add(beamMesh);
 
         camera.position.z = 4.8;
 
@@ -244,12 +203,7 @@ function init3DTradingWorkflowScene() {
             particles.rotation.y += 0.0004;
             currencyGroup.rotation.y += 0.0005;
 
-            // Scanner beam vertical sweep
-            beamMesh.position.y = Math.sin(Date.now() * 0.0009) * 3.8;
-
             if (!isMobile) {
-                globeGroup.rotation.y += 0.0012;
-                globeGroup.rotation.x = Math.sin(Date.now() * 0.0005) * 0.12;
                 chartGroup.rotation.y = Math.sin(Date.now() * 0.0004) * 0.15;
                 chartGroup.position.y = Math.sin(Date.now() * 0.0008) * 0.1;
                 metalGroup.rotation.x += 0.0012;
