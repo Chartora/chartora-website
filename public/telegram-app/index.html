@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Chartora.in — Telegram Trading Terminal</title>
+    <!-- Telegram WebApp SDK (Must be loaded first) -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link rel="stylesheet" href="tma.css">
+    <link rel="icon" href="/public/favicon.svg" type="image/svg+xml">
+</head>
+<body class="tma-body">
+    <div id="tma-app" class="tma-container">
+        
+        <!-- TOP APP BAR -->
+        <header class="tma-header">
+            <div class="header-brand" onclick="ChartoraTMA.navigate('dashboard')">
+                <div class="brand-logo">⚡</div>
+                <div class="brand-text">
+                    <span class="brand-title">CHARTORA</span>
+                    <span class="brand-badge" id="app-tier-badge">ALL ACCESS</span>
+                </div>
+            </div>
+            <div class="header-actions">
+                <button class="icon-btn" id="btn-notifications-open" onclick="ChartoraTMA.navigate('notifications')" aria-label="Notifications">
+                    🔔
+                    <span class="notif-badge" id="header-notif-count" style="display:none;">0</span>
+                </button>
+                <div class="user-avatar" id="header-user-avatar" onclick="ChartoraTMA.navigate('account')">👤</div>
+            </div>
+        </header>
+
+        <!-- CONNECTION STATUS BANNER -->
+        <div id="status-banner" class="status-banner" style="display: none;"></div>
+
+        <!-- MAIN VIEWPORT CONTAINER -->
+        <main class="tma-viewport" id="tma-viewport">
+
+            <!-- 1. DASHBOARD SCREEN -->
+            <section id="view-dashboard" class="tma-screen active">
+                <!-- Market Quick Ticker -->
+                <div class="ticker-scroll" id="ticker-strip">
+                    <div class="ticker-item"><span class="sym">XAUUSD</span> <span class="pr">$3,342.50</span> <span class="ch pos">+0.85%</span></div>
+                    <div class="ticker-item"><span class="sym">US100</span> <span class="pr">21,150.00</span> <span class="ch neg">-0.62%</span></div>
+                    <div class="ticker-item"><span class="sym">EURUSD</span> <span class="pr">1.0880</span> <span class="ch neg">-0.15%</span></div>
+                    <div class="ticker-item"><span class="sym">BTCUSD</span> <span class="pr">$68,420</span> <span class="ch pos">+1.95%</span></div>
+                </div>
+
+                <!-- Hero Intelligence Card -->
+                <div class="hero-card">
+                    <div class="hero-header">
+                        <span class="badge-live">● LIVE SCANNER</span>
+                        <span class="hero-time" id="hero-time">UTC REAL-TIME</span>
+                    </div>
+                    <h2 class="hero-title">Institutional Trading Intelligence</h2>
+                    <p class="hero-desc">Your Markets. Our Scanners. Your Decision.</p>
+                    <div class="hero-stats">
+                        <div class="h-stat">
+                            <span class="val" id="dash-win-rate">75.0%</span>
+                            <span class="lbl">Virtual Win Rate</span>
+                        </div>
+                        <div class="h-stat">
+                            <span class="val pos" id="dash-cumulative-r">+12.4R</span>
+                            <span class="lbl">Cumulative R</span>
+                        </div>
+                        <div class="h-stat">
+                            <span class="val" id="dash-active-setups">4</span>
+                            <span class="lbl">Active Setups</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Action Buttons Grid -->
+                <div class="quick-actions-grid">
+                    <button class="action-card" onclick="ChartoraTMA.navigate('signals')">
+                        <span class="act-icon">⚡</span>
+                        <span class="act-name">Live Setups</span>
+                    </button>
+                    <button class="action-card" onclick="ChartoraTMA.navigate('markets')">
+                        <span class="act-icon">📈</span>
+                        <span class="act-name">Markets</span>
+                    </button>
+                    <button class="action-card" onclick="ChartoraTMA.navigate('risk')">
+                        <span class="act-icon">🧮</span>
+                        <span class="act-name">Risk Tool</span>
+                    </button>
+                    <button class="action-card" onclick="ChartoraTMA.navigate('journal')">
+                        <span class="act-icon">📓</span>
+                        <span class="act-name">Journal</span>
+                    </button>
+                    <button class="action-card" onclick="ChartoraTMA.navigate('strength')">
+                        <span class="act-icon">💪</span>
+                        <span class="act-name">Strength</span>
+                    </button>
+                    <button class="action-card" onclick="ChartoraTMA.navigate('news')">
+                        <span class="act-icon">📰</span>
+                        <span class="act-name">News</span>
+                    </button>
+                    <button class="action-card" onclick="ChartoraTMA.navigate('academy')">
+                        <span class="act-icon">🎓</span>
+                        <span class="act-name">Academy</span>
+                    </button>
+                    <button class="action-card" onclick="ChartoraTMA.navigate('watchlist')">
+                        <span class="act-icon">⭐</span>
+                        <span class="act-name">Watchlist</span>
+                    </button>
+                </div>
+
+                <!-- Featured Setup Box -->
+                <div class="section-container">
+                    <div class="section-header">
+                        <h3>Latest Scanner Setup</h3>
+                        <a href="javascript:void(0)" onclick="ChartoraTMA.navigate('signals')" class="link-more">View All &rarr;</a>
+                    </div>
+                    <div id="dash-featured-signal" class="signal-card-container">
+                        <div class="card-skeleton"></div>
+                    </div>
+                </div>
+
+                <!-- Currency Strength Overview -->
+                <div class="section-container">
+                    <div class="section-header">
+                        <h3>Relative Currency Strength (1H)</h3>
+                        <a href="javascript:void(0)" onclick="ChartoraTMA.navigate('strength')" class="link-more">Full Matrix &rarr;</a>
+                    </div>
+                    <div class="strength-grid" id="dash-currency-grid">
+                        <div class="card-skeleton"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 2. MARKETS SCREEN -->
+            <section id="view-markets" class="tma-screen">
+                <div class="search-bar">
+                    <span class="search-icon">🔍</span>
+                    <input type="text" id="market-search-input" placeholder="Search Gold, EURUSD, US100, NVDA..." autocomplete="off">
+                </div>
+
+                <div class="filter-tabs" id="market-filter-tabs">
+                    <button class="tab-btn active" data-cat="ALL">All</button>
+                    <button class="tab-btn" data-cat="Metals">Metals</button>
+                    <button class="tab-btn" data-cat="Forex">Forex</button>
+                    <button class="tab-btn" data-cat="Indices">Indices</button>
+                    <button class="tab-btn" data-cat="Stocks">Stocks</button>
+                    <button class="tab-btn" data-cat="Crypto">Crypto</button>
+                </div>
+
+                <div class="markets-list" id="markets-container">
+                    <div class="card-skeleton"></div>
+                </div>
+            </section>
+
+            <!-- 3. SIGNALS & SETUPS SCREEN -->
+            <section id="view-signals" class="tma-screen">
+                <div class="filter-tabs" id="signal-filter-tabs">
+                    <button class="tab-btn active" data-status="ALL">All Setups</button>
+                    <button class="tab-btn" data-status="ACTIVE">Active</button>
+                    <button class="tab-btn" data-status="TP HIT">TP Hit</button>
+                    <button class="tab-btn" data-status="SL HIT">SL Hit</button>
+                </div>
+
+                <div class="signals-list" id="signals-container">
+                    <div class="card-skeleton"></div>
+                </div>
+            </section>
+
+            <!-- 4. SETUP DETAIL SCREEN -->
+            <section id="view-setup-detail" class="tma-screen">
+                <div id="setup-detail-content">
+                    <div class="card-skeleton"></div>
+                </div>
+            </section>
+
+            <!-- 5. RISK CALCULATOR SCREEN -->
+            <section id="view-risk" class="tma-screen">
+                <div class="screen-header">
+                    <h2>🧮 Position Size & Risk Tool</h2>
+                    <p>Calculate your exact lot size and risk parameters before entry.</p>
+                </div>
+
+                <div class="calc-card">
+                    <div class="form-group">
+                        <label>Account Balance ($)</label>
+                        <input type="number" id="tma-rc-balance" value="10000" oninput="ChartoraTMA.calcRisk()">
+                    </div>
+                    <div class="form-group">
+                        <label>Risk Percentage (%)</label>
+                        <input type="number" id="tma-rc-pct" value="1.0" step="0.1" oninput="ChartoraTMA.calcRisk()">
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Entry Price</label>
+                            <input type="number" id="tma-rc-entry" value="3342.50" step="0.01" oninput="ChartoraTMA.calcRisk()">
+                        </div>
+                        <div class="form-group">
+                            <label>Stop Loss</label>
+                            <input type="number" id="tma-rc-sl" value="3336.10" step="0.01" oninput="ChartoraTMA.calcRisk()">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Take Profit (Target 1)</label>
+                        <input type="number" id="tma-rc-tp" value="3351.50" step="0.01" oninput="ChartoraTMA.calcRisk()">
+                    </div>
+
+                    <div class="calc-results-box">
+                        <div class="res-row">
+                            <span class="lbl">Account Risk ($):</span>
+                            <span class="val danger" id="tma-res-risk">$100.00</span>
+                        </div>
+                        <div class="res-row">
+                            <span class="lbl">Stop Distance:</span>
+                            <span class="val" id="tma-res-dist">6.40 Points</span>
+                        </div>
+                        <div class="res-row">
+                            <span class="lbl">Potential Reward:</span>
+                            <span class="val success" id="tma-res-reward">$140.62</span>
+                        </div>
+                        <div class="res-row">
+                            <span class="lbl">Risk / Reward:</span>
+                            <span class="val primary" id="tma-res-rr">1 : 1.41</span>
+                        </div>
+                        <div class="res-row highlight">
+                            <span class="lbl">Recommended Size:</span>
+                            <span class="val warning" id="tma-res-lots">0.15 Lots</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 6. TRADE JOURNAL SCREEN -->
+            <section id="view-journal" class="tma-screen">
+                <div class="screen-header">
+                    <h2>📓 Synced Trade Journal</h2>
+                    <p>Track, evaluate, and refine your trading performance.</p>
+                </div>
+
+                <div class="journal-stats-grid">
+                    <div class="j-stat">
+                        <span class="val" id="j-total">0</span>
+                        <span class="lbl">Trades</span>
+                    </div>
+                    <div class="j-stat">
+                        <span class="val success" id="j-winrate">0.0%</span>
+                        <span class="lbl">Win Rate</span>
+                    </div>
+                    <div class="j-stat">
+                        <span class="val primary" id="j-netr">+0.0R</span>
+                        <span class="lbl">Net R</span>
+                    </div>
+                </div>
+
+                <button class="btn btn-primary btn-block" onclick="ChartoraTMA.toggleTradeModal(true)">+ Record New Trade</button>
+
+                <div class="trades-list" id="journal-trades-container">
+                    <div class="card-skeleton"></div>
+                </div>
+            </section>
+
+            <!-- 7. CURRENCY STRENGTH SCREEN -->
+            <section id="view-strength" class="tma-screen">
+                <div class="screen-header">
+                    <h2>💪 Currency Strength Index</h2>
+                    <p>Normalized multi-pair momentum across 8 major currencies.</p>
+                </div>
+
+                <div class="filter-tabs" id="strength-tf-tabs">
+                    <button class="tab-btn" data-tf="5M" onclick="ChartoraTMA.loadCurrencyStrength('5M')">5M</button>
+                    <button class="tab-btn" data-tf="15M" onclick="ChartoraTMA.loadCurrencyStrength('15M')">15M</button>
+                    <button class="tab-btn active" data-tf="1H" onclick="ChartoraTMA.loadCurrencyStrength('1H')">1H</button>
+                    <button class="tab-btn" data-tf="4H" onclick="ChartoraTMA.loadCurrencyStrength('4H')">4H</button>
+                    <button class="tab-btn" data-tf="1D" onclick="ChartoraTMA.loadCurrencyStrength('1D')">1D</button>
+                </div>
+
+                <div class="strength-full-list" id="strength-full-container">
+                    <div class="card-skeleton"></div>
+                </div>
+            </section>
+
+            <!-- 8. NEWS SCREEN -->
+            <section id="view-news" class="tma-screen">
+                <div class="screen-header">
+                    <h2>📰 Macroeconomic Calendar</h2>
+                    <p>High and medium impact economic news releases.</p>
+                </div>
+
+                <div class="news-list" id="news-container">
+                    <div class="card-skeleton"></div>
+                </div>
+            </section>
+
+            <!-- 9. ACADEMY SCREEN -->
+            <section id="view-academy" class="tma-screen">
+                <div class="screen-header">
+                    <h2>🎓 Chartora Trading Academy</h2>
+                    <p>Institutional trading curriculum and strategy execution.</p>
+                </div>
+
+                <div class="courses-list" id="academy-courses-container">
+                    <div class="card-skeleton"></div>
+                </div>
+            </section>
+
+            <!-- 10. WATCHLIST SCREEN -->
+            <section id="view-watchlist" class="tma-screen">
+                <div class="screen-header">
+                    <h2>⭐ My Watchlist</h2>
+                    <p>Your tracked institutional instruments.</p>
+                </div>
+
+                <div class="watchlist-list" id="watchlist-container">
+                    <div class="card-skeleton"></div>
+                </div>
+            </section>
+
+            <!-- 11. ALERTS SCREEN -->
+            <section id="view-alerts" class="tma-screen">
+                <div class="screen-header">
+                    <h2>🔔 Smart Price Alerts</h2>
+                    <p>Automated threshold notifications sent directly to Telegram.</p>
+                </div>
+
+                <div class="alerts-list" id="alerts-container">
+                    <div class="card-skeleton"></div>
+                </div>
+            </section>
+
+            <!-- 12. NOTIFICATIONS SCREEN -->
+            <section id="view-notifications" class="tma-screen">
+                <div class="screen-header">
+                    <h2>📢 Notification Center</h2>
+                    <button class="btn btn-sm btn-secondary" onclick="ChartoraTMA.markAllNotificationsRead()">Mark all read</button>
+                </div>
+
+                <div class="notifications-list" id="notifications-container">
+                    <div class="card-skeleton"></div>
+                </div>
+            </section>
+
+            <!-- 13. ACCOUNT & PROFILE SCREEN -->
+            <section id="view-account" class="tma-screen">
+                <div class="account-card">
+                    <div class="acc-avatar">👤</div>
+                    <h3 id="acc-user-name">Alex Rivers</h3>
+                    <span class="acc-plan" id="acc-plan-name">Chartora All Access</span>
+                    <span class="acc-email" id="acc-user-email">trader@chartora.in</span>
+                </div>
+
+                <div class="section-container">
+                    <h3>Telegram Account Link</h3>
+                    <div class="status-card" id="acc-tg-link-box">
+                        <div class="status-indicator online"></div>
+                        <div class="status-details">
+                            <span class="st-title">Connected Telegram ID</span>
+                            <span class="st-sub" id="acc-tg-id">ID: 11223344</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section-container">
+                    <h3>MT5 Expert Advisor Gateway</h3>
+                    <div class="status-card">
+                        <div class="status-indicator online"></div>
+                        <div class="status-details">
+                            <span class="st-title">EA_DEMO_01 (IC Markets)</span>
+                            <span class="st-sub">Status: ONLINE • 5 Pairs Active</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section-container">
+                    <h3>Terminal Preferences</h3>
+                    <div class="pref-toggle-row">
+                        <span>⚡ Setup Alerts</span>
+                        <input type="checkbox" id="pref-sig" checked onchange="ChartoraTMA.saveSettings()">
+                    </div>
+                    <div class="pref-toggle-row">
+                        <span>🔔 Price Alerts</span>
+                        <input type="checkbox" id="pref-price" checked onchange="ChartoraTMA.saveSettings()">
+                    </div>
+                    <div class="pref-toggle-row">
+                        <span>📰 High-Impact News</span>
+                        <input type="checkbox" id="pref-news" checked onchange="ChartoraTMA.saveSettings()">
+                    </div>
+                    <div class="pref-toggle-row">
+                        <span>📳 Haptic Touch Feedback</span>
+                        <input type="checkbox" id="pref-haptic" checked onchange="ChartoraTMA.saveSettings()">
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- ADD TRADE MODAL -->
+        <div id="modal-trade" class="tma-modal" style="display:none;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Record New Trade</h3>
+                    <button class="icon-btn" onclick="ChartoraTMA.toggleTradeModal(false)">✕</button>
+                </div>
+                <div class="form-group">
+                    <label>Symbol</label>
+                    <input type="text" id="tm-symbol" value="XAUUSD">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Direction</label>
+                        <select id="tm-direction">
+                            <option value="LONG">LONG (BUY)</option>
+                            <option value="SHORT">SHORT (SELL)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Strategy</label>
+                        <input type="text" id="tm-strat" value="EMA Pullback">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Entry Price</label>
+                        <input type="number" id="tm-entry" step="0.01" value="3342.50">
+                    </div>
+                    <div class="form-group">
+                        <label>Stop Loss</label>
+                        <input type="number" id="tm-sl" step="0.01" value="3336.10">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Exit Price</label>
+                        <input type="number" id="tm-exit" step="0.01" value="3357.90">
+                    </div>
+                    <div class="form-group">
+                        <label>Net Profit ($)</label>
+                        <input type="number" id="tm-result" value="240.00">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Trade Notes & Lesson</label>
+                    <textarea id="tm-notes" rows="2" placeholder="1H Trend alignment + 5M engulfing trigger."></textarea>
+                </div>
+                <button class="btn btn-primary btn-block" onclick="ChartoraTMA.saveTrade()">SAVE TRADE RECORD</button>
+            </div>
+        </div>
+
+        <!-- BOTTOM NAVIGATION BAR -->
+        <nav class="tma-bottom-nav">
+            <button class="nav-item active" data-screen="dashboard" onclick="ChartoraTMA.navigate('dashboard')">
+                <span class="nav-icon">⚡</span>
+                <span class="nav-label">Home</span>
+            </button>
+            <button class="nav-item" data-screen="markets" onclick="ChartoraTMA.navigate('markets')">
+                <span class="nav-icon">📈</span>
+                <span class="nav-label">Markets</span>
+            </button>
+            <button class="nav-item" data-screen="signals" onclick="ChartoraTMA.navigate('signals')">
+                <span class="nav-icon">🎯</span>
+                <span class="nav-label">Setups</span>
+            </button>
+            <button class="nav-item" data-screen="academy" onclick="ChartoraTMA.navigate('academy')">
+                <span class="nav-icon">🎓</span>
+                <span class="nav-label">Academy</span>
+            </button>
+            <button class="nav-item" data-screen="account" onclick="ChartoraTMA.navigate('account')">
+                <span class="nav-icon">👤</span>
+                <span class="nav-label">Profile</span>
+            </button>
+        </nav>
+
+    </div>
+
+    <!-- Mini App Logic -->
+    <script src="tma.js"></script>
+</body>
+</html>

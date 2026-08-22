@@ -1011,6 +1011,23 @@ function saveTradeRecord() {
 
     tradeJournalData.unshift(newRecord);
     localStorage.setItem('chartora_journal', JSON.stringify(tradeJournalData));
+
+    // Sync with backend API
+    if (typeof ChartoraAPI !== 'undefined' && ChartoraAPI.token) {
+        ChartoraAPI.addTrade({
+            symbol: market,
+            direction,
+            strategy,
+            entry_price: entry,
+            sl_price: sl,
+            tp_price: tp,
+            exit_price: tp,
+            result_usd: result,
+            notes: reason,
+            trade_date: date
+        }).catch(err => console.warn("Backend journal sync skipped:", err));
+    }
+
     handleRoute();
 }
 

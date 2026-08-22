@@ -33,6 +33,13 @@ Chartora.in uses a normalized relational database design supporting **SQLite3** 
 24. **`telegram_memberships`**: Telegram channel access state (`id`, `user_id`, `channel_id`, `role`, `joined_at`, `status`).
 25. **`telegram_access_logs`**: Telegram invitation & revocation audit log (`id`, `user_id`, `action`, `channel_id`, `invite_link`, `status`, `timestamp`).
 26. **`audit_logs`**: System audit trail (`id`, `actor_id`, `action`, `target_type`, `target_id`, `details`, `ip_address`, `timestamp`).
+27. **`telegram_users`**: Authoritative Telegram-to-Chartora identity link (`id`, `telegram_id`, `user_id`, `username`, `first_name`, `last_name`, `language_code`, `is_premium`, `auth_date`, `created_at`, `updated_at`).
+28. **`user_watchlists`**: User-customized market watchlists (`id`, `user_id`, `symbol`, `category`, `notes`, `created_at`).
+29. **`user_alerts`**: User price thresholds and trigger rules (`id`, `user_id`, `symbol`, `alert_type`, `target_price`, `condition`, `is_active`, `triggered_at`, `created_at`).
+30. **`telegram_notifications`**: Persistent notification queue and Telegram dispatch logs (`id`, `user_id`, `telegram_id`, `event_type`, `title`, `message`, `payload_json`, `is_read`, `status`, `error`, `sent_at`, `created_at`).
+31. **`telegram_bot_updates`**: Webhook idempotency ledger for deduplication (`id`, `update_id`, `update_type`, `processed_at`).
+32. **`deep_link_tokens`**: Signed cryptographic deep link tokens (`id`, `token`, `action_type`, `payload_json`, `user_id`, `expires_at`, `used_at`, `created_at`).
+33. **`user_preferences`**: Terminal and push alert preferences (`id`, `user_id`, `signal_alerts`, `price_alerts`, `news_alerts`, `haptic_feedback`, `sound_enabled`, `theme`, `language`, `timezone`, `updated_at`).
 
 ---
 

@@ -1,12 +1,12 @@
 /**
- * CHARTORA.IN — Client-Side SaaS API Bridge & PWA Manager
+ * CHARTORA.IN — Client-Side SaaS API Bridge & Unified Multi-Channel Store
+ * Connects Web Portal directly to the centralized Chartora Intelligence Core API.
  */
 
 const ChartoraAPI = {
     token: localStorage.getItem('chartora_token') || null,
     currentUser: JSON.parse(localStorage.getItem('chartora_user') || 'null'),
 
-    // Headers with token
     getHeaders() {
         const headers = { 'Content-Type': 'application/json' };
         if (this.token) {
@@ -15,10 +15,10 @@ const ChartoraAPI = {
         return headers;
     },
 
-    // Login
+    // 1. Auth Methods
     async login(email, password) {
         try {
-            const res = await fetch('/api/auth/login', {
+            const res = await fetch('/api/v1/auth/login', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email, password })
@@ -36,10 +36,9 @@ const ChartoraAPI = {
         }
     },
 
-    // Register
     async register(fullName, username, email, password) {
         try {
-            const res = await fetch('/api/auth/register', {
+            const res = await fetch('/api/v1/auth/register', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ full_name: fullName, username, email, password })
@@ -57,100 +56,140 @@ const ChartoraAPI = {
         }
     },
 
-    // Logout
     logout() {
         this.token = null;
         this.currentUser = null;
         localStorage.removeItem('chartora_token');
         localStorage.removeItem('chartora_user');
         window.location.hash = 'home';
-        handleRoute();
+        if (typeof handleRoute === 'function') handleRoute();
     },
 
-    // Fetch Virtual Performance Analytics
-    async getPerformanceMetrics() {
+    // 2. Market Data & Setups
+    async getMarkets() {
         try {
-            const res = await fetch('/api/performance', { headers: this.getHeaders() });
+            const res = await fetch('/api/v1/markets', { headers: this.getHeaders() });
             return await res.json();
         } catch (e) {
-            return null;
+            return { markets: [] };
         }
     },
 
-    // Fetch Signals
     async getSignals() {
         try {
-            const res = await fetch('/api/signals', { headers: this.getHeaders() });
+            const res = await fetch('/api/v1/signals', { headers: this.getHeaders() });
             return await res.json();
         } catch (e) {
-            return null;
+            return { signals: [] };
         }
     },
 
-    // Fetch Community Posts
-    async getCommunityPosts() {
+    async getCurrencyStrength(timeframe = '1H') {
         try {
-            const res = await fetch('/api/community/posts', { headers: this.getHeaders() });
+            const res = await fetch(`/api/v1/currency-strength?timeframe=${timeframe}`, { headers: this.getHeaders() });
             return await res.json();
         } catch (e) {
-            return null;
+            return { currencies: [] };
         }
     },
 
-    // Request Single-Use Expiring Telegram Invite
-    async requestTelegramInvite() {
+    async getNews() {
         try {
-            const res = await fetch('/api/telegram/request-invite', {
+            const res = await fetch('/api/v1/news', { headers: this.getHeaders() });
+            return await res.json();
+        } catch (e) {
+            return { news: [] };
+        }
+    },
+
+    // 3. Synced Trade Journal
+    async getJournal() {
+        try {
+            const res = await fetch('/api/v1/journal', { headers: this.getHeaders() });
+            return await res.json();
+        } catch (e) {
+            return { trades: [], metrics: {} };
+        }
+    },
+
+    async addTrade(tradePayload) {
+        try {
+            const res = await fetch('/api/v1/journal', {
                 method: 'POST',
-                headers: this.getHeaders()
+                headers: this.getHeaders(),
+                body: JSON.stringify(tradePayload)
             });
             return await res.json();
         } catch (e) {
-            return { invite_link: 'https://t.me/chartora_official' };
+            return { success: false };
         }
     },
 
-    // Fetch Admin Metrics
-    async getAdminMetrics() {
+    // 4. Academy Curriculum & Progress
+    async getAcademyCourses() {
         try {
-            const res = await fetch('/api/admin/metrics', { headers: this.getHeaders() });
+            const res = await fetch('/api/v1/academy', { headers: this.getHeaders() });
+            return await res.json();
+        } catch (e) {
+            return { courses: [] };
+        }
+    },
+
+    async markLessonComplete(lessonId) {
+        try {
+            const res = await fetch('/api/v1/academy/complete', {
+                method: 'POST',
+                headers: this.getHeaders(),
+                body: JSON.stringify({ lesson_id: lessonId })
+            });
+            return await res.json();
+        } catch (e) {
+            return { success: false };
+        }
+    },
+
+    // 5. Risk Planning
+    async calculateRisk(balance, riskPct, entry, sl, tp) {
+        try {
+            const res = await fetch('/api/v1/risk/calculate', {
+                method: 'POST',
+                headers: this.getHeaders(),
+                body: JSON.stringify({
+                    balance,
+                    risk_pct: riskPct,
+                    entry_price: entry,
+                    sl_price: sl,
+                    tp1_price: tp
+                })
+            });
             return await res.json();
         } catch (e) {
             return null;
+        }
+    },
+
+    // 6. Telegram Deep Link & Invites
+    async getTelegramDeepLink(action, reference) {
+        try {
+            const res = await fetch('/api/v1/telegram/deep-link', {
+                method: 'POST',
+                headers: this.getHeaders(),
+                body: JSON.stringify({ action, reference })
+            });
+            return await res.json();
+        } catch (e) {
+            return { deep_link: 'https://t.me/ChartoraBot' };
         }
     }
 };
 
-// PWA Service Worker Registration & Deferred Install Prompt
-let deferredPwaPrompt = null;
-
+// PWA Service Worker Registration
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
         navigator.serviceWorker.register('/public/sw.js').then((reg) => {
-            console.log('✅ PWA Service Worker registered:', reg.scope);
+            console.log('✅ Chartora PWA Service Worker registered:', reg.scope);
         }).catch((err) => {
-            console.log('PWA Service Worker registration failed:', err);
+            console.log('PWA Service Worker registration skipped:', err);
         });
     });
-}
-
-window.addEventListener('beforeinstallprompt', (e) => {
-    e.preventDefault();
-    deferredPwaPrompt = e;
-    const btn = document.getElementById('pwa-install-btn');
-    if (btn) btn.style.display = 'inline-flex';
-});
-
-function triggerPwaInstall() {
-    if (deferredPwaPrompt) {
-        deferredPwaPrompt.prompt();
-        deferredPwaPrompt.userChoice.then((choiceResult) => {
-            if (choiceResult.outcome === 'accepted') {
-                console.log('User accepted PWA installation');
-            }
-            deferredPwaPrompt = null;
-        });
-    } else {
-        alert('Chartora PWA is already installed or supported natively on your mobile browser.');
-    }
 }

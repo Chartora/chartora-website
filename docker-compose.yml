@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  chartora-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: chartora_production_core
+    restart: always
+    ports:
+      - "8080:8080"
+    environment:
+      - APP_ENV=production
+      - APP_URL=https://chartora.in
+      - API_URL=https://api.chartora.in
+      - PORT=8080
+      - JWT_SECRET=${JWT_SECRET:-chartora_production_jwt_secret_change_me_2026}
+      - DATABASE_URL=${DATABASE_URL:-}
+      - STRIPE_MODE=${STRIPE_MODE:-disabled}
+      - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET:-whsec_sample_chartora}
+      - TELEGRAM_MODE=${TELEGRAM_MODE:-active}
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN:-}
+      - TELEGRAM_BOT_USERNAME=${TELEGRAM_BOT_USERNAME:-ChartoraBot}
+      - TELEGRAM_WEBHOOK_SECRET=${TELEGRAM_WEBHOOK_SECRET:-}
+      - TELEGRAM_FREE_CHANNEL_ID=${TELEGRAM_FREE_CHANNEL_ID:-}
+      - TELEGRAM_PREMIUM_CHANNEL_ID=${TELEGRAM_PREMIUM_CHANNEL_ID:-}
+    volumes:
+      - chartora_data:/app/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+volumes:
+  chartora_data:
