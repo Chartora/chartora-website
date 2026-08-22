@@ -1,0 +1,27 @@
+services:
+  - type: web
+    name: chartora-platform
+    env: python
+    region: oregon
+    plan: free
+    buildCommand: "python3 -m unittest discover tests"
+    startCommand: "python3 server.py"
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.0
+      - key: APP_ENV
+        value: production
+      - key: PORT
+        value: 8080
+      - key: APP_URL
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: TELEGRAM_MODE
+        value: active
+      - key: TELEGRAM_BOT_TOKEN
+        sync: false
+      - key: TELEGRAM_BOT_USERNAME
+        sync: false
+      - key: TELEGRAM_WEBHOOK_SECRET
+        generateValue: true
