@@ -51,7 +51,13 @@ from backend.core import (
     news_engine,
     mt5_gateway_service,
     JournalService,
-    AcademyService
+    AcademyService,
+    SymbolRegistry,
+    CANONICAL_MARKET_REGISTRY,
+    realtime_market_engine,
+    news_intelligence_engine,
+    economic_calendar_engine,
+    global_session_engine
 )
 
 PORT = int(os.environ.get('PORT', 8080))
@@ -648,6 +654,29 @@ class ChartoraSaaSHandler(http.server.SimpleHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body)
 
+    def handle_sse_stream(self, stream_type: str):
+        """Server-Sent Events broadcaster for real-time market and news feeds."""
+        self.send_response(200)
+        self.send_header('Content-Type', 'text/event-stream')
+        self.send_header('Cache-Control', 'no-cache')
+        self.send_header('Connection', 'keep-alive')
+        self.send_header('Access-Control-Allow-Origin', '*')
+        self.end_headers()
+
+        try:
+            if stream_type == "markets":
+                quotes = realtime_market_engine.get_all_quotes()
+                event_str = f"event: market_snapshot\ndata: {json.dumps(quotes)}\n\n"
+                self.wfile.write(event_str.encode('utf-8'))
+                self.wfile.flush()
+            elif stream_type == "news":
+                news_items = news_intelligence_engine.get_news(limit=10)
+                event_str = f"event: news_snapshot\ndata: {json.dumps(news_items)}\n\n"
+                self.wfile.write(event_str.encode('utf-8'))
+                self.wfile.flush()
+        except Exception:
+            pass
+
     def do_OPTIONS(self):
         self.send_response(200)
         self.send_header('Access-Control-Allow-Origin', '*')
@@ -712,6 +741,9 @@ class ChartoraSaaSHandler(http.server.SimpleHTTPRequestHandler):
                 "version": "3.1.0",
                 "modules": {
                     "market_data": "ACTIVE",
+                    "realtime_engine": "ACTIVE",
+                    "news_intelligence": "ACTIVE",
+                    "economic_calendar": "ACTIVE",
                     "strategy_engine": "ACTIVE",
                     "mt5_gateway": "ONLINE",
                     "telegram": TELEGRAM_MODE,
@@ -720,6 +752,12 @@ class ChartoraSaaSHandler(http.server.SimpleHTTPRequestHandler):
             })
         if path == '/ready':
             return self.send_json({"status": "READY", "database": "connected", "telegram": TELEGRAM_MODE})
+
+        # SSE Streaming Endpoints
+        if path in ['/api/stream/markets', '/api/v1/stream/markets']:
+            return self.handle_sse_stream("markets")
+        if path in ['/api/stream/news', '/api/v1/stream/news']:
+            return self.handle_sse_stream("news")
 
         # Chart Snapshot Rendering (/api/v1/charts/<setup_id>.svg / .png)
         if path.startswith('/api/v1/charts/') or path.startswith('/api/charts/'):
@@ -810,15 +848,15 @@ class ChartoraSaaSHandler(http.server.SimpleHTTPRequestHandler):
                     }
                 })
 
-            # 3. MARKETS UNIVERSE
+            # 3. MARKETS UNIVERSE (LEGACY & REAL-TIME)
             elif path in ['/api/markets', '/api/v1/markets']:
-                quotes = market_data_engine.get_all_quotes()
-                return self.send_json({"markets": quotes, "server_time": datetime.now().isoformat()})
+                quotes = realtime_market_engine.get_all_quotes()
+                return self.send_json({"markets": quotes, "server_time": datetime.now(timezone.utc).isoformat()})
 
             elif path.startswith('/api/markets/') or path.startswith('/api/v1/markets/'):
                 prefix = '/api/v1/markets/' if path.startswith('/api/v1/markets/') else '/api/markets/'
                 symbol = path.replace(prefix, '').upper().strip()
-                quote = market_data_engine.get_quote(symbol)
+                quote = realtime_market_engine.get_quote(symbol)
                 cursor.execute('SELECT * FROM signals WHERE instrument = ? ORDER BY created_at DESC LIMIT 3', (symbol,))
                 recent_signals = [dict(r) for r in cursor.fetchall()]
                 return self.send_json({
@@ -826,6 +864,97 @@ class ChartoraSaaSHandler(http.server.SimpleHTTPRequestHandler):
                     "quote": quote,
                     "recent_signals": recent_signals,
                     "market_note": f"Real-time institutional liquidity stream for {symbol}."
+                })
+
+            # REALTIME QUOTES & CANONICAL UNIVERSE
+            elif path in ['/api/realtime/quotes', '/api/v1/realtime/quotes']:
+                cat = urllib.parse.parse_qs(parsed.query).get('category', [None])[0]
+                quotes = realtime_market_engine.get_all_quotes(category=cat)
+                return self.send_json({
+                    "quotes": quotes,
+                    "server_time": datetime.now(timezone.utc).isoformat(),
+                    "canonical_symbols_count": len(quotes)
+                })
+
+            elif path.startswith('/api/v1/realtime/quotes/') or path.startswith('/api/realtime/quotes/'):
+                prefix = '/api/v1/realtime/quotes/' if path.startswith('/api/v1/realtime/quotes/') else '/api/realtime/quotes/'
+                sym = path.replace(prefix, '').upper().strip()
+                quote = realtime_market_engine.get_quote(sym)
+                if quote:
+                    return self.send_json({"quote": quote})
+                return self.send_json({"error": "Symbol not found in registry"}, 404)
+
+            # REALTIME NEWS INTELLIGENCE & EDUCATIONAL SUMMARIES
+            elif path in ['/api/news/intelligence', '/api/v1/news/intelligence', '/api/v1/news']:
+                query_params = urllib.parse.parse_qs(parsed.query)
+                cat = query_params.get('category', [None])[0]
+                imp = query_params.get('impact', [None])[0]
+                news_items = news_intelligence_engine.get_news(category=cat, impact=imp, limit=30)
+                return self.send_json({
+                    "news": news_items,
+                    "count": len(news_items),
+                    "server_time": datetime.now(timezone.utc).isoformat()
+                })
+
+            elif path.startswith('/api/v1/news/') or path.startswith('/api/news/'):
+                prefix = '/api/v1/news/' if path.startswith('/api/v1/news/') else '/api/news/'
+                news_id = path.replace(prefix, '').strip()
+                item = news_intelligence_engine.get_news_by_id(news_id)
+                if item:
+                    return self.send_json({"news_item": item})
+                return self.send_json({"error": "News item not found"}, 404)
+
+            # ECONOMIC CALENDAR & COUNTDOWN ALERTS
+            elif path in ['/api/calendar/events', '/api/v1/calendar/events', '/api/v1/calendar']:
+                query_params = urllib.parse.parse_qs(parsed.query)
+                curr = query_params.get('currency', [None])[0]
+                imp = query_params.get('importance', [None])[0]
+                events = economic_calendar_engine.get_events(currency=curr, importance=imp, limit=30)
+                return self.send_json({
+                    "events": events,
+                    "count": len(events),
+                    "server_time": datetime.now(timezone.utc).isoformat()
+                })
+
+            elif path in ['/api/calendar/upcoming', '/api/v1/calendar/upcoming']:
+                events = economic_calendar_engine.get_events(importance='HIGH', limit=10)
+                imminent = [e for e in events if e.get('is_imminent')]
+                return self.send_json({
+                    "upcoming_high_impact": events,
+                    "imminent_within_hour": imminent,
+                    "server_time": datetime.now(timezone.utc).isoformat()
+                })
+
+            # GLOBAL SESSIONS & STATUS
+            elif path in ['/api/sessions/status', '/api/v1/sessions/status']:
+                session_info = global_session_engine.get_current_session_status()
+                return self.send_json(session_info)
+
+            elif path in ['/api/market-status', '/api/v1/market-status']:
+                session_info = global_session_engine.get_current_session_status()
+                all_quotes = realtime_market_engine.get_all_quotes()
+                status_by_cat = {}
+                for q in all_quotes:
+                    cat = q.get("category", "General")
+                    if cat not in status_by_cat:
+                        status_by_cat[cat] = {"count": 0, "live": 0, "stale": 0}
+                    status_by_cat[cat]["count"] += 1
+                    if q.get("freshness") == "LIVE":
+                        status_by_cat[cat]["live"] += 1
+                    else:
+                        status_by_cat[cat]["stale"] += 1
+
+                return self.send_json({
+                    "status": "OPERATIONAL",
+                    "sessions": session_info,
+                    "categories": status_by_cat,
+                    "providers": {
+                        "MT5": "ONLINE",
+                        "TwelveData_REST": "ACTIVE",
+                        "Finnhub_News": "ACTIVE",
+                        "Chartora_Fallback": "ACTIVE"
+                    },
+                    "server_time": datetime.now(timezone.utc).isoformat()
                 })
 
             # 4. SIGNALS & SETUPS

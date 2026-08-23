@@ -22,6 +22,8 @@ const ChartoraTMA = {
     courses: [],
     currencies: [],
     news: [],
+    calendarEvents: [],
+    sessions: null,
     settings: {
         signal_alerts: 1,
         price_alerts: 1,
@@ -34,7 +36,7 @@ const ChartoraTMA = {
     // 1. INITIALIZATION & SDK LIFECYCLE
     // ==========================================
     async init() {
-        console.log("⚡ Initializing Chartora Telegram Mini App...");
+        console.log("⚡ Initializing Chartora Telegram Mini App & Real-Time Engine...");
 
         if (this.tg) {
             this.tg.ready();
@@ -51,7 +53,9 @@ const ChartoraTMA = {
         this.handleInitialRoute();
         await this.loadAllData();
 
-        // Real-time polling fallback
+        // Connect SSE streaming with polling fallback
+        this.connectMarketStream();
+        this.connectNewsStream();
         setInterval(() => this.refreshBackgroundData(), 15000);
     },
 
@@ -234,7 +238,7 @@ const ChartoraTMA = {
     },
 
     // ==========================================
-    // 4. DATA LOADERS & API CALLS
+    // 4. DATA LOADERS, SSE STREAMING & API CALLS
     // ==========================================
     async loadAllData() {
         await Promise.all([
@@ -242,22 +246,65 @@ const ChartoraTMA = {
             this.loadSignals(),
             this.loadCurrencyStrength('1H'),
             this.loadNews(),
+            this.loadCalendar(),
+            this.loadSessions(),
             this.loadJournal(),
             this.loadAcademy()
         ]);
     },
 
+    connectMarketStream() {
+        if (!window.EventSource) return;
+        try {
+            const es = new EventSource('/api/stream/markets');
+            es.addEventListener('market_snapshot', (e) => {
+                try {
+                    const quotes = JSON.parse(e.data);
+                    if (quotes && quotes.length) {
+                        this.markets = quotes;
+                        this.renderMarketsList();
+                    }
+                } catch (err) {}
+            });
+            es.onerror = () => {
+                es.close();
+                setTimeout(() => this.connectMarketStream(), 10000);
+            };
+        } catch (e) {}
+    },
+
+    connectNewsStream() {
+        if (!window.EventSource) return;
+        try {
+            const es = new EventSource('/api/stream/news');
+            es.addEventListener('news_snapshot', (e) => {
+                try {
+                    const items = JSON.parse(e.data);
+                    if (items && items.length) {
+                        this.news = items;
+                        this.renderNewsList();
+                    }
+                } catch (err) {}
+            });
+            es.onerror = () => {
+                es.close();
+                setTimeout(() => this.connectNewsStream(), 15000);
+            };
+        } catch (e) {}
+    },
+
     async refreshBackgroundData() {
         await this.loadMarkets();
         await this.loadSignals();
+        await this.loadSessions();
     },
 
     async loadMarkets() {
         try {
-            const res = await fetch('/api/v1/markets', { headers: this.getHeaders() });
+            const res = await fetch('/api/v1/realtime/quotes', { headers: this.getHeaders() });
             const data = await res.json();
-            if (data.markets) {
-                this.markets = data.markets;
+            if (data.quotes) {
+                this.markets = data.quotes;
                 this.renderMarketsList();
             }
         } catch (e) {}
@@ -288,13 +335,56 @@ const ChartoraTMA = {
 
     async loadNews() {
         try {
-            const res = await fetch('/api/v1/news', { headers: this.getHeaders() });
+            const res = await fetch('/api/v1/news/intelligence', { headers: this.getHeaders() });
             const data = await res.json();
             if (data.news) {
                 this.news = data.news;
                 this.renderNewsList();
             }
         } catch (e) {}
+    },
+
+    async loadCalendar() {
+        try {
+            const res = await fetch('/api/v1/calendar/events', { headers: this.getHeaders() });
+            const data = await res.json();
+            if (data.events) {
+                this.calendarEvents = data.events;
+                this.renderCalendarList();
+            }
+        } catch (e) {}
+    },
+
+    async loadSessions() {
+        try {
+            const res = await fetch('/api/v1/sessions/status', { headers: this.getHeaders() });
+            const data = await res.json();
+            if (data.sessions) {
+                this.sessions = data;
+                this.renderSessionClock(data);
+            }
+        } catch (e) {}
+    },
+
+    switchNewsTab(tab) {
+        this.haptic('selection');
+        const btnIntel = document.getElementById('btn-tab-intel');
+        const btnCal = document.getElementById('btn-tab-calendar');
+        const newsCont = document.getElementById('news-container');
+        const calCont = document.getElementById('calendar-container');
+
+        if (tab === 'intel') {
+            btnIntel?.classList.add('active');
+            btnCal?.classList.remove('active');
+            if (newsCont) newsCont.style.display = 'flex';
+            if (calCont) calCont.style.display = 'none';
+        } else {
+            btnCal?.classList.add('active');
+            btnIntel?.classList.remove('active');
+            if (newsCont) newsCont.style.display = 'none';
+            if (calCont) calCont.style.display = 'flex';
+            this.loadCalendar();
+        }
     },
 
     async loadJournal() {
@@ -376,158 +466,122 @@ const ChartoraTMA = {
         `;
     },
 
+    renderSessionClock(data) {
+        const grid = document.getElementById('session-grid-container');
+        const badge = document.getElementById('session-liquidity-badge');
+        if (!grid || !data || !data.sessions) return;
+
+        if (badge) {
+            badge.textContent = data.liquidity_state || 'STANDARD LIQUIDITY';
+        }
+
+        grid.innerHTML = Object.values(data.sessions).map(s => {
+            const isOpen = s.status === 'OPEN';
+            return `
+                <div class="sess-pill ${isOpen ? 'active' : ''}">
+                    <span>${s.name}</span>
+                    <span class="dot">${isOpen ? '●' : '○'}</span>
+                </div>
+            `;
+        }).join('');
+    },
+
     renderMarketsList() {
         const container = document.getElementById('markets-container');
         if (!container) return;
 
         container.innerHTML = this.markets.map(m => {
-            const isPos = (m.change_24h || '').startsWith('+');
+            const changeVal = parseFloat(m.change_pct || 0);
+            const isPos = changeVal >= 0;
+            const changeStr = `${isPos ? '+' : ''}${changeVal.toFixed(2)}%`;
+            const freshnessBadge = m.freshness === 'LIVE' ? '🟢 LIVE' : m.freshness === 'DELAYED' ? '🟡 DELAYED' : '⚪ STALE';
+
             return `
                 <div class="market-item" onclick="ChartoraTMA.showMarketAction('${m.symbol}')">
                     <div class="m-left">
-                        <span class="m-sym">${m.symbol}</span>
-                        <span class="m-name">${m.name || m.category}</span>
+                        <div style="display:flex; align-items:center; gap:6px;">
+                            <span class="m-sym">${m.symbol}</span>
+                            <span class="badge-freshness" style="font-size:10px; opacity:0.75;">${freshnessBadge}</span>
+                        </div>
+                        <span class="m-name">${m.display_name || m.category}</span>
                     </div>
                     <div class="m-right">
-                        <span class="m-price">${m.last || m.price}</span>
-                        <span class="m-ch ${isPos ? 'pos' : 'neg'}">${m.change_24h}</span>
+                        <span class="m-price">${m.last || m.bid}</span>
+                        <span class="m-ch ${isPos ? 'pos' : 'neg'}">${changeStr}</span>
                     </div>
                 </div>
             `;
         }).join('');
     },
 
-    renderSignalsList() {
-        const container = document.getElementById('signals-container');
+    renderCalendarList() {
+        const container = document.getElementById('calendar-container');
         if (!container) return;
 
-        container.innerHTML = this.signals.map(s => {
-            const isBull = s.direction === 'BUY';
+        if (!this.calendarEvents.length) {
+            container.innerHTML = '<div class="empty-state">No upcoming economic calendar events scheduled.</div>';
+            return;
+        }
+
+        container.innerHTML = this.calendarEvents.map(e => {
+            const isHigh = e.importance === 'HIGH';
+            const countdown = e.countdown_minutes !== null ? (e.countdown_minutes > 0 ? `In ${e.countdown_minutes}m` : 'Released') : '';
             return `
-                <div class="signal-card" onclick="ChartoraTMA.showSetupDetail('SET-${s.instrument}-01')">
-                    <div class="sig-header">
-                        <div>
-                            <span class="sig-sym">${s.instrument}</span>
-                            <span class="sig-tf">${s.timeframe}</span>
-                        </div>
-                        <span class="sig-badge ${isBull ? 'pos' : 'neg'}">${s.direction}</span>
+                <div class="news-card">
+                    <div class="news-top">
+                        <span class="news-impact ${isHigh ? 'high' : 'med'}">${e.importance} IMPACT • ${e.currency}</span>
+                        <span class="news-time" style="color:var(--tma-accent); font-weight:600;">${countdown}</span>
                     </div>
-                    <div class="sig-strategy">${s.strategy}</div>
-                    <div class="sig-grid">
-                        <div><span class="k">Entry</span><span class="v">${s.entry_price}</span></div>
-                        <div><span class="k">Stop Loss</span><span class="v neg">${s.sl_price}</span></div>
-                        <div><span class="k">Target 1</span><span class="v pos">${s.tp1_price}</span></div>
-                        <div><span class="k">R:R</span><span class="v primary">1 : ${s.rr_ratio}</span></div>
+                    <h4 class="news-title">${e.event_name}</h4>
+                    <p class="news-summary">${e.notes || ''}</p>
+                    <div class="news-meta" style="margin-top:8px;">
+                        <span>Forecast: <b>${e.forecast}</b></span>
+                        <span>Previous: <b>${e.previous}</b></span>
+                        <span>Actual: <b class="${e.actual !== 'N/A' ? 'pos' : ''}">${e.actual}</b></span>
+                    </div>
+                    <div style="font-size:11px; color:var(--tma-text-sub); margin-top:6px;">
+                        Source: ${e.source}
                     </div>
                 </div>
             `;
         }).join('');
-    },
-
-    showSetupDetail(setupId) {
-        this.navigate('setup-detail');
-        const container = document.getElementById('setup-detail-content');
-        if (!container) return;
-
-        const sym = setupId.replace("SET-", "").split("-")[0] || "XAUUSD";
-        const isBull = true;
-
-        container.innerHTML = `
-            <div class="detail-header">
-                <h2>${sym} • 5M</h2>
-                <span class="sig-badge pos">🟢 BUY SETUP</span>
-            </div>
-            
-            <div class="quality-box">
-                <span class="q-score">82/100</span>
-                <span class="q-label">CONDITION QUALITY SCORE</span>
-            </div>
-
-            <!-- Embedded Live Chart Snapshot -->
-            <div class="chart-box">
-                <img src="/api/v1/charts/${setupId}.svg" alt="${sym} Setup Chart" class="chart-img">
-            </div>
-
-            <div class="setup-params-card">
-                <h3>Setup Parameters</h3>
-                <div class="sig-grid">
-                    <div><span class="k">Entry</span><span class="v">3,342.50</span></div>
-                    <div><span class="k">Stop Loss</span><span class="v neg">3,336.10</span></div>
-                    <div><span class="k">Target 1</span><span class="v pos">3,351.50</span></div>
-                    <div><span class="k">Target 2</span><span class="v pos">3,357.90</span></div>
-                </div>
-            </div>
-
-            <div class="analysis-card">
-                <h3>Why This Setup Exists (Conditions)</h3>
-                <ul class="condition-list">
-                    <li>✔️ 1H higher timeframe trend is strongly Bullish.</li>
-                    <li>✔️ 5M EMA 9 and EMA 21 maintain proper alignment above 200 EMA.</li>
-                    <li>✔️ Controlled pullback into the dynamic EMA 21 value zone.</li>
-                    <li>✔️ Key structure support held without invalidation.</li>
-                    <li>✔️ Bullish engulfing trigger candle confirmed momentum.</li>
-                    <li>✔️ Minimum 1 : 1.63 Risk/Reward ratio to Target 1.</li>
-                </ul>
-            </div>
-
-            <div class="analysis-card">
-                <h3>Invalidation Rule</h3>
-                <p>A confirmed 5M candle close below <code>3,336.10</code> invalidates the structure immediately.</p>
-            </div>
-
-            <div class="action-buttons-stack">
-                <button class="btn btn-primary btn-block" onclick="ChartoraTMA.navigate('risk')">🧮 Plan Risk for this Setup</button>
-                <button class="btn btn-secondary btn-block" onclick="ChartoraTMA.toggleTradeModal(true)">📓 Record in Trade Journal</button>
-            </div>
-        `;
-    },
-
-    renderCurrencyStrength(currencies) {
-        const dashGrid = document.getElementById('dash-currency-grid');
-        const fullList = document.getElementById('strength-full-container');
-
-        if (dashGrid) {
-            dashGrid.innerHTML = currencies.slice(0, 4).map(c => `
-                <div class="c-box">
-                    <span class="c-code">${c.code}</span>
-                    <span class="c-score ${c.status === 'STRONG' ? 'pos' : c.status === 'WEAK' ? 'neg' : ''}">${c.score}</span>
-                </div>
-            `).join('');
-        }
-
-        if (fullList) {
-            fullList.innerHTML = currencies.map(c => `
-                <div class="strength-bar-row">
-                    <div class="s-info">
-                        <span class="s-sym">${c.code} (${c.name})</span>
-                        <span class="s-val ${c.status === 'STRONG' ? 'pos' : c.status === 'WEAK' ? 'neg' : ''}">${c.score}/100</span>
-                    </div>
-                    <div class="bar-track">
-                        <div class="bar-fill ${c.status === 'STRONG' ? 'pos' : c.status === 'WEAK' ? 'neg' : ''}" style="width:${c.score}%"></div>
-                    </div>
-                </div>
-            `).join('');
-        }
     },
 
     renderNewsList() {
         const container = document.getElementById('news-container');
         if (!container) return;
 
-        container.innerHTML = this.news.map(n => `
-            <div class="news-card">
-                <div class="news-top">
-                    <span class="news-impact ${n.impact === 'HIGH' ? 'high' : 'med'}">${n.impact} IMPACT</span>
-                    <span class="news-time">${n.release_time}</span>
+        if (!this.news.length) {
+            container.innerHTML = '<div class="empty-state">No breaking intelligence headlines at this moment.</div>';
+            return;
+        }
+
+        container.innerHTML = this.news.map(n => {
+            const isHigh = n.impact === 'HIGH' || n.impact === 'CRITICAL';
+            const edu = n.educational_context || {};
+            return `
+                <div class="news-card" style="border-left: 3px solid ${isHigh ? 'var(--tma-danger)' : 'var(--tma-accent)'};">
+                    <div class="news-top">
+                        <span class="news-impact ${isHigh ? 'high' : 'med'}">${n.impact} IMPACT • ${n.category}</span>
+                        <span class="news-time">${n.published_at ? n.published_at.slice(11, 16) + ' UTC' : ''}</span>
+                    </div>
+                    <h4 class="news-title">${n.headline}</h4>
+                    <p class="news-summary">${n.summary}</p>
+                    
+                    ${edu.why_it_matters ? `
+                        <div style="background:rgba(255,255,255,0.03); border-radius:6px; padding:8px; margin:8px 0; font-size:12px; line-height:1.4;">
+                            <div style="color:var(--tma-accent); font-weight:600; margin-bottom:2px;">💡 Why it matters:</div>
+                            <div style="color:var(--tma-text-sub);">${edu.why_it_matters}</div>
+                        </div>
+                    ` : ''}
+
+                    <div class="news-meta">
+                        <span>Affected: <b>${(n.affected_assets || []).join(', ')}</b></span>
+                        <span>Source: <b>${n.source}</b></span>
+                    </div>
                 </div>
-                <h4 class="news-title">${n.title}</h4>
-                <p class="news-summary">${n.summary}</p>
-                <div class="news-meta">
-                    <span>Currency: <b>${n.currency}</b></span>
-                    <span>Expected: <b>${n.expected}</b></span>
-                </div>
-            </div>
-        `).join('');
+            `;
+        }).join('');
     },
 
     renderJournal(data) {

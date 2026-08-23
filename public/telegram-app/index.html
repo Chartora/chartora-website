@@ -70,7 +70,21 @@
                     </div>
                 </div>
 
-                <!-- Quick Action Buttons Grid -->
+                <!-- Global Sessions Clock Widget -->
+                <div class="session-clock-card" id="dash-session-card">
+                    <div class="session-top">
+                        <span class="session-title">🌐 GLOBAL SESSIONS</span>
+                        <span class="session-badge" id="session-liquidity-badge">LONDON / NY OVERLAP</span>
+                    </div>
+                    <div class="session-grid" id="session-grid-container">
+                        <div class="sess-pill active"><span>London</span><span class="dot">●</span></div>
+                        <div class="sess-pill active"><span>New York</span><span class="dot">●</span></div>
+                        <div class="sess-pill"><span>Tokyo</span><span class="dot">○</span></div>
+                        <div class="sess-pill"><span>Sydney</span><span class="dot">○</span></div>
+                    </div>
+                </div>
+
+                <!-- Live Quick Action Grid -->
                 <div class="quick-actions-grid">
                     <button class="action-card" onclick="ChartoraTMA.navigate('signals')">
                         <span class="act-icon">⚡</span>
@@ -79,6 +93,10 @@
                     <button class="action-card" onclick="ChartoraTMA.navigate('markets')">
                         <span class="act-icon">📈</span>
                         <span class="act-name">Markets</span>
+                    </button>
+                    <button class="action-card" onclick="ChartoraTMA.navigate('news')">
+                        <span class="act-icon">📰</span>
+                        <span class="act-name">News Intel</span>
                     </button>
                     <button class="action-card" onclick="ChartoraTMA.navigate('risk')">
                         <span class="act-icon">🧮</span>
@@ -92,10 +110,6 @@
                         <span class="act-icon">💪</span>
                         <span class="act-name">Strength</span>
                     </button>
-                    <button class="action-card" onclick="ChartoraTMA.navigate('news')">
-                        <span class="act-icon">📰</span>
-                        <span class="act-name">News</span>
-                    </button>
                     <button class="action-card" onclick="ChartoraTMA.navigate('academy')">
                         <span class="act-icon">🎓</span>
                         <span class="act-name">Academy</span>
@@ -103,6 +117,10 @@
                     <button class="action-card" onclick="ChartoraTMA.navigate('watchlist')">
                         <span class="act-icon">⭐</span>
                         <span class="act-name">Watchlist</span>
+                    </button>
+                    <button class="action-card" onclick="ChartoraTMA.navigate('alerts')">
+                        <span class="act-icon">🔔</span>
+                        <span class="act-name">Alerts</span>
                     </button>
                 </div>
 
@@ -276,14 +294,23 @@
                 </div>
             </section>
 
-            <!-- 8. NEWS SCREEN -->
+            <!-- 8. NEWS & MACRO INTELLIGENCE SCREEN -->
             <section id="view-news" class="tma-screen">
                 <div class="screen-header">
-                    <h2>📰 Macroeconomic Calendar</h2>
-                    <p>High and medium impact economic news releases.</p>
+                    <h2>📰 News & Economic Calendar</h2>
+                    <p>Real-time macro intelligence and scheduled releases.</p>
+                </div>
+
+                <div class="filter-tabs" id="news-section-tabs">
+                    <button class="tab-btn active" id="btn-tab-intel" onclick="ChartoraTMA.switchNewsTab('intel')">⚡ Breaking Intel</button>
+                    <button class="tab-btn" id="btn-tab-calendar" onclick="ChartoraTMA.switchNewsTab('calendar')">📅 Calendar Events</button>
                 </div>
 
                 <div class="news-list" id="news-container">
+                    <div class="card-skeleton"></div>
+                </div>
+
+                <div class="calendar-list" id="calendar-container" style="display:none;">
                     <div class="card-skeleton"></div>
                 </div>
             </section>

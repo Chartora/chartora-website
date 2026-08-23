@@ -10,6 +10,11 @@ from .currency_strength import currency_strength_engine, CurrencyStrengthEngine
 from .news_engine import news_engine, NewsEngine
 from .mt5_gateway import mt5_gateway_service, Mt5GatewayService
 from .journal_service import JournalService, AcademyService
+from .symbol_registry import SymbolRegistry, CANONICAL_MARKET_REGISTRY
+from .realtime_engine import realtime_market_engine, RealTimeMarketEngine
+from .news_intelligence_engine import news_intelligence_engine, NewsIntelligenceEngine
+from .economic_calendar import economic_calendar_engine, EconomicCalendarEngine
+from .global_session_engine import global_session_engine, GlobalSessionEngine
 
 __all__ = [
     "event_bus",
@@ -29,5 +34,15 @@ __all__ = [
     "mt5_gateway_service",
     "Mt5GatewayService",
     "JournalService",
-    "AcademyService"
+    "AcademyService",
+    "SymbolRegistry",
+    "CANONICAL_MARKET_REGISTRY",
+    "realtime_market_engine",
+    "RealTimeMarketEngine",
+    "news_intelligence_engine",
+    "NewsIntelligenceEngine",
+    "economic_calendar_engine",
+    "EconomicCalendarEngine",
+    "global_session_engine",
+    "GlobalSessionEngine"
 ]
