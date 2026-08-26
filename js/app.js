@@ -9,6 +9,179 @@
  * 5. Category Pricing & Custom Build Services
  */
 
+// Theme Engine
+function initTheme() {
+    const savedTheme = localStorage.getItem('chartora_theme') || (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+    setTheme(savedTheme);
+}
+
+function setTheme(theme) {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('chartora_theme', theme);
+    const icon = document.getElementById('theme-icon');
+    if (icon) icon.innerText = theme === 'light' ? '☀️' : '🌙';
+}
+
+function toggleTheme() {
+    const current = document.documentElement.getAttribute('data-theme') || 'dark';
+    const next = current === 'light' ? 'dark' : 'light';
+    setTheme(next);
+}
+
+// Unified API Client
+const ChartoraAPI = {
+    token: localStorage.getItem('chartora_jwt') || null,
+    currentUser: JSON.parse(localStorage.getItem('chartora_user') || 'null'),
+    activeAccountId: localStorage.getItem('chartora_active_account_id') || null,
+    accounts: [],
+
+    async request(endpoint, options = {}) {
+        const headers = { 'Content-Type': 'application/json', ...(options.headers || {}) };
+        if (this.token) {
+            headers['Authorization'] = `Bearer ${this.token}`;
+        }
+        try {
+            const res = await fetch(endpoint, { ...options, headers });
+            const data = await res.json();
+            return data;
+        } catch (err) {
+            console.error(`API Error on ${endpoint}:`, err);
+            return { success: false, error: err.message };
+        }
+    },
+
+    async login(email, password) {
+        const res = await this.request('/api/v1/auth/login', {
+            method: 'POST',
+            body: JSON.stringify({ email, password })
+        });
+        if (res.success && res.token) {
+            this.token = res.token;
+            this.currentUser = res.user;
+            localStorage.setItem('chartora_jwt', res.token);
+            localStorage.setItem('chartora_user', JSON.stringify(res.user));
+            await this.loadAccounts();
+        }
+        return res;
+    },
+
+    async register(name, username, email, password) {
+        const res = await this.request('/api/v1/auth/register', {
+            method: 'POST',
+            body: JSON.stringify({ name, username, email, password })
+        });
+        if (res.success && res.token) {
+            this.token = res.token;
+            this.currentUser = res.user;
+            localStorage.setItem('chartora_jwt', res.token);
+            localStorage.setItem('chartora_user', JSON.stringify(res.user));
+            await this.loadAccounts();
+        }
+        return res;
+    },
+
+    async getGoogleAuthUrl() {
+        const redirect = window.location.origin + window.location.pathname + '#login';
+        return await this.request(`/api/v1/auth/google/url?redirect_uri=${encodeURIComponent(redirect)}`);
+    },
+
+    async handleGoogleCallback(code, state) {
+        const redirect = window.location.origin + window.location.pathname + '#login';
+        const res = await this.request('/api/v1/auth/google/callback', {
+            method: 'POST',
+            body: JSON.stringify({ code, state, redirect_uri: redirect })
+        });
+        if (res.success && res.token) {
+            this.token = res.token;
+            this.currentUser = res.user;
+            localStorage.setItem('chartora_jwt', res.token);
+            localStorage.setItem('chartora_user', JSON.stringify(res.user));
+            await this.loadAccounts();
+        }
+        return res;
+    },
+
+    async loadAccounts() {
+        if (!this.token) return [];
+        const res = await this.request('/api/v1/accounts');
+        if (res.success && Array.isArray(res.accounts)) {
+            this.accounts = res.accounts;
+            if (!this.activeAccountId && this.accounts.length > 0) {
+                const def = this.accounts.find(a => a.is_default) || this.accounts[0];
+                this.activeAccountId = def.id;
+                localStorage.setItem('chartora_active_account_id', def.id);
+            }
+        }
+        return this.accounts;
+    },
+
+    async getActiveAccount() {
+        if (!this.accounts || this.accounts.length === 0) {
+            await this.loadAccounts();
+        }
+        return this.accounts.find(a => String(a.id) === String(this.activeAccountId)) || this.accounts[0] || null;
+    },
+
+    async createAccount(data) {
+        const res = await this.request('/api/v1/accounts', {
+            method: 'POST',
+            body: JSON.stringify(data)
+        });
+        if (res.success) {
+            await this.loadAccounts();
+            if (res.account_id) {
+                this.activeAccountId = res.account_id;
+                localStorage.setItem('chartora_active_account_id', res.account_id);
+            }
+        }
+        return res;
+    },
+
+    async adjustBalance(accountId, type, amount, notes) {
+        const res = await this.request(`/api/v1/accounts/${accountId}/adjust`, {
+            method: 'POST',
+            body: JSON.stringify({ transaction_type: type, amount, notes })
+        });
+        if (res.success) {
+            await this.loadAccounts();
+        }
+        return res;
+    },
+
+    async addTrade(tradeData) {
+        const activeAcc = await this.getActiveAccount();
+        if (activeAcc && !tradeData.account_id) {
+            tradeData.account_id = activeAcc.id;
+        }
+        return await this.request('/api/v1/journal', {
+            method: 'POST',
+            body: JSON.stringify(tradeData)
+        });
+    },
+
+    async getTrades(accountId = null) {
+        const accId = accountId || this.activeAccountId;
+        const query = accId ? `?account_id=${accId}` : '';
+        return await this.request(`/api/v1/journal${query}`);
+    },
+
+    async getEquityCurve(accountId = null) {
+        const accId = accountId || this.activeAccountId;
+        if (!accId) return { success: false, points: [] };
+        return await this.request(`/api/v1/accounts/${accId}/equity-curve`);
+    },
+
+    logout() {
+        this.token = null;
+        this.currentUser = null;
+        this.activeAccountId = null;
+        localStorage.removeItem('chartora_jwt');
+        localStorage.removeItem('chartora_user');
+        localStorage.removeItem('chartora_active_account_id');
+        navigateTo('home');
+    }
+};
+
 // Global State
 let currentRoute = 'home';
 let activeCourseId = 'market-foundations';
@@ -16,7 +189,7 @@ let activeChapterId = 1;
 let current3DStage = 1;
 const TELEGRAM_URL = 'https://t.me/chartora_official';
 
-// Trade Journal State (Local Storage persistent)
+// Trade Journal State (Local Storage persistent fallback)
 let tradeJournalData = JSON.parse(localStorage.getItem('chartora_journal') || '[]');
 if (tradeJournalData.length === 0) {
     tradeJournalData = [
@@ -28,11 +201,15 @@ if (tradeJournalData.length === 0) {
 
 // 1. INITIALIZATION
 document.addEventListener('DOMContentLoaded', () => {
+    initTheme();
     init3DTradingWorkflowScene();
     initRouter();
     startToastSimulator();
     start3DStageLoop();
     initMobileMenuHandlers();
+    if (ChartoraAPI.token) {
+        ChartoraAPI.loadAccounts();
+    }
 });
 
 // 2. PREMIUM 3D FINANCIAL MARKET ENVIRONMENT (THREE.JS WEBGL ENGINE WITH 2D FALLBACK)
@@ -130,30 +307,6 @@ function init3DTradingWorkflowScene() {
             scene.add(metalGroup);
         }
 
-        // 4. 3D CANDLESTICK CHART STRUCTURES
-        const chartGroup = new threeEngine.Group();
-        if (!isMobile) {
-            const candleCount = 16;
-            for (let i = 0; i < candleCount; i++) {
-                const isGreen = i % 3 !== 0;
-                const height = Math.random() * 1.3 + 0.5;
-                const candleGeo = new threeEngine.BoxGeometry(0.18, height, 0.18);
-                const candleMat = new threeEngine.MeshBasicMaterial({
-                    color: isGreen ? 0x10B981 : 0xFF2E63,
-                    wireframe: true,
-                    transparent: true,
-                    opacity: 0.85
-                });
-
-                const candle = new threeEngine.Mesh(candleGeo, candleMat);
-                candle.position.x = (i - candleCount / 2) * 0.48;
-                candle.position.y = Math.sin(i * 0.4) * 0.85;
-                candle.position.z = -2.2;
-                chartGroup.add(candle);
-            }
-            scene.add(chartGroup);
-        }
-
         camera.position.z = 4.8;
 
         // Subtle Mouse Cursor Parallax on Desktop
@@ -204,8 +357,6 @@ function init3DTradingWorkflowScene() {
             currencyGroup.rotation.y += 0.0005;
 
             if (!isMobile) {
-                chartGroup.rotation.y = Math.sin(Date.now() * 0.0004) * 0.15;
-                chartGroup.position.y = Math.sin(Date.now() * 0.0008) * 0.1;
                 metalGroup.rotation.x += 0.0012;
                 metalGroup.rotation.y += 0.0018;
 
@@ -377,11 +528,36 @@ function handleRoute() {
                 setTimeout(loadNewsItems, 50); 
                 break;
             case 'dashboard':
-            case 'app': container.innerHTML = renderDashboardView(); break;
-            case 'admin': container.innerHTML = renderAdminView(); break;
-            case 'login': container.innerHTML = renderLoginView(); break;
+            case 'customer':
+            case 'portal':
+            case 'accounts':
+            case 'app': 
+                container.innerHTML = renderCustomerPortalView(); 
+                setTimeout(loadCustomerPortalData, 50);
+                break;
+            case 'employee':
+            case 'support-portal':
+                container.innerHTML = renderEmployeePortalView();
+                setTimeout(loadEmployeePortalData, 50);
+                break;
+            case 'employee-login':
+                container.innerHTML = renderEmployeeLoginView();
+                break;
+            case 'admin':
+            case 'admin-portal':
+                container.innerHTML = renderAdminPortalView();
+                setTimeout(loadAdminPortalData, 50);
+                break;
+            case 'admin-login':
+                container.innerHTML = renderAdminLoginView();
+                break;
+            case 'login': 
+                container.innerHTML = renderLoginView(); 
+                break;
             case 'register':
-            case 'signup': container.innerHTML = renderRegisterView(); break;
+            case 'signup': 
+                container.innerHTML = renderRegisterView(); 
+                break;
             case 'services': container.innerHTML = renderServicesView(); break;
             case 'journal': container.innerHTML = renderJournalView(); break;
             case 'risk-calculator': container.innerHTML = renderRiskCalculatorView(); break;
@@ -1860,163 +2036,187 @@ function checkout(plan) {
     alert(`Initiating Stripe Checkout for Chartora ${plan.toUpperCase()} Membership.\n\nAutomated onboarding will grant instant access to Telegram channels & academy!`);
 }
 
-// ==========================================
-// SAAS PLATFORM VIEW RENDERERS
-// ==========================================
+function renderCustomerPortalView() {
+    const user = ChartoraAPI.currentUser || { full_name: 'Trader', role: 'Customer', email: 'trader@chartora.in' };
+    const accounts = ChartoraAPI.accounts || [];
+    const activeAcc = accounts.find(a => String(a.id) === String(ChartoraAPI.activeAccountId)) || accounts[0] || {
+        id: 1, account_name: 'Primary Virtual Account', starting_balance: 10000.0, current_balance: 10000.0, currency: 'USD', account_type: 'DEFAULT'
+    };
 
-function renderDashboardView() {
-    const user = ChartoraAPI.currentUser || { full_name: 'Trader', role: 'Paid Member', email: 'trader@chartora.in' };
     return `
-        <section class="section" style="padding-top:120px;">
+        <section class="section" style="padding-top:100px; min-height:90vh;">
             <div class="container">
-                <div class="glass-card" style="margin-bottom:24px; border-left:4px solid var(--brand-emerald);">
-                    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">
+                <!-- Customer Portal Header with Account Switcher -->
+                <div class="account-switcher-box">
+                    <div style="display:flex; align-items:center; gap:16px; flex-wrap:wrap;">
                         <div>
-                            <span class="cmd-badge active">● ${user.role}</span>
-                            <h2 style="font-size:1.8rem; margin:8px 0 4px;">Welcome back, ${user.full_name}</h2>
-                            <p style="color:var(--text-muted); font-size:0.9rem;">Chartora Command Center • Member ID: #${user.email.split('@')[0]}</p>
+                            <span class="role-badge customer">CUSTOMER PORTAL</span>
+                            <h2 style="font-size:1.6rem; margin:6px 0 2px;">${user.full_name}</h2>
+                            <p style="color:var(--text-muted); font-size:0.85rem;">Account: ${user.email}</p>
                         </div>
-                        <div style="display:flex; gap:10px;">
-                            <button class="btn btn-outline" onclick="ChartoraAPI.requestTelegramInvite().then(d => window.open(d.invite_link, '_blank'))">Join Premium Telegram</button>
-                            <button class="btn btn-primary" onclick="navigateTo('setups')">View Live Setups</button>
+                        <div style="border-left:1px solid var(--border-color); padding-left:16px;">
+                            <label style="font-size:0.75rem; color:var(--text-muted); text-transform:uppercase; display:block; margin-bottom:4px;">Active Trading Account</label>
+                            <select class="account-select-dropdown" id="portal-account-select" onchange="switchPortalAccount(this.value)">
+                                ${accounts.length > 0 ? accounts.map(a => `
+                                    <option value="${a.id}" ${String(a.id) === String(activeAcc.id) ? 'selected' : ''}>
+                                        ${a.account_name} ($${Number(a.current_balance || a.starting_balance).toLocaleString()})
+                                    </option>
+                                `).join('') : `
+                                    <option value="${activeAcc.id}">${activeAcc.account_name} ($${Number(activeAcc.current_balance).toLocaleString()})</option>
+                                `}
+                            </select>
                         </div>
+                    </div>
+                    <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                        <button class="btn btn-outline" onclick="openCreateAccountModal()">+ New Account</button>
+                        <button class="btn btn-secondary" onclick="openAdjustBalanceModal(${activeAcc.id})">Adjust Balance</button>
+                        <button class="btn btn-primary" onclick="openAddTradeModal()">+ Log Trade</button>
                     </div>
                 </div>
 
-                <div class="cmd-grid">
-                    <div class="cmd-card">
-                        <h4 style="color:var(--text-muted); font-size:0.82rem; text-transform:uppercase;">Subscription Status</h4>
-                        <div style="font-size:1.4rem; font-weight:700; color:var(--brand-emerald-mint); margin:8px 0;">ACTIVE</div>
-                        <p style="font-size:0.85rem; color:var(--text-muted);">Renews on Sept 09, 2026 via Stripe</p>
+                <!-- HUD Metrics for Active Account -->
+                <div class="metrics-hud-grid" id="portal-metrics-hud">
+                    <div class="hud-card">
+                        <div class="hud-card-label">Current Balance</div>
+                        <div class="hud-card-val" style="color:var(--brand-emerald-mint);">$${Number(activeAcc.current_balance || activeAcc.starting_balance).toLocaleString(undefined, {minimumFractionDigits: 2})}</div>
+                        <p style="font-size:0.78rem; color:var(--text-muted); margin-top:4px;">Starting: $${Number(activeAcc.starting_balance).toLocaleString()}</p>
                     </div>
-
-                    <div class="cmd-card">
-                        <h4 style="color:var(--text-muted); font-size:0.82rem; text-transform:uppercase;">Virtual Performance R</h4>
-                        <div style="font-size:1.4rem; font-weight:700; color:#34D399; margin:8px 0;">+48.60 R</div>
-                        <p style="font-size:0.85rem; color:var(--text-muted);">Cumulative 64.1% Win Rate (142 Setups)</p>
+                    <div class="hud-card">
+                        <div class="hud-card-label">Net Profit / Loss</div>
+                        <div class="hud-card-val" id="hud-net-pnl" style="color:#34D399;">+$0.00</div>
+                        <p style="font-size:0.78rem; color:var(--text-muted); margin-top:4px;">Closed trades</p>
                     </div>
-
-                    <div class="cmd-card">
-                        <h4 style="color:var(--text-muted); font-size:0.82rem; text-transform:uppercase;">Telegram Bot Sync</h4>
-                        <div style="font-size:1.4rem; font-weight:700; color:#10B981; margin:8px 0;">VERIFIED</div>
-                        <p style="font-size:0.85rem; color:var(--text-muted);">Expiring single-use link active</p>
+                    <div class="hud-card">
+                        <div class="hud-card-label">Win Rate %</div>
+                        <div class="hud-card-val" id="hud-win-rate">0.0%</div>
+                        <p style="font-size:0.78rem; color:var(--text-muted); margin-top:4px;" id="hud-total-trades">0 trades recorded</p>
+                    </div>
+                    <div class="hud-card">
+                        <div class="hud-card-label">Profit Factor</div>
+                        <div class="hud-card-val" id="hud-profit-factor" style="color:#10B981;">0.00</div>
+                        <p style="font-size:0.78rem; color:var(--text-muted); margin-top:4px;">Risk-adjusted</p>
                     </div>
                 </div>
 
-                <div style="margin-top:36px;">
-                    <h3>Quick Command Actions</h3>
-                    <div class="cmd-grid" style="margin-top:16px;">
-                        <a href="#setups" onclick="navigateTo('setups', event)" class="glass-card" style="text-decoration:none; color:inherit;">
-                            <h4 style="color:var(--brand-emerald-mint);">⚡ Live Market Signals</h4>
-                            <p style="font-size:0.88rem; color:var(--text-muted); margin-top:6px;">View 5M & 15M technical setup alerts for Gold, Forex & Indices.</p>
-                        </a>
-                        <a href="#performance" onclick="navigateTo('performance', event)" class="glass-card" style="text-decoration:none; color:inherit;">
-                            <h4 style="color:var(--brand-emerald-mint);">📊 Virtual Performance Engine</h4>
-                            <p style="font-size:0.88rem; color:var(--text-muted); margin-top:6px;">Transparent deterministic R-multiple analytics & setup outcome logs.</p>
-                        </a>
-                        <a href="#academy" onclick="navigateTo('academy', event)" class="glass-card" style="text-decoration:none; color:inherit;">
-                            <h4 style="color:var(--brand-emerald-mint);">🎓 Chartora Academy</h4>
-                            <p style="font-size:0.88rem; color:var(--text-muted); margin-top:6px;">Master market structure, EMA pullbacks, and position sizing.</p>
-                        </a>
+                <!-- Dynamic Equity Curve Chart Container -->
+                <div class="equity-chart-container">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+                        <div>
+                            <h3 style="font-size:1.2rem;">Account Equity Progression</h3>
+                            <p style="color:var(--text-muted); font-size:0.85rem;">Deterministic balance and trade equity curve</p>
+                        </div>
+                        <div id="equity-max-dd" style="font-family:var(--font-mono); font-size:0.88rem; color:#F87171;">Max Drawdown: 0.0%</div>
                     </div>
+                    <div id="equity-curve-canvas-wrap" style="width:100%; height:220px; background:rgba(0,0,0,0.2); border-radius:8px; display:flex; align-items:center; justify-content:center;">
+                        <svg id="equity-svg" width="100%" height="220" viewBox="0 0 800 220" style="overflow:visible;">
+                            <line x1="40" y1="180" x2="760" y2="180" stroke="rgba(255,255,255,0.1)" stroke-dasharray="4"/>
+                            <polyline fill="none" stroke="#10B981" stroke-width="3" points="40,180 200,160 380,120 540,140 760,80" />
+                            <circle cx="760" cy="80" r="5" fill="#34D399" />
+                        </svg>
+                    </div>
+                </div>
+
+                <!-- Multi-Account Trade Journal Table -->
+                <div class="glass-card" style="margin-top:24px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:10px;">
+                        <div>
+                            <h3 style="font-size:1.2rem;">Trade Journal — ${activeAcc.account_name}</h3>
+                            <p style="color:var(--text-muted); font-size:0.85rem;">Account-isolated executions and notes</p>
+                        </div>
+                        <button class="btn btn-primary btn-sm" onclick="openAddTradeModal()">+ Log Trade</button>
+                    </div>
+                    <div class="perf-table-wrap">
+                        <table class="perf-table">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Symbol</th>
+                                    <th>Direction</th>
+                                    <th>Strategy</th>
+                                    <th>Entry</th>
+                                    <th>SL</th>
+                                    <th>Exit</th>
+                                    <th>Result ($)</th>
+                                    <th>R-Multiple</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="portal-trades-tbody">
+                                <tr><td colspan="10" class="text-center" style="color:var(--text-muted); padding:24px;">Loading trades for active account...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Tech Services Consultation CTA -->
+                <div class="glass-card" style="margin-top:24px; border-left:4px solid var(--brand-emerald-mint); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">
+                    <div>
+                        <h4 style="font-size:1.1rem; margin-bottom:4px;">Custom Trading Infrastructure & Services</h4>
+                        <p style="color:var(--text-muted); font-size:0.88rem;">Need custom MT5 bridges, institutional scanners, or custom EA development?</p>
+                    </div>
+                    <button class="btn btn-outline" onclick="navigateTo('services')">Explore Technology Services</button>
                 </div>
             </div>
         </section>
     `;
 }
 
-function renderPerformanceView() {
+function renderEmployeePortalView() {
     return `
-        <section class="section" style="padding-top:120px;">
+        <section class="section" style="padding-top:100px; min-height:90vh;">
             <div class="container">
-                <div class="section-title text-center">
-                    <span class="badge">DETERMINISTIC VIRTUAL ENGINE</span>
-                    <h2>Chartora Setup Performance Tracking</h2>
-                    <p class="section-subtitle">Real-time analytical performance tracking based on published Chartora technical setups.</p>
-                </div>
-
-                <div class="glass-card" style="background:rgba(239,68,68,0.08); border-color:rgba(239,68,68,0.2); margin-bottom:24px;">
-                    <p style="font-size:0.85rem; color:#FCA5A5; margin:0;">
-                        ⚠️ <strong>IMPORTANT PERFORMANCE DISCLOSURE:</strong> Virtual/educational setup performance tracking based strictly on published Chartora technical setups. This does not represent actual client brokerage returns or guaranteed profits.
-                    </p>
-                </div>
-
-                <div class="cmd-grid">
-                    <div class="cmd-card text-center">
-                        <div style="font-size:0.8rem; color:var(--text-muted);">TOTAL SETUPS</div>
-                        <div style="font-size:2rem; font-weight:800; margin-top:4px;">142</div>
+                <div class="account-switcher-box">
+                    <div>
+                        <span class="role-badge employee">EMPLOYEE CONTROL PLANE</span>
+                        <h2 style="font-size:1.6rem; margin:6px 0 2px;">Support & Customer Success Desk</h2>
+                        <p style="color:var(--text-muted); font-size:0.85rem;">Manage member tickets, inquiries, career reviews, and affiliate approvals</p>
                     </div>
-                    <div class="cmd-card text-center">
-                        <div style="font-size:0.8rem; color:var(--text-muted);">WIN RATE</div>
-                        <div style="font-size:2rem; font-weight:800; color:var(--brand-emerald-mint); margin-top:4px;">64.1%</div>
-                    </div>
-                    <div class="cmd-card text-center">
-                        <div style="font-size:0.8rem; color:var(--text-muted);">CUMULATIVE VIRTUAL R</div>
-                        <div style="font-size:2rem; font-weight:800; color:#34D399; margin-top:4px;">+48.60 R</div>
-                    </div>
-                    <div class="cmd-card text-center">
-                        <div style="font-size:0.8rem; color:var(--text-muted);">PROFIT FACTOR</div>
-                        <div style="font-size:2rem; font-weight:800; color:#10B981; margin-top:4px;">2.45</div>
+                    <div style="display:flex; gap:10px;">
+                        <button class="btn btn-outline" onclick="loadEmployeePortalData()">Refresh Queue</button>
                     </div>
                 </div>
 
-                <div class="glass-card" style="margin-top:30px;">
-                    <h3>Historical Setup Outcome Logs</h3>
+                <div class="cmd-grid" style="margin-bottom:24px;">
+                    <div class="cmd-card">
+                        <div class="hud-card-label">Open Support Tickets</div>
+                        <div class="hud-card-val" id="emp-open-tickets" style="color:#F87171;">0</div>
+                    </div>
+                    <div class="cmd-card">
+                        <div class="hud-card-label">In Progress</div>
+                        <div class="hud-card-val" id="emp-prog-tickets" style="color:#38BDF8;">0</div>
+                    </div>
+                    <div class="cmd-card">
+                        <div class="hud-card-label">Resolved Tickets</div>
+                        <div class="hud-card-val" id="emp-resolved-tickets" style="color:#10B981;">0</div>
+                    </div>
+                </div>
+
+                <!-- Tickets Queue -->
+                <div class="glass-card">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+                        <h3>Support Ticket Queue</h3>
+                        <div style="display:flex; gap:8px;">
+                            <button class="btn btn-sm btn-outline active" onclick="filterEmployeeTickets('ALL')">All</button>
+                            <button class="btn btn-sm btn-outline" onclick="filterEmployeeTickets('OPEN')">Open</button>
+                            <button class="btn btn-sm btn-outline" onclick="filterEmployeeTickets('IN_PROGRESS')">In Progress</button>
+                        </div>
+                    </div>
                     <div class="perf-table-wrap">
                         <table class="perf-table">
                             <thead>
                                 <tr>
-                                    <th>Instrument</th>
-                                    <th>Direction</th>
-                                    <th>Strategy</th>
-                                    <th>Timeframe</th>
-                                    <th>Entry</th>
-                                    <th>SL</th>
-                                    <th>Outcome</th>
-                                    <th>R-Multiple</th>
+                                    <th>Ticket ID</th>
+                                    <th>Customer</th>
+                                    <th>Subject</th>
+                                    <th>Category</th>
+                                    <th>Priority</th>
+                                    <th>Status</th>
+                                    <th>Created</th>
+                                    <th>Action</th>
                                 </tr>
                             </thead>
-                            <tbody>
-                                <tr>
-                                    <td><strong>XAUUSD</strong></td>
-                                    <td><span style="color:#34D399;">BUY</span></td>
-                                    <td>EMA 9/21 Pullback</td>
-                                    <td>5M</td>
-                                    <td>3342.50</td>
-                                    <td>3336.10</td>
-                                    <td><span class="cmd-badge active">ACTIVE</span></td>
-                                    <td><strong>+2.41 R</strong></td>
-                                </tr>
-                                <tr>
-                                    <td><strong>US100</strong></td>
-                                    <td><span style="color:#F87171;">SELL</span></td>
-                                    <td>Breakout Retest</td>
-                                    <td>15M</td>
-                                    <td>21150.00</td>
-                                    <td>21210.00</td>
-                                    <td><span class="cmd-badge tp1">TP1 HIT</span></td>
-                                    <td><strong>+2.50 R</strong></td>
-                                </tr>
-                                <tr>
-                                    <td><strong>EURUSD</strong></td>
-                                    <td><span style="color:#34D399;">BUY</span></td>
-                                    <td>Trend Following</td>
-                                    <td>15M</td>
-                                    <td>1.0880</td>
-                                    <td>1.0855</td>
-                                    <td><span class="cmd-badge tp2">TP2 HIT</span></td>
-                                    <td><strong>+2.00 R</strong></td>
-                                </tr>
-                                <tr>
-                                    <td><strong>NVDA</strong></td>
-                                    <td><span style="color:#34D399;">BUY</span></td>
-                                    <td>Breakout</td>
-                                    <td>30M</td>
-                                    <td>128.50</td>
-                                    <td>126.20</td>
-                                    <td><span class="cmd-badge sl">SL HIT</span></td>
-                                    <td><span style="color:#EF4444;">-1.00 R</span></td>
-                                </tr>
+                            <tbody id="emp-tickets-tbody">
+                                <tr><td colspan="8" class="text-center" style="padding:24px; color:var(--text-muted);">Loading tickets queue...</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -2026,31 +2226,87 @@ function renderPerformanceView() {
     `;
 }
 
-function renderAdminView() {
+function renderAdminPortalView() {
     return `
-        <section class="section" style="padding-top:120px;">
+        <section class="section" style="padding-top:100px; min-height:90vh;">
             <div class="container">
-                <div class="glass-card" style="border-left:4px solid var(--brand-emerald-mint);">
-                    <h2>Chartora SaaS Admin Panel</h2>
-                    <p style="color:var(--text-muted);">Real-time subscriber metrics, revenue MRR, Telegram bot status & audit logs.</p>
+                <div class="account-switcher-box" style="border-left:4px solid #EF4444;">
+                    <div>
+                        <span class="role-badge admin">ADMIN EXECUTIVE PORTAL</span>
+                        <h2 style="font-size:1.6rem; margin:6px 0 2px;">Chartora Platform Administration</h2>
+                        <p style="color:var(--text-muted); font-size:0.85rem;">Executive KPIs, user role management, trading accounts oversight & system diagnostics</p>
+                    </div>
+                    <div style="display:flex; gap:10px;">
+                        <button class="btn btn-outline" onclick="loadAdminPortalData()">Refresh Telemetry</button>
+                    </div>
                 </div>
 
-                <div class="cmd-grid" style="margin-top:24px;">
+                <!-- Executive KPI Matrix -->
+                <div class="cmd-grid" style="margin-bottom:24px;">
                     <div class="cmd-card">
-                        <div style="font-size:0.8rem; color:var(--text-muted);">TOTAL MEMBERS</div>
-                        <div style="font-size:2rem; font-weight:800; margin-top:4px;">1,248</div>
+                        <div class="hud-card-label">Total Users</div>
+                        <div class="hud-card-val" id="adm-total-users">--</div>
                     </div>
                     <div class="cmd-card">
-                        <div style="font-size:0.8rem; color:var(--text-muted);">ACTIVE PAID SUBSCRIBERS</div>
-                        <div style="font-size:2rem; font-weight:800; color:var(--brand-emerald-mint); margin-top:4px;">312</div>
+                        <div class="hud-card-label">Active Paid Subscribers</div>
+                        <div class="hud-card-val" id="adm-active-subs" style="color:var(--brand-emerald-mint);">--</div>
                     </div>
                     <div class="cmd-card">
-                        <div style="font-size:0.8rem; color:var(--text-muted);">CURRENT MRR</div>
-                        <div style="font-size:2rem; font-weight:800; color:#34D399; margin-top:4px;">$7,940 / mo</div>
+                        <div class="hud-card-label">Platform MRR</div>
+                        <div class="hud-card-val" id="adm-mrr" style="color:#34D399;">--</div>
                     </div>
                     <div class="cmd-card">
-                        <div style="font-size:0.8rem; color:var(--text-muted);">TELEGRAM BOT HEALTH</div>
-                        <div style="font-size:2rem; font-weight:800; color:#10B981; margin-top:4px;">100% ONLINE</div>
+                        <div class="hud-card-label">Trading Accounts</div>
+                        <div class="hud-card-val" id="adm-accounts">--</div>
+                    </div>
+                </div>
+
+                <!-- User Management Table -->
+                <div class="glass-card" style="margin-bottom:24px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:10px;">
+                        <h3>User Role & Subscription Management</h3>
+                        <input type="text" id="admin-user-search" class="glass-input" placeholder="Search user by name or email..." oninput="filterAdminUsers(this.value)" style="padding:6px 12px; font-size:0.85rem; width:260px;">
+                    </div>
+                    <div class="perf-table-wrap">
+                        <table class="perf-table">
+                            <thead>
+                                <tr>
+                                    <th>User ID</th>
+                                    <th>Name</th>
+                                    <th>Email</th>
+                                    <th>Role</th>
+                                    <th>Subscription</th>
+                                    <th>Status</th>
+                                    <th>Joined</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="adm-users-tbody">
+                                <tr><td colspan="8" class="text-center" style="padding:24px; color:var(--text-muted);">Loading platform users...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- System Health Diagnostics -->
+                <div class="glass-card">
+                    <h3>Platform Diagnostic Matrix</h3>
+                    <div class="cmd-grid" style="margin-top:16px;" id="adm-diagnostics-grid">
+                        <div class="cmd-card">
+                            <div class="hud-card-label">MT5 Bridge Status</div>
+                            <div style="font-size:1.2rem; font-weight:700; color:#10B981;">HEALTHY</div>
+                            <p style="font-size:0.8rem; color:var(--text-muted); margin-top:4px;">HMAC-SHA256 authenticated</p>
+                        </div>
+                        <div class="cmd-card">
+                            <div class="hud-card-label">Telegram Webhook</div>
+                            <div style="font-size:1.2rem; font-weight:700; color:#10B981;">CONNECTED</div>
+                            <p style="font-size:0.8rem; color:var(--text-muted); margin-top:4px;">Bot token verified</p>
+                        </div>
+                        <div class="cmd-card">
+                            <div class="hud-card-label">Database Schema</div>
+                            <div style="font-size:1.2rem; font-weight:700; color:var(--brand-emerald-mint);">MIGRATION 8 (LATEST)</div>
+                            <p style="font-size:0.8rem; color:var(--text-muted); margin-top:4px;">WAL Mode / Zero Corruption</p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -2063,10 +2319,27 @@ function renderLoginView() {
         <section class="section" style="padding-top:140px; min-height:80vh;">
             <div class="container" style="max-width:440px;">
                 <div class="glass-card text-center">
-                    <h2>Member Sign In</h2>
-                    <p style="color:var(--text-muted); font-size:0.9rem; margin-top:6px;">Access your Chartora Command Center</p>
-                    <form style="margin-top:24px; text-align:left;" onsubmit="event.preventDefault(); ChartoraAPI.login(this.email.value, this.password.value).then(d => { if(d.success) navigateTo('dashboard'); else alert(d.message); });">
-                        <div style="margin-bottom:16px;">
+                    <span class="role-badge customer">CUSTOMER SIGN IN</span>
+                    <h2 style="margin-top:8px;">Member Access</h2>
+                    <p style="color:var(--text-muted); font-size:0.9rem; margin-top:6px;">Access your Chartora Trading Command Center</p>
+                    
+                    <!-- Google OAuth 2.0 Sign In Button -->
+                    <div style="margin-top:20px;">
+                        <button class="google-auth-btn" onclick="initiateGoogleLogin()">
+                            <svg width="18" height="18" viewBox="0 0 24 24">
+                                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+                                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+                            </svg>
+                            <span>Sign in with Google</span>
+                        </button>
+                    </div>
+
+                    <div class="auth-divider"><span>OR SIGN IN WITH EMAIL</span></div>
+
+                    <form style="text-align:left;" onsubmit="event.preventDefault(); ChartoraAPI.login(this.email.value, this.password.value).then(d => { if(d.success) navigateTo('dashboard'); else alert(d.message || d.error); });">
+                        <div style="margin-bottom:14px;">
                             <label style="font-size:0.85rem; color:var(--text-muted);">Email Address</label>
                             <input type="email" name="email" required class="glass-input" placeholder="trader@chartora.in" style="width:100%; margin-top:6px; padding:12px;">
                         </div>
@@ -2074,7 +2347,68 @@ function renderLoginView() {
                             <label style="font-size:0.85rem; color:var(--text-muted);">Password</label>
                             <input type="password" name="password" required class="glass-input" placeholder="••••••••" style="width:100%; margin-top:6px; padding:12px;">
                         </div>
-                        <button type="submit" class="btn btn-primary" style="width:100%;">Sign In to Command Center</button>
+                        <button type="submit" class="btn btn-primary btn-glow" style="width:100%;">Sign In</button>
+                    </form>
+
+                    <div style="margin-top:20px; font-size:0.85rem; color:var(--text-muted);">
+                        Don't have an account? <a href="#register" onclick="navigateTo('register', event)" style="color:var(--brand-emerald-mint);">Register here</a>
+                    </div>
+
+                    <div style="margin-top:16px; padding-top:14px; border-top:1px solid var(--border-color); display:flex; justify-content:space-around; font-size:0.8rem;">
+                        <a href="#employee-login" onclick="navigateTo('employee-login', event)" style="color:var(--text-muted); text-decoration:none;">Employee Portal ↗</a>
+                        <a href="#admin-login" onclick="navigateTo('admin-login', event)" style="color:var(--text-muted); text-decoration:none;">Admin Security ↗</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+    `;
+}
+
+function renderEmployeeLoginView() {
+    return `
+        <section class="section" style="padding-top:140px; min-height:80vh;">
+            <div class="container" style="max-width:440px;">
+                <div class="glass-card text-center" style="border-left:4px solid #38BDF8;">
+                    <span class="role-badge employee">EMPLOYEE GATEWAY</span>
+                    <h2 style="margin-top:8px;">Staff Portal Login</h2>
+                    <p style="color:var(--text-muted); font-size:0.9rem; margin-top:6px;">Support, Operations & Inquiries Desk</p>
+                    
+                    <form style="margin-top:20px; text-align:left;" onsubmit="event.preventDefault(); ChartoraAPI.login(this.email.value, this.password.value).then(d => { if(d.success) navigateTo('employee'); else alert(d.message || d.error); });">
+                        <div style="margin-bottom:14px;">
+                            <label style="font-size:0.85rem; color:var(--text-muted);">Employee Email</label>
+                            <input type="email" name="email" required class="glass-input" placeholder="staff@chartora.in" style="width:100%; margin-top:6px; padding:12px;">
+                        </div>
+                        <div style="margin-bottom:20px;">
+                            <label style="font-size:0.85rem; color:var(--text-muted);">Password</label>
+                            <input type="password" name="password" required class="glass-input" placeholder="••••••••" style="width:100%; margin-top:6px; padding:12px;">
+                        </div>
+                        <button type="submit" class="btn btn-secondary" style="width:100%; border-color:#38BDF8; color:#38BDF8;">Access Employee Portal</button>
+                    </form>
+                </div>
+            </div>
+        </section>
+    `;
+}
+
+function renderAdminLoginView() {
+    return `
+        <section class="section" style="padding-top:140px; min-height:80vh;">
+            <div class="container" style="max-width:440px;">
+                <div class="glass-card text-center" style="border-left:4px solid #EF4444;">
+                    <span class="role-badge admin">ADMIN GATEWAY</span>
+                    <h2 style="margin-top:8px;">Admin Security Login</h2>
+                    <p style="color:var(--text-muted); font-size:0.9rem; margin-top:6px;">Executive Control Plane</p>
+                    
+                    <form style="margin-top:20px; text-align:left;" onsubmit="event.preventDefault(); ChartoraAPI.login(this.email.value, this.password.value).then(d => { if(d.success) navigateTo('admin'); else alert(d.message || d.error); });">
+                        <div style="margin-bottom:14px;">
+                            <label style="font-size:0.85rem; color:var(--text-muted);">Admin Email</label>
+                            <input type="email" name="email" required class="glass-input" placeholder="admin@chartora.in" style="width:100%; margin-top:6px; padding:12px;">
+                        </div>
+                        <div style="margin-bottom:20px;">
+                            <label style="font-size:0.85rem; color:var(--text-muted);">Password</label>
+                            <input type="password" name="password" required class="glass-input" placeholder="••••••••" style="width:100%; margin-top:6px; padding:12px;">
+                        </div>
+                        <button type="submit" class="btn btn-primary" style="width:100%; background:#EF4444; border-color:#EF4444;">Sign In to Admin</button>
                     </form>
                 </div>
             </div>
@@ -2087,9 +2421,26 @@ function renderRegisterView() {
         <section class="section" style="padding-top:140px; min-height:80vh;">
             <div class="container" style="max-width:440px;">
                 <div class="glass-card text-center">
-                    <h2>Create Account</h2>
+                    <span class="role-badge customer">JOIN CHARTORA</span>
+                    <h2 style="margin-top:8px;">Create Member Account</h2>
                     <p style="color:var(--text-muted); font-size:0.9rem; margin-top:6px;">Join Chartora Market Intelligence</p>
-                    <form style="margin-top:24px; text-align:left;" onsubmit="event.preventDefault(); ChartoraAPI.register(this.name.value, this.username.value, this.email.value, this.password.value).then(d => { if(d.success) navigateTo('dashboard'); else alert(d.error); });">
+                    
+                    <!-- Google OAuth 2.0 Sign In Button -->
+                    <div style="margin-top:20px;">
+                        <button class="google-auth-btn" onclick="initiateGoogleLogin()">
+                            <svg width="18" height="18" viewBox="0 0 24 24">
+                                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+                                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+                            </svg>
+                            <span>Sign up with Google</span>
+                        </button>
+                    </div>
+
+                    <div class="auth-divider"><span>OR REGISTER WITH EMAIL</span></div>
+
+                    <form style="text-align:left;" onsubmit="event.preventDefault(); ChartoraAPI.register(this.name.value, this.username.value, this.email.value, this.password.value).then(d => { if(d.success) navigateTo('dashboard'); else alert(d.error); });">
                         <div style="margin-bottom:14px;">
                             <label style="font-size:0.85rem; color:var(--text-muted);">Full Name</label>
                             <input type="text" name="name" required class="glass-input" placeholder="Alex Rivers" style="width:100%; margin-top:6px; padding:12px;">
@@ -2113,6 +2464,24 @@ function renderRegisterView() {
         </section>
     `;
 }
+
+// Check for Google OAuth callback params on window load
+window.addEventListener('DOMContentLoaded', () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const code = urlParams.get('code');
+    const state = urlParams.get('state');
+    if (code && state) {
+        ChartoraAPI.handleGoogleCallback(code, state).then(res => {
+            if (res.success) {
+                // Clear URL params
+                window.history.replaceState({}, document.title, window.location.pathname + '#dashboard');
+                navigateTo('dashboard');
+            } else {
+                alert('Google Sign-In failed: ' + (res.error || 'Invalid callback'));
+            }
+        });
+    }
+});
 
 /* ==========================================
    CAREERS VIEW (2 FULL TIME + 4 INTERNSHIPS)

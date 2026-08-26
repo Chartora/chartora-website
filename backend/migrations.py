@@ -302,6 +302,7 @@ MIGRATIONS = [
         CREATE TABLE IF NOT EXISTS trade_journal (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             user_id INTEGER NOT NULL,
+            account_id INTEGER,
             symbol TEXT NOT NULL,
             direction TEXT NOT NULL,
             strategy TEXT,
@@ -311,11 +312,19 @@ MIGRATIONS = [
             exit_price REAL,
             result_usd REAL DEFAULT 0,
             r_multiple REAL DEFAULT 0,
+            lot_size REAL DEFAULT 1.0,
+            risk_usd REAL DEFAULT 0.0,
+            risk_pct REAL DEFAULT 1.0,
+            timeframe TEXT DEFAULT '15M',
+            status TEXT DEFAULT 'CLOSED',
+            tags TEXT,
             notes TEXT,
+            emotion_notes TEXT,
             screenshot_url TEXT,
             trade_date DATE,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+            FOREIGN KEY (account_id) REFERENCES trading_accounts(id) ON DELETE CASCADE
         );
 
         CREATE TABLE IF NOT EXISTS academy_courses (
@@ -544,6 +553,73 @@ MIGRATIONS = [
         CREATE INDEX IF NOT EXISTS idx_delivery_logs_status ON telegram_delivery_logs(status);
         CREATE INDEX IF NOT EXISTS idx_tg_notifs_user_event ON telegram_notifications(user_id, event_type, created_at);
         """
+    ),
+    (
+        8,
+        "virtual_accounts_portals_and_google_oauth",
+        """
+        CREATE TABLE IF NOT EXISTS trading_accounts (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            account_name TEXT NOT NULL,
+            account_type TEXT DEFAULT 'VIRTUAL',
+            starting_balance REAL NOT NULL DEFAULT 10000.0,
+            current_balance REAL NOT NULL DEFAULT 10000.0,
+            currency TEXT NOT NULL DEFAULT 'USD',
+            start_date DATE NOT NULL DEFAULT (CURRENT_DATE),
+            description TEXT,
+            is_archived INTEGER DEFAULT 0,
+            is_default INTEGER DEFAULT 0,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        );
+
+        CREATE TABLE IF NOT EXISTS trading_account_transactions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            account_id INTEGER NOT NULL,
+            user_id INTEGER NOT NULL,
+            transaction_type TEXT NOT NULL,
+            amount REAL NOT NULL,
+            balance_after REAL NOT NULL,
+            reference_id TEXT,
+            notes TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (account_id) REFERENCES trading_accounts(id) ON DELETE CASCADE,
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        );
+
+        CREATE TABLE IF NOT EXISTS support_tickets (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            ticket_id TEXT UNIQUE NOT NULL,
+            user_id INTEGER,
+            name TEXT NOT NULL,
+            email TEXT NOT NULL,
+            subject TEXT NOT NULL,
+            message TEXT NOT NULL,
+            category TEXT DEFAULT 'GENERAL',
+            status TEXT DEFAULT 'OPEN',
+            priority TEXT DEFAULT 'NORMAL',
+            assigned_employee_id INTEGER,
+            response_notes TEXT,
+            resolved_at DATETIME,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL,
+            FOREIGN KEY (assigned_employee_id) REFERENCES users(id) ON DELETE SET NULL
+        );
+
+        CREATE TABLE IF NOT EXISTS google_oauth_states (
+            state TEXT PRIMARY KEY,
+            redirect_uri TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            expires_at DATETIME NOT NULL
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_trading_accounts_user ON trading_accounts(user_id, is_archived);
+        CREATE INDEX IF NOT EXISTS idx_account_txs_account ON trading_account_transactions(account_id, created_at);
+        CREATE INDEX IF NOT EXISTS idx_support_tickets_status ON support_tickets(status, priority, created_at);
+        """
     )
 ]
 
@@ -595,6 +671,31 @@ class MigrationManager:
                 except Exception as e:
                     self.conn.rollback()
                     raise RuntimeError(f"Migration {version} ({name}) failed: {e}")
+
+        # Ensure trade_journal columns if migrated from earlier versions
+        try:
+            cursor = self.conn.cursor()
+            cursor.execute("PRAGMA table_info(trade_journal)")
+            existing_cols = [r[1] for r in cursor.fetchall()]
+            for col_name, col_type in [
+                ("account_id", "INTEGER"),
+                ("lot_size", "REAL DEFAULT 1.0"),
+                ("risk_usd", "REAL DEFAULT 0.0"),
+                ("risk_pct", "REAL DEFAULT 1.0"),
+                ("timeframe", "TEXT DEFAULT '15M'"),
+                ("status", "TEXT DEFAULT 'CLOSED'"),
+                ("tags", "TEXT"),
+                ("emotion_notes", "TEXT")
+            ]:
+                if col_name not in existing_cols:
+                    try:
+                        cursor.execute(f"ALTER TABLE trade_journal ADD COLUMN {col_name} {col_type}")
+                    except Exception:
+                        pass
+            self.conn.commit()
+        except Exception:
+            pass
+
         return count
 
 def run_all_migrations(db_path: Optional[str] = None):

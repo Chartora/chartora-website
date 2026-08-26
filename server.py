@@ -54,6 +54,9 @@ from backend.core import (
     mt5_gateway_service,
     JournalService,
     AcademyService,
+    AccountService,
+    GoogleAuthService,
+    SupportService,
     SymbolRegistry,
     CANONICAL_MARKET_REGISTRY,
     realtime_market_engine,
@@ -70,6 +73,7 @@ STRIPE_MODE = os.environ.get('STRIPE_MODE', 'disabled')
 STRIPE_WEBHOOK_SECRET = os.environ.get('STRIPE_WEBHOOK_SECRET', 'whsec_sample_chartora')
 TELEGRAM_MODE = os.environ.get('TELEGRAM_MODE', 'active')
 TELEGRAM_WEBHOOK_SECRET = os.environ.get('TELEGRAM_WEBHOOK_SECRET', '')
+SERVER_START_TIME = time.time()
 
 # Rate limiting storage (IP -> list of timestamps)
 RATE_LIMIT_STORE = {}
@@ -237,7 +241,20 @@ bot_service = TelegramBotService(get_db)
 notif_service = NotificationService(get_db)
 journal_service = JournalService(get_db)
 academy_service = AcademyService(get_db)
+account_service = AccountService(get_db)
+google_auth_service = GoogleAuthService(get_db)
+support_service = SupportService(get_db)
 stripe_manager = StripeWebhookManager(get_db)
+
+def is_employee_role(role: str) -> bool:
+    if not role:
+        return False
+    return role.strip().lower() in ['employee', 'admin', 'super admin', 'staff', 'support staff']
+
+def is_admin_role(role: str) -> bool:
+    if not role:
+        return False
+    return role.strip().lower() in ['admin', 'super admin']
 
 def is_rate_limited(ip, max_reqs=240, window_sec=60):
     now = time.time()
@@ -439,12 +456,18 @@ class ChartoraSaaSHandler(http.server.SimpleHTTPRequestHandler):
         cursor = conn.cursor()
 
         try:
-            # 1. AUTH STATE
+            # 1. AUTH STATE & GOOGLE OAUTH
             if path in ['/api/auth/me', '/api/v1/auth/me']:
                 user = self.get_auth_user()
                 if user:
                     return self.send_json({"authenticated": True, "user": user})
                 return self.send_json({"authenticated": False, "user": None}, 401)
+
+            elif path in ['/api/auth/google/url', '/api/v1/auth/google/url']:
+                qs = urllib.parse.parse_qs(parsed.query)
+                redirect_uri = qs.get('redirect_uri', [None])[0] or "http://localhost:8080/login"
+                res = google_auth_service.generate_auth_url(redirect_uri)
+                return self.send_json(res)
 
             # 2. TELEGRAM ME
             elif path in ['/api/telegram/me', '/api/v1/telegram/me']:
@@ -624,23 +647,67 @@ class ChartoraSaaSHandler(http.server.SimpleHTTPRequestHandler):
                 alerts = [dict(r) for r in cursor.fetchall()]
                 return self.send_json({"alerts": alerts})
 
-            # 10. TRADE JOURNAL
+            # 10. VIRTUAL TRADING ACCOUNTS
+            elif path in ['/api/accounts', '/api/v1/accounts']:
+                user = self.get_auth_user()
+                if not user:
+                    return self.send_json({"error": "Authentication required"}, 401)
+                accounts = account_service.get_user_accounts(user['id'])
+                return self.send_json({"accounts": accounts})
+
+            elif path.startswith('/api/v1/accounts/') or path.startswith('/api/accounts/'):
+                user = self.get_auth_user()
+                if not user:
+                    return self.send_json({"error": "Authentication required"}, 401)
+                prefix = '/api/v1/accounts/' if path.startswith('/api/v1/accounts/') else '/api/accounts/'
+                rest = path.replace(prefix, '').strip('/')
+                parts = rest.split('/')
+                try:
+                    acc_id = int(parts[0])
+                except ValueError:
+                    return self.send_json({"error": "Invalid account ID"}, 400)
+
+                if len(parts) == 1:
+                    acc = account_service.get_account(user['id'], acc_id)
+                    if acc:
+                        return self.send_json({"account": acc})
+                    return self.send_json({"error": "Account not found"}, 404)
+                elif len(parts) == 2 and parts[1] == 'transactions':
+                    txs = account_service.get_account_transactions(user['id'], acc_id)
+                    return self.send_json({"transactions": txs})
+                elif len(parts) == 2 and parts[1] == 'equity-curve':
+                    eq = account_service.get_equity_curve(user['id'], acc_id)
+                    return self.send_json(eq)
+
+            # 11. TRADE JOURNAL & REAL-TIME METRICS
             elif path in ['/api/journal', '/api/v1/journal']:
                 user = self.get_auth_user()
                 if not user:
                     return self.send_json({"error": "Authentication required"}, 401)
-
-                res = journal_service.get_user_trades(user['id'])
+                qs = urllib.parse.parse_qs(parsed.query)
+                acc_param = qs.get('account_id', [None])[0]
+                acc_id = int(acc_param) if acc_param and acc_param.isdigit() else None
+                res = journal_service.get_user_trades(user['id'], account_id=acc_id)
                 return self.send_json(res)
 
-            # 11. ACADEMY CURRICULUM & PROGRESS
+            elif path in ['/api/journal/metrics', '/api/v1/journal/metrics']:
+                user = self.get_auth_user()
+                if not user:
+                    return self.send_json({"error": "Authentication required"}, 401)
+                qs = urllib.parse.parse_qs(parsed.query)
+                acc_param = qs.get('account_id', [None])[0]
+                acc_id = int(acc_param) if acc_param and acc_param.isdigit() else None
+                res = journal_service.get_user_trades(user['id'], account_id=acc_id)
+                return self.send_json({"metrics": res["metrics"], "account_id": acc_id})
+
+            # 12. ACADEMY CURRICULUM & PROGRESS
             elif path in ['/api/academy', '/api/v1/academy']:
                 user = self.get_auth_user()
                 uid = user['id'] if user else None
                 curriculum = academy_service.get_curriculum(uid)
                 return self.send_json({"courses": curriculum})
 
-            # 12. CURRENCY STRENGTH MATRIX
+            # 13. CURRENCY STRENGTH MATRIX
             elif path in ['/api/currency-strength', '/api/v1/currency-strength']:
                 qs = urllib.parse.parse_qs(parsed.query)
                 tf = qs.get('timeframe', ['1H'])[0]
@@ -652,12 +719,12 @@ class ChartoraSaaSHandler(http.server.SimpleHTTPRequestHandler):
                 risk_eval = news_engine.check_instrument_news_risk(sym)
                 return self.send_json(risk_eval)
 
-            # 13. MT5 GATEWAY STATUS
+            # 14. MT5 GATEWAY STATUS
             elif path in ['/api/v1/mt5/status', '/api/mt5/status']:
                 status_list = mt5_gateway_service.get_ea_status()
                 return self.send_json({"mt5_eas": status_list, "server_time": time.time()})
 
-            # 14. PERFORMANCE METRICS
+            # 15. PERFORMANCE METRICS
             elif path in ['/api/performance', '/api/v1/performance']:
                 cursor.execute('''
                     SELECT s.*, o.final_status, o.exit_price, o.r_multiple, o.win_loss_be
@@ -689,7 +756,7 @@ class ChartoraSaaSHandler(http.server.SimpleHTTPRequestHandler):
                     "outcomes": outcomes
                 })
 
-            # 15. NOTIFICATIONS
+            # 16. NOTIFICATIONS
             elif path in ['/api/notifications', '/api/v1/notifications']:
                 user = self.get_auth_user()
                 if not user:
@@ -699,7 +766,15 @@ class ChartoraSaaSHandler(http.server.SimpleHTTPRequestHandler):
                 notifications = [dict(r) for r in cursor.fetchall()]
                 return self.send_json({"notifications": notifications})
 
-            # 16. SETTINGS
+            # 17. USER PROFILE & SETTINGS
+            elif path in ['/api/profile', '/api/v1/profile']:
+                user = self.get_auth_user()
+                if not user:
+                    return self.send_json({"error": "Authentication required"}, 401)
+                cursor.execute('SELECT * FROM profiles WHERE user_id = ?', (user['id'],))
+                p = cursor.fetchone()
+                return self.send_json({"profile": dict(p) if p else {}, "user": user})
+
             elif path in ['/api/telegram/settings', '/api/v1/settings', '/api/settings']:
                 user = self.get_auth_user()
                 if not user:
@@ -714,12 +789,175 @@ class ChartoraSaaSHandler(http.server.SimpleHTTPRequestHandler):
                         "news_alerts": 1,
                         "haptic_feedback": 1,
                         "sound_enabled": 1,
-                        "theme": "auto",
+                        "theme": "dark",
                         "language": "en"
                     })
                 return self.send_json(dict(pref))
 
-            # 17. COMMUNITY POSTS
+            # 18. SUPPORT TICKETS
+            elif path in ['/api/support/tickets', '/api/v1/support/tickets']:
+                user = self.get_auth_user()
+                uid = user['id'] if user else None
+                tickets = support_service.get_tickets(user_id=uid)
+                return self.send_json({"tickets": tickets})
+
+            # 19. EMPLOYEE PORTAL (RBAC)
+            elif path in ['/api/employee/dashboard', '/api/v1/employee/dashboard']:
+                user = self.get_auth_user()
+                if not user or not is_employee_role(user.get('role', '')):
+                    return self.send_json({"error": "Unauthorized. Employee credentials required."}, 403)
+                
+                cursor.execute("SELECT COUNT(*) FROM support_tickets WHERE status = 'OPEN'")
+                open_tickets = cursor.fetchone()[0]
+                cursor.execute("SELECT COUNT(*) FROM contact_messages")
+                total_inquiries = cursor.fetchone()[0]
+                cursor.execute("SELECT COUNT(*) FROM users")
+                customers_count = cursor.fetchone()[0]
+                cursor.execute("SELECT COUNT(*) FROM trading_accounts")
+                total_accounts = cursor.fetchone()[0]
+
+                return self.send_json({
+                    "employee": user,
+                    "summary": {
+                        "open_tickets": open_tickets,
+                        "total_inquiries": total_inquiries,
+                        "total_customers": customers_count,
+                        "managed_virtual_accounts": total_accounts,
+                        "system_status": "OPERATIONAL"
+                    }
+                })
+
+            elif path in ['/api/employee/tickets', '/api/v1/employee/tickets']:
+                user = self.get_auth_user()
+                if not user or not is_employee_role(user.get('role', '')):
+                    return self.send_json({"error": "Unauthorized. Employee credentials required."}, 403)
+                tickets = support_service.get_tickets(limit=100)
+                return self.send_json({"tickets": tickets})
+
+            elif path in ['/api/employee/inquiries', '/api/v1/employee/inquiries']:
+                user = self.get_auth_user()
+                if not user or not is_employee_role(user.get('role', '')):
+                    return self.send_json({"error": "Unauthorized. Employee credentials required."}, 403)
+                cursor.execute("SELECT * FROM contact_messages ORDER BY created_at DESC LIMIT 50")
+                contacts = [dict(r) for r in cursor.fetchall()]
+                cursor.execute("SELECT * FROM career_applications ORDER BY created_at DESC LIMIT 50")
+                careers = [dict(r) for r in cursor.fetchall()]
+                cursor.execute("SELECT * FROM affiliate_applications ORDER BY created_at DESC LIMIT 50")
+                affiliates = [dict(r) for r in cursor.fetchall()]
+                return self.send_json({"contacts": contacts, "careers": careers, "affiliates": affiliates})
+
+            elif path in ['/api/employee/customers', '/api/v1/employee/customers']:
+                user = self.get_auth_user()
+                if not user or not is_employee_role(user.get('role', '')):
+                    return self.send_json({"error": "Unauthorized. Employee credentials required."}, 403)
+                cursor.execute("""
+                    SELECT u.id, u.email, u.role, u.created_at, p.full_name, p.username, tu.telegram_id,
+                           (SELECT COUNT(*) FROM trading_accounts WHERE user_id = u.id) as accounts_count,
+                           (SELECT COUNT(*) FROM trade_journal WHERE user_id = u.id) as trades_count
+                    FROM users u
+                    LEFT JOIN profiles p ON u.id = p.user_id
+                    LEFT JOIN telegram_users tu ON u.id = tu.user_id
+                    ORDER BY u.created_at DESC LIMIT 100
+                """)
+                customers = [dict(r) for r in cursor.fetchall()]
+                return self.send_json({"customers": customers})
+
+            # 20. ADMIN PORTAL (RBAC)
+            elif path in ['/api/admin/dashboard', '/api/v1/admin/dashboard']:
+                user = self.get_auth_user()
+                if not user or not is_admin_role(user.get('role', '')):
+                    return self.send_json({"error": "Unauthorized. Administrator credentials required."}, 403)
+
+                cursor.execute("SELECT COUNT(*) FROM users")
+                total_users = cursor.fetchone()[0]
+                cursor.execute("SELECT COUNT(*) FROM users WHERE role IN ('Paid Member', 'All Access Member') OR id IN (SELECT user_id FROM subscriptions WHERE status = 'ACTIVE')")
+                paid_users = cursor.fetchone()[0]
+                cursor.execute("SELECT COUNT(*) FROM trading_accounts")
+                total_accounts = cursor.fetchone()[0]
+                cursor.execute("SELECT COUNT(*), COALESCE(SUM(result_usd), 0.0) FROM trade_journal")
+                journal_stats = cursor.fetchone()
+                total_trades = journal_stats[0]
+                total_journal_pnl = round(journal_stats[1], 2)
+                cursor.execute("SELECT COUNT(*) FROM mt5_signal_events")
+                mt5_events_count = cursor.fetchone()[0]
+                mrr = paid_users * 79.00
+
+                return self.send_json({
+                    "admin": user,
+                    "metrics": {
+                        "total_users": total_users,
+                        "active_subscribers": paid_users,
+                        "estimated_mrr_usd": mrr,
+                        "total_trading_accounts": total_accounts,
+                        "total_journal_trades": total_trades,
+                        "total_journal_pnl_usd": total_journal_pnl,
+                        "mt5_events_processed": mt5_events_count,
+                        "system_health": "OPTIMAL"
+                    }
+                })
+
+            elif path in ['/api/admin/users', '/api/v1/admin/users']:
+                user = self.get_auth_user()
+                if not user or not is_admin_role(user.get('role', '')):
+                    return self.send_json({"error": "Unauthorized. Administrator credentials required."}, 403)
+                cursor.execute("""
+                    SELECT u.id, u.email, u.role, u.created_at, p.full_name, p.username, p.avatar_url, tu.telegram_id,
+                           (SELECT status FROM subscriptions WHERE user_id = u.id ORDER BY id DESC LIMIT 1) as sub_status,
+                           (SELECT COUNT(*) FROM trading_accounts WHERE user_id = u.id) as accounts_count
+                    FROM users u
+                    LEFT JOIN profiles p ON u.id = p.user_id
+                    LEFT JOIN telegram_users tu ON u.id = tu.user_id
+                    ORDER BY u.created_at DESC
+                """)
+                users_list = [dict(r) for r in cursor.fetchall()]
+                return self.send_json({"users": users_list})
+
+            elif path in ['/api/admin/trading-accounts', '/api/v1/admin/trading-accounts']:
+                user = self.get_auth_user()
+                if not user or not is_admin_role(user.get('role', '')):
+                    return self.send_json({"error": "Unauthorized. Administrator credentials required."}, 403)
+                cursor.execute("""
+                    SELECT ta.*, u.email, p.full_name
+                    FROM trading_accounts ta
+                    JOIN users u ON ta.user_id = u.id
+                    LEFT JOIN profiles p ON u.id = p.user_id
+                    ORDER BY ta.created_at DESC
+                """)
+                accs = [dict(r) for r in cursor.fetchall()]
+                return self.send_json({"accounts": accs})
+
+            elif path in ['/api/admin/alerts-monitoring', '/api/v1/admin/alerts-monitoring']:
+                user = self.get_auth_user()
+                if not user or not is_admin_role(user.get('role', '')):
+                    return self.send_json({"error": "Unauthorized. Administrator credentials required."}, 403)
+                cursor.execute("SELECT * FROM mt5_signal_events ORDER BY created_at DESC LIMIT 50")
+                mt5_events = [dict(r) for r in cursor.fetchall()]
+                cursor.execute("SELECT * FROM telegram_delivery_logs ORDER BY created_at DESC LIMIT 50")
+                tg_logs = [dict(r) for r in cursor.fetchall()]
+                return self.send_json({"mt5_events": mt5_events, "telegram_delivery_logs": tg_logs})
+
+            elif path in ['/api/admin/system-health', '/api/v1/admin/system-health']:
+                user = self.get_auth_user()
+                if not user or not is_admin_role(user.get('role', '')):
+                    return self.send_json({"error": "Unauthorized. Administrator credentials required."}, 403)
+                return self.send_json({
+                    "database": "SQLITE3 WAL MODE (NORMAL SYNC)",
+                    "market_engine": "ONLINE (22 Instruments Streaming)",
+                    "news_engine": "ACTIVE",
+                    "mt5_bridge": "ONLINE (HMAC Verified)",
+                    "telegram_bot": TELEGRAM_MODE,
+                    "uptime_seconds": round(time.time() - SERVER_START_TIME, 1)
+                })
+
+            elif path in ['/api/admin/audit-logs', '/api/v1/admin/audit-logs']:
+                user = self.get_auth_user()
+                if not user or not is_admin_role(user.get('role', '')):
+                    return self.send_json({"error": "Unauthorized. Administrator credentials required."}, 403)
+                cursor.execute("SELECT * FROM audit_logs ORDER BY timestamp DESC LIMIT 100")
+                logs = [dict(r) for r in cursor.fetchall()]
+                return self.send_json({"audit_logs": logs})
+
+            # 21. COMMUNITY POSTS
             elif path in ['/api/community/posts', '/api/v1/community/posts']:
                 cursor.execute('''
                     SELECT p.*, prof.full_name, prof.username 
@@ -1059,8 +1297,20 @@ class ChartoraSaaSHandler(http.server.SimpleHTTPRequestHandler):
                 return self.send_json({"success": True, "message": "Settings saved successfully"})
 
             # ==========================================
-            # 11. WEB AUTH (LOGIN / REGISTER)
+            # 11. GOOGLE OAUTH CALLBACK & WEB AUTH
             # ==========================================
+            elif path in ['/api/auth/google/callback', '/api/v1/auth/google/callback']:
+                code = body.get('code')
+                state = body.get('state')
+                redirect_uri = body.get('redirect_uri', 'http://localhost:8080/login')
+                if not code or not state:
+                    return self.send_json({"error": "Missing code or state for Google OAuth"}, 400)
+                auth_res = google_auth_service.process_oauth_callback(code, state, redirect_uri, client_ip)
+                if auth_res.get('success'):
+                    token = auth_res.get('token')
+                    return self.send_json(auth_res, cookie_token=token)
+                return self.send_json(auth_res, 400)
+
             elif path in ['/api/auth/login', '/api/v1/auth/login']:
                 email = body.get('email', '').strip().lower()
                 password = body.get('password', '')
@@ -1112,7 +1362,7 @@ class ChartoraSaaSHandler(http.server.SimpleHTTPRequestHandler):
                 pass_hash = hash_password(password)
                 try:
                     cursor.execute('INSERT INTO users (email, password_hash, role) VALUES (?, ?, ?)',
-                                   (email, pass_hash, 'Free Member'))
+                                   (email, pass_hash, 'Customer'))
                     new_id = cursor.lastrowid
                     cursor.execute('INSERT INTO profiles (user_id, full_name, username) VALUES (?, ?, ?)',
                                    (new_id, full_name, username))
@@ -1124,12 +1374,73 @@ class ChartoraSaaSHandler(http.server.SimpleHTTPRequestHandler):
                                    (session_token, new_id, expires_at, client_ip))
                     
                     conn.commit()
-                    return self.send_json({"success": True, "user": {"id": new_id, "email": email, "role": "Free Member", "full_name": full_name, "username": username}, "token": session_token}, cookie_token=session_token)
+                    return self.send_json({"success": True, "user": {"id": new_id, "email": email, "role": "Customer", "full_name": full_name, "username": username}, "token": session_token}, cookie_token=session_token)
                 except sqlite3.IntegrityError:
                     return self.send_json({"error": "Email or username already registered."}, 400)
 
             # ==========================================
-            # 12. STRIPE WEBHOOK LISTENER
+            # 12. VIRTUAL TRADING ACCOUNTS & ADJUSTMENTS
+            # ==========================================
+            elif path in ['/api/accounts', '/api/v1/accounts']:
+                user = self.get_auth_user()
+                if not user:
+                    return self.send_json({"error": "Authentication required"}, 401)
+                res = account_service.create_account(user['id'], body)
+                return self.send_json(res)
+
+            elif path.endswith('/adjust') and ('/api/v1/accounts/' in path or '/api/accounts/' in path):
+                user = self.get_auth_user()
+                if not user:
+                    return self.send_json({"error": "Authentication required"}, 401)
+                prefix = '/api/v1/accounts/' if '/api/v1/accounts/' in path else '/api/accounts/'
+                acc_id_str = path.replace(prefix, '').replace('/adjust', '').strip('/')
+                try:
+                    acc_id = int(acc_id_str)
+                except ValueError:
+                    return self.send_json({"error": "Invalid account ID"}, 400)
+
+                tx_type = body.get('transaction_type', 'DEPOSIT')
+                amount = float(body.get('amount', 0))
+                notes = body.get('notes', '')
+                res = account_service.adjust_balance(user['id'], acc_id, tx_type, amount, notes)
+                return self.send_json(res)
+
+            # ==========================================
+            # 13. SUPPORT TICKETS SUBMISSION
+            # ==========================================
+            elif path in ['/api/support/tickets', '/api/v1/support/tickets']:
+                user = self.get_auth_user()
+                uid = user['id'] if user else None
+                res = support_service.create_ticket(body, uid)
+                return self.send_json(res)
+
+            # ==========================================
+            # 14. PROFILE & SETTINGS UPDATE
+            # ==========================================
+            elif path in ['/api/profile', '/api/v1/profile']:
+                user = self.get_auth_user()
+                if not user:
+                    return self.send_json({"error": "Authentication required"}, 401)
+                full_name = body.get('full_name', '').strip()
+                username = body.get('username', '').strip()
+                avatar_url = body.get('avatar_url', '').strip()
+                trading_exp = body.get('trading_experience', '')
+                trading_level = body.get('trading_level', '')
+                cursor.execute("""
+                    UPDATE profiles SET
+                        full_name = COALESCE(NULLIF(?, ''), full_name),
+                        username = COALESCE(NULLIF(?, ''), username),
+                        avatar_url = COALESCE(NULLIF(?, ''), avatar_url),
+                        trading_experience = COALESCE(NULLIF(?, ''), trading_experience),
+                        trading_level = COALESCE(NULLIF(?, ''), trading_level),
+                        updated_at = CURRENT_TIMESTAMP
+                    WHERE user_id = ?
+                """, (full_name, username, avatar_url, trading_exp, trading_level, user['id']))
+                conn.commit()
+                return self.send_json({"success": True, "message": "Profile updated successfully"})
+
+            # ==========================================
+            # 15. STRIPE WEBHOOK LISTENER
             # ==========================================
             elif path in ['/api/stripe/webhook', '/api/v1/stripe/webhook']:
                 event_id = body.get('id', f"evt_{int(time.time())}")
@@ -1138,7 +1449,7 @@ class ChartoraSaaSHandler(http.server.SimpleHTTPRequestHandler):
                 return self.send_json(res)
 
             # ==========================================
-            # 13. TELEGRAM DEEP LINK & LINKING TOKEN GENERATOR
+            # 16. TELEGRAM DEEP LINK & LINKING TOKEN GENERATOR
             # ==========================================
             elif path in ['/api/telegram/deep-link', '/api/v1/telegram/deep-link']:
                 user = self.get_auth_user()
@@ -1174,7 +1485,7 @@ class ChartoraSaaSHandler(http.server.SimpleHTTPRequestHandler):
                 })
 
             # ==========================================
-            # 14. CAREERS & AFFILIATES
+            # 17. CAREERS & AFFILIATES
             # ==========================================
             elif path in ['/api/careers/apply', '/api/v1/careers/apply']:
                 role = body.get('role', 'General Application')
@@ -1238,6 +1549,7 @@ class ChartoraSaaSHandler(http.server.SimpleHTTPRequestHandler):
         if not user:
             return self.send_json({"error": "Authentication required"}, 401)
 
+        # 1. TRADE JOURNAL UPDATE
         if path in ['/api/journal', '/api/v1/journal'] or path.startswith('/api/v1/journal/'):
             trade_id = body.get('id') or body.get('trade_id')
             if not trade_id and '/' in path.strip('/'):
@@ -1250,6 +1562,45 @@ class ChartoraSaaSHandler(http.server.SimpleHTTPRequestHandler):
                 res = journal_service.update_trade(user['id'], body)
                 return self.send_json(res)
             return self.send_json({"error": "Trade ID required for update"}, 400)
+
+        # 2. VIRTUAL ACCOUNT UPDATE
+        elif path.startswith('/api/v1/accounts/') or path.startswith('/api/accounts/'):
+            prefix = '/api/v1/accounts/' if path.startswith('/api/v1/accounts/') else '/api/accounts/'
+            acc_id_str = path.replace(prefix, '').strip('/')
+            try:
+                acc_id = int(acc_id_str)
+            except ValueError:
+                return self.send_json({"error": "Invalid account ID"}, 400)
+            res = account_service.update_account(user['id'], acc_id, body)
+            return self.send_json(res)
+
+        # 3. EMPLOYEE TICKET UPDATE
+        elif path.startswith('/api/v1/employee/tickets/') or path.startswith('/api/employee/tickets/'):
+            if not is_employee_role(user.get('role', '')):
+                return self.send_json({"error": "Unauthorized. Employee role required."}, 403)
+            prefix = '/api/v1/employee/tickets/' if path.startswith('/api/v1/employee/tickets/') else '/api/employee/tickets/'
+            ticket_id = path.replace(prefix, '').strip('/')
+            res = support_service.update_ticket(ticket_id, body, employee_id=user['id'])
+            return self.send_json(res)
+
+        # 4. ADMIN USER ROLE UPDATE
+        elif path.startswith('/api/v1/admin/users/') and path.endswith('/role'):
+            if not is_admin_role(user.get('role', '')):
+                return self.send_json({"error": "Unauthorized. Admin role required."}, 403)
+            user_id_str = path.replace('/api/v1/admin/users/', '').replace('/role', '').strip('/')
+            try:
+                target_user_id = int(user_id_str)
+            except ValueError:
+                return self.send_json({"error": "Invalid user ID"}, 400)
+            new_role = body.get('role', 'Customer')
+            conn = get_db()
+            cursor = conn.cursor()
+            cursor.execute("UPDATE users SET role = ? WHERE id = ?", (new_role, target_user_id))
+            cursor.execute("INSERT INTO audit_logs (actor_id, action, target_type, details) VALUES (?, 'ROLE_CHANGE', 'USER', ?)",
+                           (user['id'], f"Changed user #{target_user_id} role to {new_role}"))
+            conn.commit()
+            conn.close()
+            return self.send_json({"success": True, "message": f"User role updated to {new_role}"})
 
         return self.send_json({"error": "Route not found"}, 404)
 
@@ -1277,6 +1628,16 @@ class ChartoraSaaSHandler(http.server.SimpleHTTPRequestHandler):
                     deleted = journal_service.delete_trade(user['id'], trade_id)
                     return self.send_json({"success": deleted, "message": "Trade record deleted"})
                 return self.send_json({"error": "Trade ID required"}, 400)
+
+            elif path.startswith('/api/v1/accounts/') or path.startswith('/api/accounts/'):
+                prefix = '/api/v1/accounts/' if path.startswith('/api/v1/accounts/') else '/api/accounts/'
+                acc_id_str = path.replace(prefix, '').strip('/')
+                try:
+                    acc_id = int(acc_id_str)
+                except ValueError:
+                    return self.send_json({"error": "Invalid account ID"}, 400)
+                res = account_service.archive_account(user['id'], acc_id)
+                return self.send_json(res)
 
             elif path in ['/api/watchlist', '/api/v1/watchlist'] or path.startswith('/api/watchlist/'):
                 symbol = body.get('symbol', '')

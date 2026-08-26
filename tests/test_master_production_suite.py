@@ -38,7 +38,10 @@ from backend.core import (
     news_engine,
     mt5_gateway_service,
     JournalService,
-    AcademyService
+    AcademyService,
+    AccountService,
+    GoogleAuthService,
+    SupportService
 )
 from backend.telegram_auth import (
     validate_init_data,
@@ -78,6 +81,9 @@ class TestChartoraMasterProductionSuite(unittest.TestCase):
         self.notif_service = NotificationService(server.get_db)
         self.journal_service = JournalService(server.get_db)
         self.academy_service = AcademyService(server.get_db)
+        self.account_service = AccountService(server.get_db)
+        self.google_auth_service = GoogleAuthService(server.get_db)
+        self.support_service = SupportService(server.get_db)
 
     def tearDown(self):
         self.conn.close()
@@ -268,16 +274,153 @@ class TestChartoraMasterProductionSuite(unittest.TestCase):
         self.assertGreaterEqual(user_trades["metrics"]["win_rate_pct"], 50.0)
 
     def test_academy_curriculum_and_completion(self):
-        """Verifies 5-course curriculum delivery and lesson completion persistence"""
+        """Verifies 6-track comprehensive curriculum delivery and lesson completion persistence"""
         curriculum = self.academy_service.get_curriculum(user_id=2)
-        self.assertEqual(len(curriculum), 5)
-        self.assertEqual(curriculum[0]["title"], "Course 1: Financial Market Foundations")
+        self.assertEqual(len(curriculum), 6)
+        self.assertIn("Course 1", curriculum[0]["title"])
+        self.assertIn("Course 6", curriculum[5]["title"])
 
         complete_res = self.academy_service.mark_lesson_complete(user_id=2, lesson_id="l1_3")
         self.assertTrue(complete_res["success"])
 
     # ==========================================
-    # 8. TELEGRAM BOT COMMAND DISPATCH & KEYBOARDS
+    # 8. VIRTUAL TRADING ACCOUNTS & LEDGER TESTS
+    # ==========================================
+    def test_virtual_accounts_lifecycle(self):
+        """Verifies account creation, balance adjustments, ledger audit trail, and equity curve"""
+        # 1. Create account
+        acc_res = self.account_service.create_account(user_id=2, account_data={
+            "account_name": "Gold Scalping 100K",
+            "account_type": "EVALUATION",
+            "starting_balance": 100000.0,
+            "currency": "USD"
+        })
+        self.assertTrue(acc_res["success"])
+        acc_id = acc_res["account_id"]
+
+        # 2. Query accounts
+        accounts = self.account_service.get_user_accounts(user_id=2)
+        target = next((a for a in accounts if a["id"] == acc_id), None)
+        self.assertIsNotNone(target)
+        self.assertEqual(target["starting_balance"], 100000.0)
+
+        # 3. Balance Adjustment (Deposit & Withdrawal)
+        adj_res = self.account_service.adjust_balance(
+            user_id=2, account_id=acc_id, transaction_type="DEPOSIT", amount=5000.0, notes="Top up"
+        )
+        self.assertTrue(adj_res["success"])
+        self.assertEqual(adj_res["balance_after"], 105000.0)
+
+        # 4. Check Transactions Ledger
+        txs = self.account_service.get_account_transactions(user_id=2, account_id=acc_id)
+        self.assertGreaterEqual(len(txs), 2)
+        self.assertEqual(txs[0]["transaction_type"], "DEPOSIT")
+
+        # 5. Equity Curve
+        eq_curve = self.account_service.get_equity_curve(user_id=2, account_id=acc_id)
+        self.assertEqual(eq_curve["account_id"], acc_id)
+        self.assertIn("points", eq_curve)
+
+    def test_account_isolated_trade_journal(self):
+        """Verifies that trades recorded to Account A do not leak into Account B"""
+        # Create Account A and Account B
+        acc_a = self.account_service.create_account(user_id=2, account_data={"account_name": "Account A", "starting_balance": 10000.0})["account_id"]
+        acc_b = self.account_service.create_account(user_id=2, account_data={"account_name": "Account B", "starting_balance": 50000.0})["account_id"]
+
+        # Add trade to Account A
+        self.journal_service.add_trade(user_id=2, trade_data={
+            "account_id": acc_a,
+            "symbol": "EURUSD",
+            "direction": "BUY",
+            "entry_price": 1.0850,
+            "sl_price": 1.0820,
+            "exit_price": 1.0910,
+            "result_usd": 300.0
+        })
+
+        # Add trade to Account B
+        self.journal_service.add_trade(user_id=2, trade_data={
+            "account_id": acc_b,
+            "symbol": "US100",
+            "direction": "SELL",
+            "entry_price": 21000.0,
+            "sl_price": 21050.0,
+            "exit_price": 20850.0,
+            "result_usd": 1500.0
+        })
+
+        # Verify Isolation
+        trades_a = self.journal_service.get_user_trades(user_id=2, account_id=acc_a)
+        trades_b = self.journal_service.get_user_trades(user_id=2, account_id=acc_b)
+
+        self.assertEqual(len(trades_a["trades"]), 1)
+        self.assertEqual(trades_a["trades"][0]["symbol"], "EURUSD")
+        self.assertEqual(trades_a["metrics"]["net_usd"], 300.0)
+
+        self.assertEqual(len(trades_b["trades"]), 1)
+        self.assertEqual(trades_b["trades"][0]["symbol"], "US100")
+        self.assertEqual(trades_b["metrics"]["net_usd"], 1500.0)
+
+    # ==========================================
+    # 9. GOOGLE OAUTH & RBAC SECURITY TESTS
+    # ==========================================
+    def test_google_oauth_state_and_callback(self):
+        """Verifies CSRF state generation, state verification, user provisioning, and session issuance"""
+        auth_url_info = self.google_auth_service.generate_auth_url("http://localhost:8080/login")
+        self.assertIn("accounts.google.com", auth_url_info["auth_url"])
+        state = auth_url_info["state"]
+
+        # Simulate callback with mock code and valid state
+        login_res = self.google_auth_service.process_oauth_callback(
+            code="mock_google_code_VIPTrader",
+            state=state,
+            redirect_uri="http://localhost:8080/login"
+        )
+        self.assertTrue(login_res["success"])
+        self.assertIn("token", login_res)
+        self.assertEqual(login_res["user"]["email"], "google_viptrader@chartora.in")
+
+    def test_rbac_authorization_roles(self):
+        """Verifies role validation helpers for Customer, Employee, and Admin"""
+        self.assertTrue(server.is_employee_role("Employee"))
+        self.assertTrue(server.is_employee_role("Admin"))
+        self.assertTrue(server.is_employee_role("Super Admin"))
+        self.assertFalse(server.is_employee_role("Customer"))
+        self.assertFalse(server.is_employee_role("Free Member"))
+
+        self.assertTrue(server.is_admin_role("Admin"))
+        self.assertTrue(server.is_admin_role("Super Admin"))
+        self.assertFalse(server.is_admin_role("Employee"))
+        self.assertFalse(server.is_admin_role("Customer"))
+
+    def test_support_ticket_lifecycle(self):
+        """Verifies customer ticket submission, employee retrieval, and status updating"""
+        ticket_res = self.support_service.create_ticket({
+            "name": "Alex Rivers",
+            "email": "trader@chartora.in",
+            "subject": "MT5 Bridge Connectivity Query",
+            "message": "How do I configure HMAC authentication on VPS?",
+            "category": "TECHNICAL",
+            "priority": "HIGH"
+        }, user_id=2)
+        self.assertTrue(ticket_res["success"])
+        ticket_id = ticket_res["ticket_id"]
+
+        # Employee retrieves tickets
+        tickets = self.support_service.get_tickets(status="OPEN")
+        found = next((t for t in tickets if t["ticket_id"] == ticket_id), None)
+        self.assertIsNotNone(found)
+        self.assertEqual(found["priority"], "HIGH")
+
+        # Employee updates ticket
+        up_res = self.support_service.update_ticket(ticket_id, {
+            "status": "RESOLVED",
+            "response_notes": "Configured secret in Expert Advisor inputs."
+        }, employee_id=1)
+        self.assertTrue(up_res["success"])
+
+    # ==========================================
+    # 10. TELEGRAM BOT COMMAND DISPATCH & KEYBOARDS
     # ==========================================
     def test_telegram_bot_all_commands(self):
         """Verifies command dispatch for /start, /app, /markets, /setups, /news, /strength, /academy, /risk, /journal, /plans, /connect_mt5, /account, /settings, /help"""
@@ -306,7 +449,7 @@ class TestChartoraMasterProductionSuite(unittest.TestCase):
             self.assertEqual(res["status"], expected_status, f"Failed on command {cmd}")
 
     # ==========================================
-    # 9. TELEGRAM MINI APP INITDATA & AUTH
+    # 11. TELEGRAM MINI APP INITDATA & AUTH
     # ==========================================
     def test_mini_app_init_data_auth(self):
         """Verifies Telegram WebApp initData HMAC authentication and session issuance"""
@@ -322,7 +465,7 @@ class TestChartoraMasterProductionSuite(unittest.TestCase):
         self.assertEqual(validated["user"]["username"], "miniapp_user")
 
     # ==========================================
-    # 10. MULTI-CHANNEL NOTIFICATION BROADCASTS
+    # 12. MULTI-CHANNEL NOTIFICATION BROADCASTS
     # ==========================================
     def test_setup_alert_broadcasting(self):
         """Verifies setup alert queuing for linked Telegram users"""

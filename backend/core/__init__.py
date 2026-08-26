@@ -10,6 +10,9 @@ from .currency_strength import currency_strength_engine, CurrencyStrengthEngine
 from .news_engine import news_engine, NewsEngine
 from .mt5_gateway import mt5_gateway_service, Mt5GatewayService
 from .journal_service import JournalService, AcademyService
+from .account_service import AccountService
+from .google_auth import GoogleAuthService
+from .support_service import SupportService
 from .symbol_registry import SymbolRegistry, CANONICAL_MARKET_REGISTRY
 from .realtime_engine import realtime_market_engine, RealTimeMarketEngine
 from .news_intelligence_engine import news_intelligence_engine, NewsIntelligenceEngine
@@ -35,6 +38,9 @@ __all__ = [
     "Mt5GatewayService",
     "JournalService",
     "AcademyService",
+    "AccountService",
+    "GoogleAuthService",
+    "SupportService",
     "SymbolRegistry",
     "CANONICAL_MARKET_REGISTRY",
     "realtime_market_engine",
