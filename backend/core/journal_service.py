@@ -86,6 +86,50 @@ class JournalService:
             "message": f"Trade for {symbol} recorded successfully."
         }
 
+    def update_trade(self, user_id: int, trade_data: Dict[str, Any]) -> Dict[str, Any]:
+        conn = self.get_db()
+        cursor = conn.cursor()
+
+        trade_id = trade_data.get("id") or trade_data.get("trade_id")
+        if not trade_id:
+            conn.close()
+            return {"success": False, "error": "Trade ID required"}
+
+        symbol = trade_data.get("symbol", "XAUUSD").upper().strip()
+        direction = trade_data.get("direction", "LONG").upper().strip()
+        strategy = trade_data.get("strategy", "EMA Pullback")
+        entry = float(trade_data.get("entry_price", 0))
+        sl = float(trade_data.get("sl_price", 0))
+        tp = float(trade_data.get("tp_price", 0))
+        exit_p = float(trade_data.get("exit_price", entry))
+        result = float(trade_data.get("result_usd", 0))
+        r_mult = float(trade_data.get("r_multiple", 0))
+        risk = abs(entry - sl) if sl > 0 else 0
+        if r_mult == 0 and risk > 0 and exit_p > 0:
+            reward = (exit_p - entry) if direction in ["LONG", "BUY"] else (entry - exit_p)
+            r_mult = round(reward / risk, 2)
+
+        notes = trade_data.get("notes", "")
+        screenshot = trade_data.get("screenshot_url", "")
+        trade_date = trade_data.get("trade_date", time.strftime("%Y-%m-%d", time.gmtime()))
+
+        cursor.execute("""
+            UPDATE trade_journal SET
+                symbol = ?, direction = ?, strategy = ?, entry_price = ?, sl_price = ?,
+                tp_price = ?, exit_price = ?, result_usd = ?, r_multiple = ?, notes = ?, screenshot_url = ?, trade_date = ?
+            WHERE id = ? AND user_id = ?
+        """, (symbol, direction, strategy, entry, sl, tp, exit_p, result, r_mult, notes, screenshot, trade_date, trade_id, user_id))
+
+        updated = cursor.rowcount > 0
+        conn.commit()
+        conn.close()
+
+        return {
+            "success": updated,
+            "trade_id": trade_id,
+            "message": f"Trade #{trade_id} updated successfully." if updated else "Trade not found or unauthorized."
+        }
+
     def delete_trade(self, user_id: int, trade_id: int) -> bool:
         conn = self.get_db()
         cursor = conn.cursor()

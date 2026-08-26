@@ -412,6 +412,96 @@ MIGRATIONS = [
         CREATE INDEX IF NOT EXISTS idx_user_alerts_lookup ON user_alerts(user_id, symbol, is_active);
         CREATE INDEX IF NOT EXISTS idx_audit_lookup ON audit_logs(service, timestamp);
         """
+    ),
+    (
+        6,
+        "contact_forms_sessions_and_composite_indexes",
+        """
+        CREATE TABLE IF NOT EXISTS contact_messages (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            email TEXT NOT NULL,
+            phone TEXT,
+            experience TEXT,
+            trading_level TEXT,
+            message TEXT NOT NULL,
+            ip_address TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        );
+
+        CREATE TABLE IF NOT EXISTS career_applications (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            role TEXT,
+            name TEXT NOT NULL,
+            email TEXT NOT NULL,
+            phone TEXT,
+            country TEXT,
+            skills TEXT,
+            url TEXT,
+            linkedin TEXT,
+            notes TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        );
+
+        CREATE TABLE IF NOT EXISTS affiliate_applications (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            email TEXT NOT NULL,
+            country TEXT,
+            social_channel TEXT,
+            audience_size TEXT,
+            primary_platform TEXT,
+            telegram_username TEXT,
+            strategy TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        );
+
+        CREATE TABLE IF NOT EXISTS sessions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            session_token TEXT UNIQUE NOT NULL,
+            user_id INTEGER NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            expires_at TIMESTAMP NOT NULL,
+            ip_address TEXT,
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        );
+
+        CREATE TABLE IF NOT EXISTS processed_webhooks (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            event_id TEXT UNIQUE NOT NULL,
+            event_type TEXT NOT NULL,
+            processed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+
+        CREATE TABLE IF NOT EXISTS community_posts (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            title TEXT NOT NULL,
+            content TEXT NOT NULL,
+            category TEXT DEFAULT 'General',
+            is_pinned INTEGER DEFAULT 0,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        );
+
+        CREATE TABLE IF NOT EXISTS signal_outcomes (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            signal_id INTEGER NOT NULL,
+            final_status TEXT NOT NULL,
+            exit_price REAL,
+            r_multiple REAL DEFAULT 0,
+            win_loss_be TEXT,
+            closed_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (signal_id) REFERENCES signals(id) ON DELETE CASCADE
+        );
+
+        -- Additional Composite Indexes
+        CREATE INDEX IF NOT EXISTS idx_signals_inst_status_created ON signals(instrument, status, created_at);
+        CREATE INDEX IF NOT EXISTS idx_user_alerts_user_active ON user_alerts(user_id, is_active);
+        CREATE INDEX IF NOT EXISTS idx_user_watchlists_user_sym ON user_watchlists(user_id, symbol);
+        CREATE INDEX IF NOT EXISTS idx_trade_journal_user_created ON trade_journal(user_id, created_at);
+        CREATE INDEX IF NOT EXISTS idx_contact_email_created ON contact_messages(email, created_at);
+        """
     )
 ]
 

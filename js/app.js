@@ -767,17 +767,33 @@ function handleV5ContactSubmit(e) {
 
     if (isValid) {
         const container = document.getElementById('contact-form-container');
-        if (container) {
-            container.innerHTML = `
-                <div style="text-align:center; padding:30px 10px;">
-                    <div style="font-size:3rem; margin-bottom:12px;">✅</div>
-                    <h2 style="color:var(--brand-emerald); margin-bottom:10px;">MESSAGE RECEIVED</h2>
-                    <p style="color:var(--text-muted); line-height:1.6;">
-                        Thank you for contacting Chartora.<br>Our team will review your message and get back to you shortly.
-                    </p>
-                </div>
-            `;
-        }
+        const submitBtn = e.target.querySelector('button[type="submit"]');
+        if (submitBtn) { submitBtn.innerText = 'Sending...'; submitBtn.disabled = true; }
+
+        fetch('/api/v1/contact', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, email, phone, experience: exp, trading_level: level, message: msg })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (container) {
+                container.innerHTML = `
+                    <div style="text-align:center; padding:30px 10px;">
+                        <div style="font-size:3rem; margin-bottom:12px;">✅</div>
+                        <h2 style="color:var(--brand-emerald); margin-bottom:10px;">MESSAGE RECEIVED</h2>
+                        <p style="color:var(--text-muted); line-height:1.6;">
+                            ${data.message || 'Thank you for contacting Chartora. Our team will review your message and get back to you shortly.'}
+                        </p>
+                        <button class="btn btn-outline" style="margin-top:20px;" onclick="handleRoute()">Send Another Message</button>
+                    </div>
+                `;
+            }
+        })
+        .catch(err => {
+            if (submitBtn) { submitBtn.innerText = 'SEND INQUIRY'; submitBtn.disabled = false; }
+            alert("Could not send message. Please check your network connection and try again.");
+        });
     }
 }
 
@@ -2908,22 +2924,30 @@ function handleCareerFormSubmit(e) {
     const formData = new FormData(e.target);
     const data = Object.fromEntries(formData.entries());
 
-    fetch('/api/careers/apply', {
+    fetch('/api/v1/careers/apply', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
     })
     .then(res => res.json())
-    .catch(() => ({ success: true }))
+    .then(res => {
+        if (res.success) {
+            showAnimatedPopup(
+                'Application Received 🚀',
+                res.message || 'Thank you for your interest in Chartora. Our team will review your application and contact you if your profile matches an available opportunity.',
+                'Back to Careers',
+                () => navigateTo('careers')
+            );
+            e.target.reset();
+        } else {
+            showAnimatedPopup('Submission Error', res.error || 'Please fill in all required fields.', 'Try Again');
+        }
+    })
+    .catch(err => {
+        showAnimatedPopup('Network Error', 'Could not submit application. Please check your internet connection and try again.', 'Dismiss');
+    })
     .finally(() => {
         if (btn) { btn.innerText = 'Submit Application'; btn.disabled = false; }
-        showAnimatedPopup(
-            'Application Received 🚀',
-            'Thank you for your interest in Chartora. Our team will review your application and contact you if your profile matches an available opportunity.',
-            'Back to Careers',
-            () => navigateTo('careers')
-        );
-        e.target.reset();
     });
 }
 
@@ -2935,22 +2959,30 @@ function handleAffiliateFormSubmit(e) {
     const formData = new FormData(e.target);
     const data = Object.fromEntries(formData.entries());
 
-    fetch('/api/affiliate/apply', {
+    fetch('/api/v1/affiliate/apply', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
     })
     .then(res => res.json())
-    .catch(() => ({ success: true }))
+    .then(res => {
+        if (res.success) {
+            showAnimatedPopup(
+                'Application Received 🚀',
+                res.message || 'Thank you for applying to the Chartora 20% Affiliate Program! Your partner account details and referral link are active.',
+                'Back to Affiliate Program',
+                () => navigateTo('affiliate')
+            );
+            e.target.reset();
+        } else {
+            showAnimatedPopup('Submission Error', res.error || 'Please fill in all required fields.', 'Try Again');
+        }
+    })
+    .catch(err => {
+        showAnimatedPopup('Network Error', 'Could not submit affiliate application. Please check your connection and try again.', 'Dismiss');
+    })
     .finally(() => {
         if (btn) { btn.innerText = 'Join Affiliate Program'; btn.disabled = false; }
-        showAnimatedPopup(
-            'Application Received 🚀',
-            'Thank you for applying to the Chartora 20% Affiliate Program! Your partner account details and referral link have been sent to your email.',
-            'Back to Affiliate Program',
-            () => navigateTo('affiliate')
-        );
-        e.target.reset();
     });
 }
 

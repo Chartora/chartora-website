@@ -1,53 +1,55 @@
 //+------------------------------------------------------------------+
-//|                                              ChartoraBridge.mq5  |
+//|                                              ChartoraBridge.mq5 |
 //|                                  Copyright 2026, Chartora.in     |
-//|                                       https://chartora.in        |
+//|                                      https://chartora.in         |
 //+------------------------------------------------------------------+
 #property copyright "Copyright 2026, Chartora.in"
 #property link      "https://chartora.in"
 #property version   "3.10"
-#property description "Chartora.in High-Performance MT5 Institutional Market & Setup Bridge"
-#property strict
+#property description "Chartora Institutional Trading Intelligence Bridge EA"
+#property description "Connects MetaTrader 5 terminal securely to Chartora Intelligence Core"
+
+#include <Trade\Trade.mqh>
 
 //--- Input Parameters
-input group "=== CHARTORA SERVER CONFIGURATION ==="
-input string   InpServerUrl     = "https://chartora.up.railway.app"; // Chartora Base URL (No trailing slash)
-input string   InpEA_ID         = "EA_DEMO_01";                      // Registered EA ID
-input string   InpSecretKey     = "mt5_demo_secret_key_2026";        // EA Secret Key (HMAC Authentication)
+input group "=== Chartora Cloud Gateway Settings ==="
+input string   InpGatewayUrl     = "http://localhost:8080/api/v1/mt5"; // Base Gateway URL
+input string   InpEaId           = "EA_DEMO_01";                       // Registered EA ID
+input string   InpSecretKey      = "mt5_demo_secret_key_2026";         // HMAC Secret Key
+input int      InpHeartbeatSec   = 30;                                 // Heartbeat Interval (Seconds)
 
-input group "=== STREAMING & SCANNER SETTINGS ==="
-input int      InpHeartbeatSec  = 10;                                // Heartbeat & Tick Push Interval (Seconds)
-input bool     InpStreamTicks   = true;                              // Push Real-Time Bids/Asks
-input bool     InpEnableEMAScan = true;                              // Enable EMA Pullback Scanner Detection
-input int      InpFastEMA       = 9;                                 // Fast EMA Period
-input int      InpSlowEMA       = 21;                                // Slow EMA Period
-input int      InpTrendEMA      = 200;                               // Trend Filter EMA Period
+input group "=== Technical Strategy Scanner ==="
+input bool     InpEnableScanner  = true;                               // Enable EMA 9/21/200 Scanner
+input ENUM_TIMEFRAMES InpTimeframe = PERIOD_M5;                        // Setup Execution Timeframe
+input int      InpEmaFast        = 9;                                  // Fast EMA Period
+input int      InpEmaMedium      = 21;                                 // Medium EMA Period
+input int      InpEmaSlow        = 200;                                // Baseline EMA Period
 
-//--- Global Handles & State
-int hFastEMA, hSlowEMA, hTrendEMA;
+//--- Global Variables
+int      hEmaFast, hEmaMedium, hEmaSlow;
+datetime lastBarTime = 0;
 datetime lastHeartbeatTime = 0;
+CTrade   trade;
 
 //+------------------------------------------------------------------+
 //| Expert initialization function                                   |
 //+------------------------------------------------------------------+
 int OnInit()
 {
-   Print("🚀 Initializing Chartora MT5 Gateway Bridge v3.10...");
-   Print("Target Server: ", InpServerUrl);
-   Print("EA Identifier: ", InpEA_ID);
+   Print("🚀 Chartora Bridge EA Initialized for ", _Symbol);
+   
+   // Create indicator handles
+   hEmaFast   = iMA(_Symbol, InpTimeframe, InpEmaFast, 0, MODE_EMA, PRICE_CLOSE);
+   hEmaMedium = iMA(_Symbol, InpTimeframe, InpEmaMedium, 0, MODE_EMA, PRICE_CLOSE);
+   hEmaSlow   = iMA(_Symbol, InpTimeframe, InpEmaSlow, 0, MODE_EMA, PRICE_CLOSE);
 
-   // Create EMA Indicator Handles
-   hFastEMA  = iMA(_Symbol, _Period, InpFastEMA, 0, MODE_EMA, PRICE_CLOSE);
-   hSlowEMA  = iMA(_Symbol, _Period, InpSlowEMA, 0, MODE_EMA, PRICE_CLOSE);
-   hTrendEMA = iMA(_Symbol, _Period, InpTrendEMA, 0, MODE_EMA, PRICE_CLOSE);
-
-   if(hFastEMA == INVALID_HANDLE || hSlowEMA == INVALID_HANDLE || hTrendEMA == INVALID_HANDLE)
+   if(hEmaFast == INVALID_HANDLE || hEmaMedium == INVALID_HANDLE || hEmaSlow == INVALID_HANDLE)
    {
-      Print("❌ Failed to create indicator handles.");
+      Print("❌ Failed to create EMA indicator handles.");
       return(INIT_FAILED);
    }
 
-   EventSetTimer(InpHeartbeatSec);
+   EventSetTimer(1); // 1-second timer resolution for heartbeats
    SendHeartbeat();
    return(INIT_SUCCEEDED);
 }
@@ -58,159 +60,169 @@ int OnInit()
 void OnDeinit(const int reason)
 {
    EventKillTimer();
-   IndicatorRelease(hFastEMA);
-   IndicatorRelease(hSlowEMA);
-   IndicatorRelease(hTrendEMA);
-   Print("🔌 Chartora MT5 Bridge Deinitialized.");
+   IndicatorRelease(hEmaFast);
+   IndicatorRelease(hEmaMedium);
+   IndicatorRelease(hEmaSlow);
+   Print("Chartora Bridge EA Deinitialized.");
 }
 
 //+------------------------------------------------------------------+
-//| Timer Event (Heartbeat & Tick Broadcast)                         |
+//| Expert tick function                                             |
 //+------------------------------------------------------------------+
-void OnTimer()
+void OnTick()
 {
-   SendHeartbeat();
-   if(InpEnableEMAScan)
+   // Check for newly formed bar
+   datetime currentBarTime = iTime(_Symbol, InpTimeframe, 0);
+   if(currentBarTime != lastBarTime)
    {
-      ScanEMASetup();
+      lastBarTime = currentBarTime;
+      OnBarClosed();
    }
 }
 
 //+------------------------------------------------------------------+
-//| OnTick Event                                                     |
+//| Timer function for 30-sec heartbeats                             |
 //+------------------------------------------------------------------+
-void OnTick()
+void OnTimer()
 {
-   // Push tick if threshold elapsed
-   if(InpStreamTicks && (TimeCurrent() - lastHeartbeatTime >= InpHeartbeatSec))
+   datetime now = TimeCurrent();
+   if(now - lastHeartbeatTime >= InpHeartbeatSec)
    {
+      lastHeartbeatTime = now;
       SendHeartbeat();
    }
 }
 
 //+------------------------------------------------------------------+
-//| Send Heartbeat & Real-Time Price Telemetry                       |
+//| Executed on closed candle bar                                    |
+//+------------------------------------------------------------------+
+void OnBarClosed()
+{
+   if(!InpEnableScanner) return;
+
+   MqlRates rates[];
+   ArraySetAsSeries(rates, true);
+   if(CopyRates(_Symbol, InpTimeframe, 1, 3, rates) < 3) return;
+
+   double ema9[], ema21[], ema200[];
+   ArraySetAsSeries(ema9, true);
+   ArraySetAsSeries(ema21, true);
+   ArraySetAsSeries(ema200, true);
+
+   if(CopyBuffer(hEmaFast, 0, 1, 3, ema9) < 3) return;
+   if(CopyBuffer(hEmaMedium, 0, 1, 3, ema21) < 3) return;
+   if(CopyBuffer(hEmaSlow, 0, 1, 3, ema200) < 3) return;
+
+   // 1. BULLISH EMA PULLBACK CONDITION
+   bool bullEmaAlign = (ema9[0] > ema21[0]) && (ema21[0] > ema200[0]);
+   bool bullPullback = (rates[0].low <= ema21[0] * 1.0005) && (rates[0].close > ema9[0]);
+   bool bullEngulf   = (rates[0].close > rates[0].open) && (rates[0].close >= rates[1].high);
+
+   if(bullEmaAlign && bullPullback && bullEngulf)
+   {
+      double entry = rates[0].close;
+      double sl    = rates[0].low - (rates[0].high - rates[0].low) * 0.5;
+      double risk  = entry - sl;
+      double tp1   = entry + (risk * 1.6);
+      double tp2   = entry + (risk * 2.5);
+
+      SendSetupEvent("BUY", entry, sl, tp1, tp2, "EMA 9/21 Pullback Continuation + 200 EMA HTF Alignment");
+   }
+
+   // 2. BEARISH EMA PULLBACK CONDITION
+   bool bearEmaAlign = (ema9[0] < ema21[0]) && (ema21[0] < ema200[0]);
+   bool bearPullback = (rates[0].high >= ema21[0] * 0.9995) && (rates[0].close < ema9[0]);
+   bool bearEngulf   = (rates[0].close < rates[0].open) && (rates[0].close <= rates[1].low);
+
+   if(bearEmaAlign && bearPullback && bearEngulf)
+   {
+      double entry = rates[0].close;
+      double sl    = rates[0].high + (rates[0].high - rates[0].low) * 0.5;
+      double risk  = sl - entry;
+      double tp1   = entry - (risk * 1.6);
+      double tp2   = entry - (risk * 2.5);
+
+      SendSetupEvent("SELL", entry, sl, tp1, tp2, "EMA 9/21 Bearish Pullback Continuation + 200 EMA Baseline");
+   }
+}
+
+//+------------------------------------------------------------------+
+//| Send Telemetry Heartbeat to Chartora Gateway                     |
 //+------------------------------------------------------------------+
 void SendHeartbeat()
 {
-   lastHeartbeatTime = TimeCurrent();
-
-   MqlTick tick;
-   if(!SymbolInfoTick(_Symbol, tick)) return;
-
-   string endpoint = InpServerUrl + "/api/v1/mt5/events";
-   
-   // Build JSON payload
    string jsonPayload = StringFormat(
-      "{\"event_type\":\"HEARTBEAT\",\"ea_id\":\"%s\",\"account\":%d,\"broker\":\"%s\",\"symbol\":\"%s\",\"bid\":%.5f,\"ask\":%.5f,\"spread\":%d,\"balance\":%.2f,\"equity\":%.2f,\"timestamp\":%d}",
-      InpEA_ID,
-      (int)AccountInfoInteger(ACCOUNT_LOGIN),
+      "{\"ea_id\":\"%s\",\"broker\":\"%s\",\"server\":\"%s\",\"balance\":%.2f,\"equity\":%.2f,\"open_positions_count\":%d,\"ea_version\":\"%s\",\"timestamp\":%d}",
+      InpEaId,
       AccountInfoString(ACCOUNT_COMPANY),
-      _Symbol,
-      tick.bid,
-      tick.ask,
-      (int)SymbolInfoInteger(_Symbol, SYMBOL_SPREAD),
+      AccountInfoString(ACCOUNT_SERVER),
       AccountInfoDouble(ACCOUNT_BALANCE),
       AccountInfoDouble(ACCOUNT_EQUITY),
-      (long)TimeCurrent()
+      PositionsTotal(),
+      "3.1.0",
+      (int)TimeCurrent()
    );
 
-   SendPostRequest(endpoint, jsonPayload);
+   SendAuthenticatedPost("/heartbeat", jsonPayload);
 }
 
 //+------------------------------------------------------------------+
-//| Scan for High-Probability EMA Trend Pullback Setups             |
+//| Send Setup Detected Event                                        |
 //+------------------------------------------------------------------+
-void ScanEMASetup()
+void SendSetupEvent(string direction, double entry, double sl, double tp1, double tp2, string reason)
 {
-   double fast[], slow[], trend[], close[];
-   ArraySetAsSeries(fast, true);
-   ArraySetAsSeries(slow, true);
-   ArraySetAsSeries(trend, true);
-   ArraySetAsSeries(close, true);
+   string jsonPayload = StringFormat(
+      "{\"symbol\":\"%s\",\"timeframe\":\"5M\",\"direction\":\"%s\",\"entry_price\":%.5f,\"sl_price\":%.5f,\"tp1_price\":%.5f,\"tp2_price\":%.5f,\"technical_reason\":\"%s\",\"news_risk\":\"LOW\"}",
+      _Symbol, direction, entry, sl, tp1, tp2, reason
+   );
 
-   if(CopyBuffer(hFastEMA, 0, 0, 3, fast) < 3 ||
-      CopyBuffer(hSlowEMA, 0, 0, 3, slow) < 3 ||
-      CopyBuffer(hTrendEMA, 0, 0, 3, trend) < 3 ||
-      CopyClose(_Symbol, _Period, 0, 3, close) < 3)
-   {
-      return;
-   }
-
-   // Detect Bullish EMA Pullback Confirmation
-   bool isBullTrend = (close[1] > trend[1]) && (fast[1] > slow[1]);
-   bool isBullPullback = (close[2] <= slow[2] || close[1] <= fast[1]);
-   bool isEngulfing = (close[1] > fast[1]);
-
-   if(isBullTrend && isBullPullback && isEngulfing)
-   {
-      MqlTick tick;
-      SymbolInfoTick(_Symbol, tick);
-      double entry = tick.ask;
-      double sl = slow[1] - (20 * _Point);
-      double risk = entry - sl;
-      if(risk <= 0) return;
-      double tp1 = entry + (risk * 1.5);
-      double tp2 = entry + (risk * 2.5);
-
-      string endpoint = InpServerUrl + "/api/v1/mt5/events";
-      string jsonPayload = StringFormat(
-         "{\"event_type\":\"SETUP_TRIGGER\",\"ea_id\":\"%s\",\"account\":%d,\"symbol\":\"%s\",\"timeframe\":\"%s\",\"direction\":\"BUY\",\"entry\":%.5f,\"sl\":%.5f,\"tp1\":%.5f,\"tp2\":%.5f,\"strategy\":\"EMA Pullback Continuation\",\"condition_score\":85,\"timestamp\":%d}",
-         InpEA_ID,
-         (int)AccountInfoInteger(ACCOUNT_LOGIN),
-         _Symbol,
-         EnumToString(_Period),
-         entry, sl, tp1, tp2,
-         (long)TimeCurrent()
-      );
-
-      Print("🎯 Found Confirmed Bullish Setup on ", _Symbol, " - Transmitting to Chartora...");
-      SendPostRequest(endpoint, jsonPayload);
-   }
+   Print("⚡ Broadcasting Setup Event to Chartora: ", _Symbol, " ", direction);
+   SendAuthenticatedPost("/events", jsonPayload);
 }
 
 //+------------------------------------------------------------------+
-//| HTTP POST Request with Custom Chartora Security Headers          |
+//| HTTP POST with Cryptographic Headers                             |
 //+------------------------------------------------------------------+
-void SendPostRequest(string url, string payload)
+bool SendAuthenticatedPost(string subPath, string jsonBody)
 {
+   string url = InpGatewayUrl + subPath;
    char postData[];
    char resultData[];
    string resultHeaders;
    
-   StringToCharArray(payload, postData, 0, WHOLE_ARRAY, CP_UTF8);
-   int dataSize = ArraySize(postData) - 1; // Exclude null terminator
+   StringToCharArray(jsonBody, postData, 0, StringLen(jsonBody));
+   
+   int ts = (int)TimeCurrent();
+   string nonce = StringFormat("%08X%08X", MathRand(), MathRand());
+   
+   // Create HMAC signature over ea_id:ts:nonce:body
+   string dataToSign = StringFormat("%s:%d:%s:%s", InpEaId, ts, nonce, jsonBody);
+   uchar keyArr[];
+   uchar dataArr[];
+   uchar hmacArr[];
+   StringToCharArray(InpSecretKey, keyArr, 0, StringLen(InpSecretKey));
+   StringToCharArray(dataToSign, dataArr, 0, StringLen(dataToSign));
+   Crypt(CRYPT_HASH_SHA256, dataArr, keyArr, hmacArr);
+   
+   string signature = "";
+   for(int i = 0; i < ArraySize(hmacArr); i++)
+      signature += StringFormat("%02x", hmacArr[i]);
 
-   long currentTs = (long)TimeCurrent();
-   string nonce = StringFormat("%d_%d", currentTs, MathRand());
+   string headers = "Content-Type: application/json\r\n" +
+                    "X-EA-ID: " + InpEaId + "\r\n" +
+                    "X-EA-Timestamp: " + IntegerToString(ts) + "\r\n" +
+                    "X-EA-Nonce: " + nonce + "\r\n" +
+                    "X-EA-Signature: " + signature + "\r\n";
 
-   // Security headers
-   string headers = "Content-Type: application/json\r\n";
-   headers += StringFormat("X-EA-ID: %s\r\n", InpEA_ID);
-   headers += StringFormat("X-EA-Timestamp: %d\r\n", currentTs);
-   headers += StringFormat("X-EA-Nonce: %s\r\n", nonce);
-
-   ResetLastError();
    int res = WebRequest("POST", url, headers, 3000, postData, resultData, resultHeaders);
-
    if(res == -1)
    {
       int err = GetLastError();
-      if(err == 4014)
-      {
-         Print("❌ WebRequest Error (4014): URL '", InpServerUrl, "' is not allowed in MT5 Options -> Expert Advisors -> Allow WebRequest for listed URL.");
-      }
-      else
-      {
-         Print("❌ WebRequest Error: Code ", err);
-      }
+      if(err == 4014) // Function not allowed
+         Print("⚠️ WebRequest not allowed. Please add '", InpGatewayUrl, "' to MT5 Allowed URLs.");
+      return false;
    }
-   else if(res == 200 || res == 201)
-   {
-      // Telemetry transmitted successfully
-   }
-   else
-   {
-      Print("⚠️ Chartora Server responded with HTTP code: ", res);
-   }
+   
+   return (res == 200);
 }
+//+------------------------------------------------------------------+

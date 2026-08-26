@@ -79,11 +79,11 @@ class TestPhase2ProductionIntegration(unittest.TestCase):
     # 1. DATABASE MIGRATIONS & INDEXES
     # ==========================================
     def test_database_migrations_applied(self):
-        """Verifies that all 5 versioned SQL migrations have been executed and logged."""
+        """Verifies that all versioned SQL migrations have been executed and logged."""
         cursor = self.conn.cursor()
         cursor.execute("SELECT count(*) FROM schema_migrations")
         count = cursor.fetchone()[0]
-        self.assertEqual(count, 5)
+        self.assertGreaterEqual(count, 5)
 
         # Verify key tables exist
         for tbl in ["users", "signals", "candles", "mt5_accounts", "ea_instances", 
