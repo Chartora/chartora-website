@@ -13,6 +13,13 @@ Tests:
 import unittest
 import json
 import time
+import os
+import sys
+
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if BASE_DIR not in sys.path:
+    sys.path.insert(0, BASE_DIR)
+
 from backend.core.symbol_registry import SymbolRegistry, CANONICAL_MARKET_REGISTRY
 from backend.core.realtime_engine import RealTimeMarketEngine
 from backend.core.news_intelligence_engine import NewsIntelligenceEngine
