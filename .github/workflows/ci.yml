@@ -1,0 +1,30 @@
+name: CI Test Suite
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  test:
+    name: Run Production Test Suite & Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: false
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Run Master Test Suite (59 Tests)
+        run: |
+          python3 -m unittest discover -s tests
+
+      - name: Build Static Distribution
+        run: |
+          npm run build
