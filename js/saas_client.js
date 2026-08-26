@@ -3,7 +3,7 @@
  * Connects Web Portal & Mobile UI directly to the centralized Chartora Intelligence Core API.
  */
 
-const ChartoraAPI = {
+window.ChartoraAPI = window.ChartoraAPI || {
     token: localStorage.getItem('chartora_token') || null,
     currentUser: JSON.parse(localStorage.getItem('chartora_user') || 'null'),
     sseSource: null,

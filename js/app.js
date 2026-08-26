@@ -29,8 +29,8 @@ function toggleTheme() {
 }
 
 // Unified API Client
-const ChartoraAPI = {
-    token: localStorage.getItem('chartora_jwt') || null,
+window.ChartoraAPI = Object.assign(window.ChartoraAPI || {}, {
+    token: localStorage.getItem('chartora_jwt') || localStorage.getItem('chartora_token') || null,
     currentUser: JSON.parse(localStorage.getItem('chartora_user') || 'null'),
     activeAccountId: localStorage.getItem('chartora_active_account_id') || null,
     accounts: [],
@@ -180,7 +180,7 @@ const ChartoraAPI = {
         localStorage.removeItem('chartora_active_account_id');
         navigateTo('home');
     }
-};
+});
 
 // Global State
 let currentRoute = 'home';
