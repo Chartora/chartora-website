@@ -1138,7 +1138,7 @@ class ChartoraSaaSHandler(http.server.SimpleHTTPRequestHandler):
                 return self.send_json(res)
 
             # ==========================================
-            # 13. TELEGRAM DEEP LINK GENERATOR
+            # 13. TELEGRAM DEEP LINK & LINKING TOKEN GENERATOR
             # ==========================================
             elif path in ['/api/telegram/deep-link', '/api/v1/telegram/deep-link']:
                 user = self.get_auth_user()
@@ -1149,6 +1149,29 @@ class ChartoraSaaSHandler(http.server.SimpleHTTPRequestHandler):
                 bot_user = get_bot_username()
                 full_link = f"https://t.me/{bot_user}?start={payload}"
                 return self.send_json({"success": True, "payload": payload, "deep_link": full_link})
+
+            elif path in ['/api/telegram/link-token', '/api/v1/telegram/link-token']:
+                user = self.get_auth_user()
+                if not user:
+                    return self.send_json({"error": "Authentication required"}, 401)
+
+                link_token = secrets.token_hex(16)
+                expires_at = (datetime.now() + timedelta(hours=2)).strftime('%Y-%m-%d %H:%M:%S')
+                cursor.execute("""
+                    INSERT INTO account_linking_tokens (user_id, token, expires_at)
+                    VALUES (?, ?, ?)
+                """, (user['id'], link_token, expires_at))
+                conn.commit()
+
+                payload = f"v1_link_{link_token}"
+                bot_user = get_bot_username()
+                deep_link = f"https://t.me/{bot_user}?start={payload}"
+                return self.send_json({
+                    "success": True,
+                    "token": link_token,
+                    "deep_link": deep_link,
+                    "expires_in_hours": 2
+                })
 
             # ==========================================
             # 14. CAREERS & AFFILIATES

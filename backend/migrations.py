@@ -502,6 +502,48 @@ MIGRATIONS = [
         CREATE INDEX IF NOT EXISTS idx_trade_journal_user_created ON trade_journal(user_id, created_at);
         CREATE INDEX IF NOT EXISTS idx_contact_email_created ON contact_messages(email, created_at);
         """
+    ),
+    (
+        7,
+        "telegram_ecosystem_and_account_linking",
+        """
+        CREATE TABLE IF NOT EXISTS account_linking_tokens (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            token TEXT UNIQUE NOT NULL,
+            expires_at DATETIME NOT NULL,
+            is_used INTEGER DEFAULT 0,
+            used_by_telegram_id INTEGER,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        );
+
+        CREATE TABLE IF NOT EXISTS user_alert_settings (
+            user_id INTEGER PRIMARY KEY,
+            min_condition_score INTEGER DEFAULT 75,
+            preferred_timeframes TEXT DEFAULT '5M,15M,1H,4H',
+            preferred_instruments TEXT DEFAULT 'ALL',
+            alert_delivery_mode TEXT DEFAULT 'ALL',
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        );
+
+        CREATE TABLE IF NOT EXISTS telegram_delivery_logs (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            notification_id INTEGER,
+            telegram_id INTEGER,
+            event_type TEXT,
+            status TEXT NOT NULL,
+            attempts INTEGER DEFAULT 1,
+            error TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_linking_token ON account_linking_tokens(token, is_used);
+        CREATE INDEX IF NOT EXISTS idx_delivery_logs_status ON telegram_delivery_logs(status);
+        CREATE INDEX IF NOT EXISTS idx_tg_notifs_user_event ON telegram_notifications(user_id, event_type, created_at);
+        """
     )
 ]
 

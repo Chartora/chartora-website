@@ -315,5 +315,114 @@ class TestTelegramEcosystem(unittest.TestCase):
         self.assertEqual(record["event_type"], "ALERT_TRIGGER")
         self.assertEqual(record["user_id"], 2)
 
+    def test_account_linking_token_flow(self):
+        """Verifies secure account linking using single-use database linking tokens"""
+        cursor = self.conn.cursor()
+        link_token = f"test_link_token_{int(time.time() * 1000)}"
+        tg_id = int(time.time() * 1000) % 1000000000
+        
+        # User 1 creates linking token
+        cursor.execute("INSERT INTO account_linking_tokens (user_id, token, expires_at) VALUES (1, ?, datetime('now', '+1 hour'))", (link_token,))
+        self.conn.commit()
+
+        # Telegram User executes /start with linking token
+        from_user = {"id": tg_id, "first_name": "LinkedTrader", "username": f"tg_{tg_id}"}
+        msg = {"message_id": 1, "chat": {"id": tg_id}, "from": from_user, "text": f"/start v1_link_{link_token}"}
+        
+        res = self.bot_service.handle_message(msg, self.conn)
+        self.assertEqual(res["status"], "start_handled")
+
+        # Verify telegram_users record is linked to User 1
+        cursor.execute("SELECT * FROM telegram_users WHERE telegram_id = ?", (tg_id,))
+        row = cursor.fetchone()
+        cursor.execute("SELECT * FROM account_linking_tokens WHERE token = ?", (link_token,))
+        tok_row = cursor.fetchone()
+        self.assertIsNotNone(row)
+        self.assertEqual(row["user_id"], 1)
+
+        # Verify token is marked used
+        self.assertEqual(tok_row["is_used"], 1)
+
+    def test_user_condition_score_preference_filtering(self):
+        """Verifies setup alert broadcast respects user minimum condition score settings"""
+        cursor = self.conn.cursor()
+        
+        # Setup Trader A (User 1): Min Score = 85
+        cursor.execute("INSERT OR REPLACE INTO telegram_users (telegram_id, user_id, username) VALUES (101, 1, 'trader_a')")
+        cursor.execute("INSERT OR REPLACE INTO user_alert_settings (user_id, min_condition_score) VALUES (1, 85)")
+
+        # Setup Trader B (User 2): Min Score = 70
+        cursor.execute("INSERT OR REPLACE INTO telegram_users (telegram_id, user_id, username) VALUES (102, 2, 'trader_b')")
+        cursor.execute("INSERT OR REPLACE INTO user_alert_settings (user_id, min_condition_score) VALUES (2, 70)")
+        self.conn.commit()
+
+        # Clear notifications table
+        cursor.execute("DELETE FROM telegram_notifications")
+        self.conn.commit()
+
+        # Setup with Score = 80 (Should notify User 2 but NOT User 1)
+        setup_80 = {
+            "setup_id": "SET-TEST-80",
+            "symbol": "XAUUSD",
+            "direction": "BUY",
+            "timeframe": "5M",
+            "entry_price": 3342.50,
+            "stop_loss": 3336.10,
+            "target_1": 3351.50,
+            "target_2": 3357.90,
+            "condition_score": 80
+        }
+        self.notif_service.broadcast_setup_alert(setup_80)
+
+        # Verify Trader B received notification
+        cursor.execute("SELECT count(*) FROM telegram_notifications WHERE user_id = 2 AND payload_json LIKE '%SET-TEST-80%'")
+        self.assertEqual(cursor.fetchone()[0], 1)
+
+        # Verify Trader A was filtered out
+        cursor.execute("SELECT count(*) FROM telegram_notifications WHERE user_id = 1 AND payload_json LIKE '%SET-TEST-80%'")
+        self.assertEqual(cursor.fetchone()[0], 0)
+
+    def test_notification_deduplication(self):
+        """Verifies duplicate setup notifications are suppressed within 1 hour"""
+        cursor = self.conn.cursor()
+        cursor.execute("INSERT OR REPLACE INTO telegram_users (telegram_id, user_id, username) VALUES (99999, 2, 'alex_trader')")
+        self.conn.commit()
+
+        payload = {"setup_id": "SET-DEDUP-01", "symbol": "US100"}
+        notif1 = self.notif_service.queue_notification(2, "SIGNAL_NEW", "Title", "Msg", payload)
+        self.assertIsNotNone(notif1)
+
+        # Second queue attempt for same setup_id must return None
+        notif2 = self.notif_service.queue_notification(2, "SIGNAL_NEW", "Title", "Msg", payload)
+        self.assertIsNone(notif2)
+
+    def test_bot_dynamic_commands(self):
+        """Verifies dynamic command responses for /news, /strength, /plans, /journal, /account, /settings"""
+        from_user = {"id": 112233, "first_name": "Alex", "username": "alex_trader"}
+
+        # /news
+        res_news = self.bot_service.handle_message({"chat": {"id": 112233}, "from": from_user, "text": "/news"}, self.conn)
+        self.assertEqual(res_news["status"], "news_handled")
+
+        # /strength
+        res_str = self.bot_service.handle_message({"chat": {"id": 112233}, "from": from_user, "text": "/strength"}, self.conn)
+        self.assertEqual(res_str["status"], "strength_handled")
+
+        # /plans
+        res_plans = self.bot_service.handle_message({"chat": {"id": 112233}, "from": from_user, "text": "/plans"}, self.conn)
+        self.assertEqual(res_plans["status"], "plans_handled")
+
+        # /journal
+        res_jour = self.bot_service.handle_message({"chat": {"id": 112233}, "from": from_user, "text": "/journal"}, self.conn)
+        self.assertEqual(res_jour["status"], "journal_handled")
+
+        # /account
+        res_acc = self.bot_service.handle_message({"chat": {"id": 112233}, "from": from_user, "text": "/account"}, self.conn)
+        self.assertEqual(res_acc["status"], "account_handled")
+
+        # /settings
+        res_set = self.bot_service.handle_message({"chat": {"id": 112233}, "from": from_user, "text": "/settings"}, self.conn)
+        self.assertEqual(res_set["status"], "settings_handled")
+
 if __name__ == '__main__':
     unittest.main()

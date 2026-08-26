@@ -1,20 +1,34 @@
 #!/usr/bin/env python3
 """
-CHARTORA.IN — Telegram Bot API Engine & Webhook Controller
-Implements production-grade Telegram Bot handlers, inline keyboards,
-Mini App deep integration, callback queries, and comprehensive command dispatch:
-/start, /app, /markets, /setups, /signals, /watchlist, /alerts, /news, /strength,
-/academy, /risk, /journal, /plans, /connect_mt5, /account, /settings, /help.
+CHARTORA.IN — Telegram Bot API Engine & Webhook Controller (Production Hardened)
+Implements:
+- Webhook Secret Validation & Deduplication (X-Telegram-Bot-Api-Secret-Token)
+- Unified Chartora User Identity & Secure Account Linking (v1_link_* tokens)
+- Live Dynamic Intelligence Engines (Real-time Markets, Setups, News, Strength, Calendar)
+- Complete Interactive Command Suite & Compact Callback Query Dispatcher
+- Direct Telegram Mini App (TMA) Deep Linking & Native WebApp Buttons
 """
 
 import json
 import os
 import time
+import secrets
+import hashlib
 import urllib.request
 import urllib.parse
 from typing import Dict, Any, Optional, List
 
 from .telegram_auth import verify_deep_link_payload, create_deep_link_payload
+from backend.core import (
+    realtime_market_engine,
+    strategy_engine,
+    news_intelligence_engine,
+    economic_calendar_engine,
+    currency_strength_engine,
+    global_session_engine,
+    JournalService,
+    AcademyService
+)
 
 TELEGRAM_API_BASE = "https://api.telegram.org"
 
@@ -29,16 +43,22 @@ def get_mini_app_url() -> str:
     return os.environ.get('TELEGRAM_MINI_APP_URL', f"{base_url}/public/telegram-app/index.html")
 
 def telegram_api_call(method: str, payload: dict, bot_token: Optional[str] = None) -> dict:
-    """Executes a call to Telegram Bot API with error handling."""
+    """Executes a call to Telegram Bot API with error handling and simulation fallback."""
     token = bot_token or get_bot_token()
     url = f"{TELEGRAM_API_BASE}/bot{token}/{method}"
     headers = {"Content-Type": "application/json"}
     data = json.dumps(payload).encode('utf-8')
     
-    # In test mode or when no active token, simulate success
     mode = os.environ.get('TELEGRAM_MODE', 'active')
     if mode == 'disabled' or token.startswith('7123456789:AAFake'):
-        return {"ok": True, "result": {"message_id": 9999, "chat": {"id": payload.get("chat_id")}}}
+        return {
+            "ok": True,
+            "result": {
+                "message_id": 9999,
+                "chat": {"id": payload.get("chat_id")},
+                "text": payload.get("text", "")
+            }
+        }
 
     try:
         req = urllib.request.Request(url, data=data, headers=headers)
@@ -56,6 +76,8 @@ def telegram_api_call(method: str, payload: dict, bot_token: Optional[str] = Non
 class TelegramBotService:
     def __init__(self, db_getter):
         self.get_db = db_getter
+        self.journal_service = JournalService(db_getter)
+        self.academy_service = AcademyService(db_getter)
 
     def send_message(self, chat_id: int, text: str, reply_markup: Optional[dict] = None, parse_mode: str = "HTML") -> dict:
         payload = {
@@ -87,26 +109,6 @@ class TelegramBotService:
             payload["show_alert"] = show_alert
         return telegram_api_call("answerCallbackQuery", payload)
 
-    def set_bot_commands(self) -> dict:
-        commands = [
-            {"command": "start", "description": "Launch Chartora Intelligence Bot & Onboarding"},
-            {"command": "app", "description": "Open Chartora Mini App Terminal"},
-            {"command": "markets", "description": "Inspect Live Market Overview & Quotes"},
-            {"command": "setups", "description": "View Published Technical Scanner Setups"},
-            {"command": "watchlist", "description": "Manage Tracked Instruments"},
-            {"command": "alerts", "description": "Configure Smart Price & Setup Alerts"},
-            {"command": "news", "description": "High-Impact Macroeconomic News Briefings"},
-            {"command": "strength", "description": "Relative Currency Strength Matrix"},
-            {"command": "academy", "description": "Trading Courses & Knowledge Library"},
-            {"command": "risk", "description": "Position Sizing & Risk Calculator"},
-            {"command": "journal", "description": "Synchronized Trade Journal"},
-            {"command": "plans", "description": "Subscription Tiers & Entitlements"},
-            {"command": "account", "description": "Account & Subscription Status"},
-            {"command": "settings", "description": "Notification & Alert Preferences"},
-            {"command": "help", "description": "User Guide & Support Links"}
-        ]
-        return telegram_api_call("setMyCommands", {"commands": commands})
-
     def get_main_menu_keyboard(self, start_param: Optional[str] = None) -> dict:
         app_url = get_mini_app_url()
         if start_param:
@@ -118,32 +120,31 @@ class TelegramBotService:
                     {"text": "🚀 Launch Chartora Mini App", "web_app": {"url": app_url}}
                 ],
                 [
-                    {"text": "📈 Markets", "callback_data": "v1:mkt:list"},
-                    {"text": "⚡ Setups", "callback_data": "v1:sig:list"}
+                    {"text": "📈 Live Markets", "callback_data": "v1:mkt:list"},
+                    {"text": "⚡ Active Setups", "callback_data": "v1:sig:list"}
                 ],
                 [
-                    {"text": "📰 News", "callback_data": "v1:news:list"},
+                    {"text": "📰 Macro News", "callback_data": "v1:news:list"},
                     {"text": "💪 Currency Strength", "callback_data": "v1:str:list"}
                 ],
                 [
                     {"text": "🎓 Academy", "web_app": {"url": f"{app_url}#academy"}},
-                    {"text": "🧮 Risk Calculator", "web_app": {"url": f"{app_url}#tools/risk"}}
+                    {"text": "🧮 Risk Calculator", "web_app": {"url": f"{app_url}#risk"}}
                 ],
                 [
-                    {"text": "📓 Journal", "web_app": {"url": f"{app_url}#journal"}},
+                    {"text": "📓 Trade Journal", "web_app": {"url": f"{app_url}#journal"}},
                     {"text": "⭐ Watchlist", "callback_data": "v1:wch:view"}
                 ],
                 [
                     {"text": "👤 Account", "callback_data": "v1:acc:info"},
-                    {"text": "⚙️ Settings", "callback_data": "v1:set:main"}
+                    {"text": "⚙️ Alert Settings", "callback_data": "v1:set:main"}
                 ]
             ]
         }
 
     # ==========================================
-    # UPDATE / WEBHOOK PROCESSOR
+    # 1. UPDATE & WEBHOOK PROCESSOR
     # ==========================================
-
     def process_update(self, update: dict) -> dict:
         update_id = update.get("update_id")
         if not update_id:
@@ -174,6 +175,9 @@ class TelegramBotService:
         finally:
             conn.close()
 
+    # ==========================================
+    # 2. IDENTITY SYNC & ACCOUNT LINKING
+    # ==========================================
     def sync_telegram_user(self, tg_user: dict, conn) -> int:
         """Upserts telegram user record and links to chartora user if possible."""
         cursor = conn.cursor()
@@ -198,23 +202,30 @@ class TelegramBotService:
         else:
             linked_user_id = None
             if username:
-                cursor.execute("SELECT user_id FROM profiles WHERE LOWER(telegram_username) = LOWER(?) OR LOWER(username) = LOWER(?)", (username, username))
+                cursor.execute("SELECT user_id FROM profiles WHERE LOWER(telegram_username) = LOWER(?)", (username,))
                 prof = cursor.fetchone()
                 if prof:
                     linked_user_id = prof["user_id"]
 
             if not linked_user_id:
-                import secrets
-                import hashlib
+                # Auto-provision user record
                 rand_email = f"tg_{tg_id}@chartora.in"
                 gen_pass = hashlib.sha256(secrets.token_hex(16).encode()).hexdigest()
                 full_name = f"{first_name} {last_name}".strip() or "Telegram Trader"
                 u_name = username or f"tg_user_{tg_id}"
-                cursor.execute('INSERT INTO users (email, password_hash, role) VALUES (?, ?, "Free Member")', (rand_email, gen_pass))
-                linked_user_id = cursor.lastrowid
-                cursor.execute('INSERT INTO profiles (user_id, full_name, username, telegram_username) VALUES (?, ?, ?, ?)',
-                               (linked_user_id, full_name, u_name, username))
-                cursor.execute('INSERT INTO user_preferences (user_id) VALUES (?)', (linked_user_id,))
+                
+                try:
+                    cursor.execute('INSERT INTO users (email, password_hash, role) VALUES (?, ?, "Free Member")', (rand_email, gen_pass))
+                    linked_user_id = cursor.lastrowid
+                    cursor.execute('INSERT INTO profiles (user_id, full_name, username, telegram_username) VALUES (?, ?, ?, ?)',
+                                   (linked_user_id, full_name, u_name, username))
+                    cursor.execute('INSERT INTO user_preferences (user_id) VALUES (?)', (linked_user_id,))
+                    cursor.execute('INSERT INTO user_alert_settings (user_id) VALUES (?)', (linked_user_id,))
+                except Exception:
+                    cursor.execute('SELECT id FROM users WHERE email = ?', (rand_email,))
+                    row = cursor.fetchone()
+                    if row:
+                        linked_user_id = row[0]
 
             if existing:
                 cursor.execute("""
@@ -230,10 +241,66 @@ class TelegramBotService:
             conn.commit()
             return linked_user_id
 
-    # ==========================================
-    # MESSAGE HANDLERS
-    # ==========================================
+    def link_account_via_token(self, tg_id: int, tg_user: dict, token_str: str, conn) -> Optional[int]:
+        """Securely links a Telegram user to an existing Chartora web account using a signed or database token."""
+        cursor = conn.cursor()
+        clean_token = token_str
+        if clean_token.startswith("v1_link_"):
+            clean_token = clean_token[len("v1_link_"):]
+        elif clean_token.startswith("link_"):
+            clean_token = clean_token[len("link_"):]
+        clean_token = clean_token.strip()
+        
+        # 1. Check database tokens
+        cursor.execute("""
+            SELECT user_id, token FROM account_linking_tokens
+            WHERE (token = ? OR token = ?) AND is_used = 0 AND (expires_at > CURRENT_TIMESTAMP OR expires_at > datetime('now'))
+        """, (token_str, clean_token))
+        row = cursor.fetchone()
+        
+        target_user_id = None
+        if row:
+            target_user_id = row["user_id"]
+            matched_tok = row["token"]
+            cursor.execute("""
+                UPDATE account_linking_tokens
+                SET is_used = 1, used_by_telegram_id = ?
+                WHERE token = ?
+            """, (tg_id, matched_tok))
+        else:
+            # 2. Check cryptographic signed payload
+            parsed = verify_deep_link_payload(token_str)
+            if parsed.get("valid") and parsed.get("action") == "link":
+                target_user_id = parsed.get("user_id")
 
+        if target_user_id:
+            username = tg_user.get("username")
+            first_name = tg_user.get("first_name", "")
+            last_name = tg_user.get("last_name", "")
+            lang = tg_user.get("language_code", "en")
+            is_prem = 1 if tg_user.get("is_premium") else 0
+
+            cursor.execute("""
+                INSERT INTO telegram_users (telegram_id, user_id, username, first_name, last_name, language_code, is_premium)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(telegram_id) DO UPDATE SET
+                    user_id = excluded.user_id,
+                    username = excluded.username,
+                    first_name = excluded.first_name,
+                    last_name = excluded.last_name,
+                    updated_at = CURRENT_TIMESTAMP
+            """, (tg_id, target_user_id, username, first_name, last_name, lang, is_prem))
+
+            if username:
+                cursor.execute("UPDATE profiles SET telegram_username = ? WHERE user_id = ?", (username, target_user_id))
+
+            conn.commit()
+            return target_user_id
+        return None
+
+    # ==========================================
+    # 3. MESSAGE & COMMAND DISPATCHER
+    # ==========================================
     def handle_message(self, message: dict, conn) -> dict:
         chat = message.get("chat", {})
         chat_id = chat.get("id")
@@ -245,7 +312,6 @@ class TelegramBotService:
 
         linked_user_id = self.sync_telegram_user(from_user, conn)
 
-        # Command Dispatching
         if text.startswith("/start"):
             parts = text.split(maxsplit=1)
             start_payload = parts[1] if len(parts) > 1 else ""
@@ -273,7 +339,7 @@ class TelegramBotService:
             return self.handle_strength_command(chat_id)
 
         elif text.startswith("/academy"):
-            return self.handle_academy_command(chat_id)
+            return self.handle_academy_command(chat_id, linked_user_id)
 
         elif text.startswith("/risk"):
             return self.handle_risk_command(chat_id)
@@ -284,8 +350,8 @@ class TelegramBotService:
         elif text.startswith("/plans") or text.startswith("/subscription"):
             return self.handle_plans_command(chat_id, conn)
 
-        elif text.startswith("/connect_mt5"):
-            return self.handle_connect_mt5_command(chat_id, linked_user_id)
+        elif text.startswith("/connect_mt5") or text.startswith("/mt5"):
+            return self.handle_connect_mt5_command(chat_id)
 
         elif text.startswith("/account"):
             return self.handle_account_command(chat_id, from_user, linked_user_id, conn)
@@ -298,15 +364,16 @@ class TelegramBotService:
 
         else:
             fallback_text = (
-                "👋 <b>Welcome to Chartora.in Trading Intelligence</b>\n\n"
+                "👋 <b>Welcome to Chartora Trading Intelligence</b>\n\n"
                 "Tap below to launch the Mini App or explore live markets, setups, news, and tools."
             )
             self.send_message(chat_id, fallback_text, self.get_main_menu_keyboard())
             return {"status": "fallback_sent"}
 
+    # ==========================================
+    # 4. COMMAND HANDLERS
+    # ==========================================
     def handle_start_command(self, chat_id: int, from_user: dict, start_payload: str, linked_user_id: Optional[int], conn) -> dict:
-        parsed_deep_link = verify_deep_link_payload(start_payload) if start_payload else None
-        
         user_name = from_user.get("first_name", "Trader")
         welcome_msg = [
             f"⚡ <b>Welcome to Chartora, {user_name}!</b>",
@@ -316,13 +383,23 @@ class TelegramBotService:
             ""
         ]
 
-        if parsed_deep_link and parsed_deep_link.get("valid"):
-            action = parsed_deep_link.get("action")
-            ref = parsed_deep_link.get("reference")
-            if action == "market" and ref:
-                welcome_msg.append(f"🎯 <i>Direct Navigation: Viewing market intelligence for <b>{ref}</b></i>\n")
-            elif action == "setup" and ref:
-                welcome_msg.append(f"⚡ <i>Setup Deep Link: Opening setup <b>#{ref}</b></i>\n")
+        if start_payload:
+            if start_payload.startswith("v1_link_") or start_payload.startswith("link_"):
+                linked_id = self.link_account_via_token(from_user.get("id"), from_user, start_payload, conn)
+                if linked_id:
+                    welcome_msg.append("🔗 <b>Account Successfully Linked!</b> Your Telegram is now connected to your Chartora Web account.\n")
+                    linked_user_id = linked_id
+                else:
+                    welcome_msg.append("⚠️ <i>Account linking link expired or invalid. You are in guest mode.</i>\n")
+            else:
+                parsed_deep_link = verify_deep_link_payload(start_payload)
+                if parsed_deep_link.get("valid"):
+                    act = parsed_deep_link.get("action")
+                    ref = parsed_deep_link.get("reference")
+                    if act == "market" and ref:
+                        welcome_msg.append(f"🎯 <i>Viewing live intelligence for <b>{ref}</b></i>\n")
+                    elif act == "setup" and ref:
+                        welcome_msg.append(f"⚡ <i>Setup Deep Link: Opening setup <b>#{ref}</b></i>\n")
 
         welcome_msg.extend([
             "<b>Quick Commands:</b>",
@@ -335,13 +412,14 @@ class TelegramBotService:
             "• 📓 <code>/journal</code> — Synced Trade Journal",
             "• 🎓 <code>/academy</code> — Trading Academy",
             "• 👤 <code>/account</code> — Subscription & Status",
+            "• ⚙️ <code>/settings</code> — Notification Preferences",
             "",
             "👇 <b>Tap below to launch the full Mini App:</b>"
         ])
 
         keyboard = self.get_main_menu_keyboard(start_param=start_payload)
         self.send_message(chat_id, "\n".join(welcome_msg), keyboard)
-        return {"status": "start_handled", "deep_link": parsed_deep_link}
+        return {"status": "start_handled"}
 
     def handle_app_command(self, chat_id: int, from_user: dict) -> dict:
         msg = (
@@ -349,7 +427,7 @@ class TelegramBotService:
             "• Real-time Scanner Setups with Condition Quality (0-100)\n"
             "• Multi-Market Watchlists & Smart Price Alerts\n"
             "• Position Sizing Risk Calculator & Synced Journal\n"
-            "• Trading Academy with 5 Structured Courses\n\n"
+            "• Trading Academy with 4 Structured Courses & Quizzes\n\n"
             "Tap below to launch the full-screen terminal:"
         )
         keyboard = {
@@ -361,20 +439,22 @@ class TelegramBotService:
         return {"status": "app_command_handled"}
 
     def handle_markets_command(self, chat_id: int, conn) -> dict:
+        quotes = realtime_market_engine.get_all_quotes()
         msg = [
             "📈 <b>Chartora Market Universe & Live Quotes</b>",
-            "",
-            "• <b>XAUUSD</b> (Gold) — <code>$3,342.50</code> (+0.85%) | 🟢 Bullish",
-            "• <b>XAGUSD</b> (Silver) — <code>$38.45</code> (+1.20%) | 🟢 Bullish",
-            "• <b>EURUSD</b> (Euro) — <code>1.0880</code> (-0.15%) | ⚪ Neutral",
-            "• <b>GBPUSD</b> (Pound) — <code>1.2940</code> (+0.32%) | 🟢 Bullish",
-            "• <b>US100</b> (Nasdaq) — <code>21,150.00</code> (-0.62%) | 🔴 Bearish",
-            "• <b>US500</b> (S&P 500) — <code>5,860.00</code> (-0.28%) | ⚪ Neutral",
-            "• <b>NVDA</b> (Nvidia) — <code>$128.50</code> (+2.10%) | 🟢 Bullish",
-            "• <b>BTCUSD</b> (Bitcoin) — <code>$68,420.00</code> (+1.95%) | 🟢 Bullish",
-            "",
-            "Select an instrument below or open the Mini App for charts:"
+            "<i>Real-time institutional liquidity stream:</i>",
+            ""
         ]
+
+        for q in quotes[:8]:
+            chg = q.get("change_percent_24h", 0.0)
+            chg_sign = "+" if chg >= 0 else ""
+            trend_emoji = "🟢" if chg > 0 else "🔴" if chg < 0 else "⚪"
+            fresh = q.get("freshness", "LIVE")
+            badge = "🟢" if fresh == "LIVE" else "🟡"
+            msg.append(f"• <b>{q['symbol']}</b>: <code>{q['bid']}</code> ({chg_sign}{chg:.2f}%) {trend_emoji} {badge}")
+
+        msg.append("\nSelect an instrument below or launch the Mini App:")
         keyboard = {
             "inline_keyboard": [
                 [
@@ -404,14 +484,18 @@ class TelegramBotService:
             ""
         ]
 
-        for s in signals:
-            emoji = "🟢 BUY" if s["direction"] == "BUY" else "🔴 SELL"
-            status_badge = "⏳ ACTIVE" if s["status"] == "ACTIVE" else f"🎯 {s['status']}"
-            msg.append(
-                f"• <b>{s['instrument']}</b> ({s['timeframe']}) — {emoji} @ <code>{s['entry_price']}</code>\n"
-                f"  SL: <code>{s['sl_price']}</code> | TP1: <code>{s['tp1_price']}</code> (<b>1:{s['rr_ratio']}R</b>)\n"
-                f"  Status: <b>{status_badge}</b> | <i>{s['strategy']}</i>\n"
-            )
+        if not signals:
+            msg.append("<i>No active setups detected by the scanner at this moment.</i>")
+        else:
+            for s in signals:
+                emoji = "🟢 BUY" if s["direction"] == "BUY" else "🔴 SELL"
+                status_badge = "⏳ ACTIVE" if s["status"] == "ACTIVE" else f"🎯 {s['status']}"
+                score = s.get("condition_score", 80)
+                msg.append(
+                    f"• <b>{s['instrument']}</b> ({s['timeframe']}) — {emoji} @ <code>{s['entry_price']}</code>\n"
+                    f"  SL: <code>{s['sl_price']}</code> | TP1: <code>{s['tp1_price']}</code> (<b>1:{s['rr_ratio']}R</b>)\n"
+                    f"  Score: <b>{score}/100</b> | Status: <b>{status_badge}</b>\n"
+                )
 
         msg.append("⚠️ <i>Educational setups only. You make the final decision.</i>")
 
@@ -446,11 +530,13 @@ class TelegramBotService:
         else:
             msg = ["⭐ <b>Your Active Watchlist</b>\n"]
             for it in items:
-                msg.append(f"• <b>{it['symbol']}</b> ({it['category'] or 'Asset'})")
+                q = realtime_market_engine.get_quote(it['symbol'])
+                price_str = f" @ <code>{q['bid']}</code>" if q else ""
+                msg.append(f"• <b>{it['symbol']}</b> ({it['category'] or 'Asset'}){price_str}")
             msg.append("\nManage your watchlist in the Mini App:")
             keyboard = {
                 "inline_keyboard": [
-                    [{"text": "⭐ Manage Watchlist", "web_app": {"url": f"{get_mini_app_url()}#watchlist"}}]
+                    [{"text": "⭐ Manage Watchlist in Mini App", "web_app": {"url": f"{get_mini_app_url()}#watchlist"}}]
                 ]
             }
 
@@ -473,18 +559,19 @@ class TelegramBotService:
             keyboard = {
                 "inline_keyboard": [
                     [{"text": "🔔 Create New Alert", "web_app": {"url": f"{get_mini_app_url()}#alerts"}}],
-                    [{"text": "⚙️ Alert Settings", "callback_data": "v1:set:main"}]
+                    [{"text": "⚙️ Alert Preferences", "callback_data": "v1:set:main"}]
                 ]
             }
         else:
             msg = ["🔔 <b>Active Price Alerts</b>\n"]
             for a in alerts:
                 status = "🟢 Active" if a["is_active"] else "⚪ Paused"
-                msg.append(f"• <b>{a['symbol']}</b>: {a['condition']} {a['target_price']} ({status})")
+                msg.append(f"• <b>{a['symbol']}</b>: {a['condition']} <code>{a['target_price']}</code> ({status})")
             msg.append("\nTap below to manage:")
             keyboard = {
                 "inline_keyboard": [
-                    [{"text": "🔔 Manage Alerts in Mini App", "web_app": {"url": f"{get_mini_app_url()}#alerts"}}]
+                    [{"text": "🔔 Manage Alerts in Mini App", "web_app": {"url": f"{get_mini_app_url()}#alerts"}}],
+                    [{"text": "⚙️ Alert Settings", "callback_data": "v1:set:main"}]
                 ]
             }
 
@@ -492,139 +579,173 @@ class TelegramBotService:
         return {"status": "alerts_handled"}
 
     def handle_news_command(self, chat_id: int) -> dict:
-        msg = (
-            "📰 <b>Chartora Macroeconomic News & Calendar</b>\n\n"
-            "🔴 <b>HIGH: US Core CPI (MoM)</b> — Release: <code>Soon</code>\n"
-            "• Expected: 0.2% | Previous: 0.3%\n"
-            "• Sensitive Markets: <code>USD</code>, <code>XAUUSD</code>, <code>US500</code>\n\n"
-            "🔴 <b>HIGH: ECB Interest Rate Decision</b>\n"
-            "• Actual: 3.75% | Sensitive: <code>EURUSD</code>\n\n"
-            "⚠️ <i>Elevated volatility may occur around high-impact events.</i>"
-        )
+        news_items = news_intelligence_engine.get_news(limit=4)
+        msg = [
+            "📰 <b>Chartora Macroeconomic Intelligence & News</b>",
+            "<i>High-impact events and macro market drivers:</i>",
+            ""
+        ]
+
+        for item in news_items:
+            impact = item.get("impact", "MEDIUM")
+            emoji = "🔴" if impact == "HIGH" else "🟡" if impact == "MEDIUM" else "🟢"
+            msg.append(
+                f"{emoji} <b>{item.get('title')}</b>\n"
+                f"• Category: <b>{item.get('category')}</b> | Source: <i>{item.get('source')}</i>\n"
+                f"• {item.get('summary', '')[:120]}...\n"
+            )
+
+        msg.append("Tap below for full economic calendar:")
         keyboard = {
             "inline_keyboard": [
-                [{"text": "📰 Full News Calendar in Mini App", "web_app": {"url": f"{get_mini_app_url()}#news"}}]
+                [{"text": "📰 View Full News & Calendar", "web_app": {"url": f"{get_mini_app_url()}#news"}}]
             ]
         }
-        self.send_message(chat_id, msg, keyboard)
+        self.send_message(chat_id, "\n".join(msg), keyboard)
         return {"status": "news_handled"}
 
     def handle_strength_command(self, chat_id: int) -> dict:
-        msg = (
-            "💪 <b>Relative Currency Strength Index (1H)</b>\n\n"
-            "1. <b>USD</b> 🟩 82/100 (Strongest)\n"
-            "2. <b>GBP</b> 🟩 76/100 (Strong)\n"
-            "3. <b>EUR</b> 🟨 64/100 (Neutral)\n"
-            "4. <b>CHF</b> 🟨 58/100 (Neutral)\n"
-            "5. <b>AUD</b> 🟨 52/100 (Neutral)\n"
-            "6. <b>CAD</b> 🟧 45/100 (Weak)\n"
-            "7. <b>NZD</b> 🟧 38/100 (Weak)\n"
-            "8. <b>JPY</b> 🟥 28/100 (Weakest)\n\n"
-            "<i>Calculated via multi-pair normalized basket returns.</i>"
-        )
+        matrix = currency_strength_engine.calculate_matrix("1H")
+        msg = [
+            "💪 <b>Relative Currency Strength Matrix (1H)</b>",
+            "<i>Real-time momentum ranking across 8 major currencies:</i>",
+            ""
+        ]
+
+        sorted_c = sorted(matrix, key=lambda x: x["score"], reverse=True)
+        for idx, c in enumerate(sorted_c):
+            bar_len = int(c["score"] / 10)
+            bar = "🟩" * bar_len + "⬜" * (10 - bar_len)
+            status_emoji = "🟢" if c["status"] == "STRONG" else "🔴" if c["status"] == "WEAK" else "⚪"
+            msg.append(f"#{idx+1} <b>{c['code']}</b> ({c['score']}/100) {status_emoji}\n{bar} <i>{c['change']}</i>")
+
         keyboard = {
             "inline_keyboard": [
-                [{"text": "💪 Explore 5M/15M/1H Matrix", "web_app": {"url": f"{get_mini_app_url()}#strength"}}]
+                [
+                    {"text": "1H", "callback_data": "v1:str:tf:1H"},
+                    {"text": "4H", "callback_data": "v1:str:tf:4H"},
+                    {"text": "1D", "callback_data": "v1:str:tf:1D"}
+                ],
+                [{"text": "📊 Full Matrix in Mini App", "web_app": {"url": f"{get_mini_app_url()}#strength"}}]
             ]
         }
-        self.send_message(chat_id, msg, keyboard)
+        self.send_message(chat_id, "\n".join(msg), keyboard)
         return {"status": "strength_handled"}
 
-    def handle_academy_command(self, chat_id: int) -> dict:
-        msg = (
-            "🎓 <b>Chartora Trading Academy</b>\n\n"
-            "Structured institutional curriculum:\n"
-            "1. Financial Market Foundations (6 Lessons)\n"
-            "2. Technical Market Structure & BOS (5 Lessons)\n"
-            "3. Chartora EMA Pullback Strategy (4 Lessons)\n"
-            "4. Risk Management & Capital Preservation (4 Lessons)\n"
-            "5. Trading Psychology & Trade Journaling (4 Lessons)\n\n"
-            "Continue learning inside the Mini App:"
-        )
+    def handle_academy_command(self, chat_id: int, linked_user_id: Optional[int]) -> dict:
+        curriculum = self.academy_service.get_curriculum(linked_user_id)
+        msg = [
+            "🎓 <b>Chartora Trading Academy</b>",
+            "<i>Structured educational modules from beginner to institutional risk management:</i>",
+            ""
+        ]
+
+        for c in curriculum:
+            lessons_cnt = len(c.get("lessons", []))
+            msg.append(f"• <b>{c['title']}</b>\n  Level: <i>{c['level']}</i> | {lessons_cnt} Lessons ({c['duration']})\n")
+
+        msg.append("Tap below to continue learning with interactive quizzes:")
         keyboard = {
             "inline_keyboard": [
-                [{"text": "🎓 Open Academy in Mini App", "web_app": {"url": f"{get_mini_app_url()}#academy"}}]
+                [{"text": "🎓 Launch Trading Academy", "web_app": {"url": f"{get_mini_app_url()}#academy"}}]
             ]
         }
-        self.send_message(chat_id, msg, keyboard)
+        self.send_message(chat_id, "\n".join(msg), keyboard)
         return {"status": "academy_handled"}
 
     def handle_risk_command(self, chat_id: int) -> dict:
         msg = (
             "🧮 <b>Chartora Position Sizing & Risk Calculator</b>\n\n"
-            "Plan your exact lot size and dollar risk before placing any trade:\n"
-            "• Account Balance & Risk Percentage (Fixed 1% Rule)\n"
-            "• Exact Point / Pip Stop Loss Distance\n"
-            "• Mathematical R:R Ratio & Recommended Lot Size\n\n"
-            "Open the calculator in the Mini App:"
+            "• <b>The 1% Rule:</b> Never risk more than 1% of account capital per trade.\n"
+            "• <b>Lot Size Formula:</b> <code>(Balance × Risk %) ÷ (SL Distance in Points × Pip Value)</code>\n"
+            "• <b>Asymmetric R:R:</b> Aim for minimum 1:2 Risk to Reward.\n\n"
+            "Tap below to use the interactive mobile risk calculator:"
         )
         keyboard = {
             "inline_keyboard": [
-                [{"text": "🧮 Open Risk Calculator", "web_app": {"url": f"{get_mini_app_url()}#tools/risk"}}]
+                [{"text": "🧮 Open Risk Calculator", "web_app": {"url": f"{get_mini_app_url()}#risk"}}]
             ]
         }
         self.send_message(chat_id, msg, keyboard)
         return {"status": "risk_handled"}
 
     def handle_journal_command(self, chat_id: int, linked_user_id: Optional[int], conn) -> dict:
-        cursor = conn.cursor()
-        total_trades = 0
-        win_rate = 0.0
-        net_r = 0.0
-        if linked_user_id:
-            cursor.execute("SELECT result_usd, r_multiple FROM trade_journal WHERE user_id = ?", (linked_user_id,))
-            trades = cursor.fetchall()
-            total_trades = len(trades)
-            if total_trades > 0:
-                wins = len([t for t in trades if t["result_usd"] > 0 or t["r_multiple"] > 0])
-                win_rate = round(wins / total_trades * 100, 1)
-                net_r = round(sum(t["r_multiple"] for t in trades), 2)
+        if not linked_user_id:
+            msg = (
+                "📓 <b>Trade Journal</b>\n\n"
+                "Please link your Chartora Web account or open the Mini App to view your synchronized trade journal."
+            )
+            keyboard = {
+                "inline_keyboard": [
+                    [{"text": "📓 Open Journal in Mini App", "web_app": {"url": f"{get_mini_app_url()}#journal"}}]
+                ]
+            }
+        else:
+            res = self.journal_service.get_user_trades(linked_user_id)
+            metrics = res.get("metrics", {})
+            trades = res.get("trades", [])
 
-        msg = (
-            f"📓 <b>Your Chartora Trade Journal</b>\n\n"
-            f"• <b>Total Trades:</b> {total_trades}\n"
-            f"• <b>Win Rate:</b> {win_rate}%\n"
-            f"• <b>Cumulative R:</b> +{net_r}R\n\n"
-            f"Log, review, and analyze your trades seamlessly across Web and Telegram:"
-        )
-        keyboard = {
-            "inline_keyboard": [
-                [{"text": "📓 Open Journal in Mini App", "web_app": {"url": f"{get_mini_app_url()}#journal"}}]
+            msg = [
+                "📓 <b>Synchronized Trade Journal</b>",
+                f"• Total Trades: <b>{metrics.get('total_trades', 0)}</b>",
+                f"• Win Rate: <b>{metrics.get('win_rate_pct', 0.0)}%</b> ({metrics.get('wins', 0)}W / {metrics.get('losses', 0)}L)",
+                f"• Net P&L: <b>${metrics.get('net_usd', 0.0)}</b> (<b>{metrics.get('net_r', 0.0)}R</b>)",
+                ""
             ]
-        }
-        self.send_message(chat_id, msg, keyboard)
+
+            if trades:
+                msg.append("<b>Recent Recorded Trades:</b>")
+                for t in trades[:3]:
+                    direction_emoji = "🟢" if t.get("direction") in ["BUY", "LONG"] else "🔴"
+                    res_str = f"+${t.get('result_usd', 0)}" if t.get("result_usd", 0) >= 0 else f"-${abs(t.get('result_usd', 0))}"
+                    msg.append(f"• {direction_emoji} <b>{t.get('symbol')}</b> — {res_str} ({t.get('r_multiple', 0)}R) on {t.get('trade_date')}")
+
+            keyboard = {
+                "inline_keyboard": [
+                    [{"text": "📓 Manage Journal in Mini App", "web_app": {"url": f"{get_mini_app_url()}#journal"}}]
+                ]
+            }
+
+        self.send_message(chat_id, "\n".join(msg) if isinstance(msg, list) else msg, keyboard)
         return {"status": "journal_handled"}
 
     def handle_plans_command(self, chat_id: int, conn) -> dict:
-        msg = (
-            "💳 <b>Chartora Subscription Plans & Entitlements</b>\n\n"
-            "• <b>Free Member ($0):</b> Basic quotes, public alerts, free academy, risk calculator.\n"
-            "• <b>Forex System ($19.99/mo):</b> Real-time Forex scanner, Telegram Forex alerts, full course.\n"
-            "• <b>Metals System ($14.99/mo):</b> Real-time Gold/Silver scanner, Gold channel access, chart snapshots.\n"
-            "• <b>Indices System ($14.99/mo):</b> Real-time US100/US500 scanner & alerts.\n"
-            "• <b>Chartora All Access ($79/mo):</b> All Scanners, All Telegram Channels, MT5 Gateway, Full Academy, Unlimited Journal.\n\n"
-            "Upgrade your subscription in the Mini App:"
-        )
+        cursor = conn.cursor()
+        cursor.execute("SELECT name, price_usd, billing_cycle FROM plans ORDER BY price_usd ASC")
+        plans = cursor.fetchall()
+
+        msg = [
+            "💎 <b>Chartora Official Plans & Subscriptions</b>",
+            "<i>Transparent pricing with multi-market intelligence access:</i>",
+            ""
+        ]
+
+        for p in plans:
+            price_str = "FREE" if p["price_usd"] == 0 else f"${p['price_usd']:.2f}/{p['billing_cycle'][:2]}"
+            msg.append(f"• <b>{p['name']}</b> — <code>{price_str}</code>")
+
+        msg.append("\nUpgrade directly inside the Mini App or on the website:")
         keyboard = {
             "inline_keyboard": [
-                [{"text": "💳 View Plans & Upgrade", "web_app": {"url": f"{get_mini_app_url()}#profile"}}]
+                [{"text": "💎 View Plans & Upgrade", "web_app": {"url": f"{get_mini_app_url()}#account"}}]
             ]
         }
-        self.send_message(chat_id, msg, keyboard)
+        self.send_message(chat_id, "\n".join(msg), keyboard)
         return {"status": "plans_handled"}
 
-    def handle_connect_mt5_command(self, chat_id: int, linked_user_id: Optional[int]) -> dict:
+    def handle_connect_mt5_command(self, chat_id: int) -> dict:
         msg = (
-            "🔌 <b>Connect MetaTrader 5 (MT5) Expert Advisor</b>\n\n"
-            "Chartora supports direct MT5 Expert Advisor integration:\n"
-            "1. Download <code>ChartoraBridge.mq5</code> from your Chartora portal.\n"
-            "2. Attach EA to your MT5 chart with your EA ID.\n"
-            "3. Receive real-time telemetry, tick data, and scanner alerts seamlessly.\n\n"
-            "Manage your MT5 bridge in the Mini App:"
+            "🔌 <b>Chartora MetaTrader 5 (MT5) Institutional Bridge</b>\n\n"
+            "• Download the official Expert Advisor: <code>ChartoraBridge.mq5</code>\n"
+            "• Install into MT5: <code>MQL5/Experts/</code>\n"
+            "• Enable WebRequest to <code>https://chartora.in</code>\n"
+            "• Configure HMAC Secret Key in EA properties\n\n"
+            "Real-time technical alerts stream directly into Chartora scanner engines."
         )
         keyboard = {
             "inline_keyboard": [
-                [{"text": "🔌 MT5 Bridge Settings", "web_app": {"url": f"{get_mini_app_url()}#profile"}}]
+                [{"text": "📊 Open Mini App Terminal", "web_app": {"url": get_mini_app_url()}}],
+                [{"text": "📖 Integration Docs", "url": "https://chartora.in#scanner"}]
             ]
         }
         self.send_message(chat_id, msg, keyboard)
@@ -632,58 +753,79 @@ class TelegramBotService:
 
     def handle_account_command(self, chat_id: int, from_user: dict, linked_user_id: Optional[int], conn) -> dict:
         cursor = conn.cursor()
+        user_info = None
+        sub_info = None
+
         if linked_user_id:
+            cursor.execute("SELECT email, role, created_at FROM users WHERE id = ?", (linked_user_id,))
+            user_info = cursor.fetchone()
             cursor.execute("""
-                SELECT u.email, u.role, p.full_name, p.username, s.status as sub_status, pl.name as plan_name
-                FROM users u
-                LEFT JOIN profiles p ON u.id = p.user_id
-                LEFT JOIN subscriptions s ON u.id = s.user_id
-                LEFT JOIN plans pl ON s.plan_id = pl.id
-                WHERE u.id = ?
+                SELECT pl.name as plan_name, s.status, s.current_period_end 
+                FROM subscriptions s
+                JOIN plans pl ON s.plan_id = pl.id
+                WHERE s.user_id = ? AND s.status = 'ACTIVE'
+                ORDER BY s.id DESC LIMIT 1
             """, (linked_user_id,))
-            acc = cursor.fetchone()
-            
-            plan_name = acc["plan_name"] if acc and acc["plan_name"] else "Free Tier"
-            sub_status = acc["sub_status"] if acc and acc["sub_status"] else "ACTIVE"
-            email = acc["email"] if acc else "N/A"
-            username = acc["username"] if acc else from_user.get("username", "N/A")
+            sub_info = cursor.fetchone()
 
-            msg = (
-                f"👤 <b>Chartora Account Status</b>\n\n"
-                f"• <b>User:</b> {username}\n"
-                f"• <b>Email:</b> <code>{email}</code>\n"
-                f"• <b>Plan:</b> <b>{plan_name}</b> ({sub_status})\n"
-                f"• <b>Telegram Link:</b> 🟢 Connected (ID: <code>{from_user.get('id')}</code>)\n\n"
-                f"Access member benefits in the Mini App:"
-            )
-        else:
-            msg = (
-                f"👤 <b>Chartora Account Status</b>\n\n"
-                f"• <b>Telegram ID:</b> <code>{from_user.get('id')}</code>\n"
-                f"• <b>Username:</b> @{from_user.get('username', 'N/A')}\n"
-                f"• <b>Status:</b> 🟡 Guest Member\n\n"
-                f"Open the Mini App to start a free account:"
-            )
+        role = user_info["role"] if user_info else "Free Member"
+        email = user_info["email"] if user_info else f"tg_{from_user.get('id')}@chartora.in"
+        plan_name = sub_info["plan_name"] if sub_info else "Chartora Free"
 
+        msg = (
+            f"👤 <b>Account Details: {from_user.get('first_name', 'Trader')}</b>\n\n"
+            f"• <b>Role:</b> {role}\n"
+            f"• <b>Active Plan:</b> {plan_name}\n"
+            f"• <b>Telegram ID:</b> <code>{from_user.get('id')}</code>\n"
+            f"• <b>Chartora User ID:</b> <code>{linked_user_id or 'Guest'}</code>\n"
+            f"• <b>Status:</b> 🟢 Active & Synced"
+        )
         keyboard = {
             "inline_keyboard": [
-                [{"text": "👤 Open Account in Mini App", "web_app": {"url": f"{get_mini_app_url()}#profile"}}]
+                [{"text": "⚙️ Alert Settings", "callback_data": "v1:set:main"}],
+                [{"text": "🚀 Open Chartora Mini App", "web_app": {"url": get_mini_app_url()}}]
             ]
         }
         self.send_message(chat_id, msg, keyboard)
         return {"status": "account_handled"}
 
     def handle_settings_command(self, chat_id: int, from_user: dict, linked_user_id: Optional[int], conn) -> dict:
+        cursor = conn.cursor()
+        prefs = None
+        settings = None
+
+        if linked_user_id:
+            cursor.execute("SELECT * FROM user_preferences WHERE user_id = ?", (linked_user_id,))
+            prefs = cursor.fetchone()
+            cursor.execute("SELECT * FROM user_alert_settings WHERE user_id = ?", (linked_user_id,))
+            settings = cursor.fetchone()
+
+        sig_icon = "🟢 ON" if (prefs and prefs["signal_alerts"]) or not prefs else "🔴 OFF"
+        price_icon = "🟢 ON" if (prefs and prefs["price_alerts"]) or not prefs else "🔴 OFF"
+        news_icon = "🟢 ON" if (prefs and prefs["news_alerts"]) or not prefs else "🔴 OFF"
+        min_score = settings["min_condition_score"] if settings else 75
+
         msg = (
-            "⚙️ <b>Notification & Terminal Preferences</b>\n\n"
-            "Configure your alert preferences:"
+            "⚙️ <b>Notification & Alert Settings</b>\n\n"
+            f"• Signal Alerts: <b>{sig_icon}</b>\n"
+            f"• Price Threshold Alerts: <b>{price_icon}</b>\n"
+            f"• News Alerts: <b>{news_icon}</b>\n"
+            f"• Minimum Setup Quality: <b>{min_score}+ Score</b>\n\n"
+            "Toggle settings below:"
         )
+
         keyboard = {
             "inline_keyboard": [
-                [{"text": "⚡ Setup Alerts: ✅ ON", "callback_data": "v1:set:sig_toggle"}],
-                [{"text": "🔔 Price Alerts: ✅ ON", "callback_data": "v1:set:alt_toggle"}],
-                [{"text": "📰 High-Impact News: ✅ ON", "callback_data": "v1:set:news_toggle"}],
-                [{"text": "⚙️ Advanced Settings in Mini App", "web_app": {"url": f"{get_mini_app_url()}#profile"}}]
+                [
+                    {"text": f"Signals: {sig_icon}", "callback_data": "v1:set:toggle:signals"},
+                    {"text": f"News: {news_icon}", "callback_data": "v1:set:toggle:news"}
+                ],
+                [
+                    {"text": f"Min Score: {min_score} pts", "callback_data": "v1:set:cycle:score"}
+                ],
+                [
+                    {"text": "🔙 Main Menu", "callback_data": "v1:menu:main"}
+                ]
             ]
         }
         self.send_message(chat_id, msg, keyboard)
@@ -691,116 +833,203 @@ class TelegramBotService:
 
     def handle_help_command(self, chat_id: int) -> dict:
         msg = (
-            "📖 <b>Chartora Bot & Mini App User Guide</b>\n\n"
-            "<b>Commands:</b>\n"
-            "• <code>/app</code> — Open Mini App terminal\n"
-            "• <code>/markets</code> — View live quotes & strengths\n"
-            "• <code>/setups</code> — View verified scanner setups\n"
-            "• <code>/news</code> — Macroeconomic calendar\n"
-            "• <code>/strength</code> — Currency strength index\n"
+            "📚 <b>Chartora Bot Quick Reference & Support</b>\n\n"
+            "<b>Available Commands:</b>\n"
+            "• <code>/start</code> — Bot welcome & account onboarding\n"
+            "• <code>/app</code> — Open full-screen Mini App\n"
+            "• <code>/markets</code> — Real-time live quotes\n"
+            "• <code>/setups</code> — Technical scanner setups\n"
+            "• <code>/watchlist</code> — Tracked instruments\n"
+            "• <code>/alerts</code> — Custom price alerts\n"
+            "• <code>/news</code> — Macroeconomic intelligence\n"
+            "• <code>/strength</code> — Currency strength matrix\n"
             "• <code>/risk</code> — Position size calculator\n"
-            "• <code>/journal</code> — Trade journal\n"
-            "• <code>/academy</code> — Trading education\n"
+            "• <code>/journal</code> — Synced trade records\n"
+            "• <code>/academy</code> — Trading educational courses\n"
             "• <code>/plans</code> — Subscription tiers\n"
-            "• <code>/account</code> — Account & tier status\n"
-            "• <code>/settings</code> — Alert preferences\n\n"
-            "🌐 <b>Website:</b> <a href=\"https://chartora.in\">chartora.in</a>\n"
-            "💬 <b>Support:</b> @ChartoraSupport"
+            "• <code>/account</code> — Profile & connection status\n"
+            "• <code>/settings</code> — Notification preferences\n\n"
+            "Need assistance? Reach our team at <a href='https://t.me/chartora_official'>@chartora_official</a>."
         )
         keyboard = {
             "inline_keyboard": [
-                [{"text": "🚀 Open Chartora Mini App", "web_app": {"url": get_mini_app_url()}}],
-                [{"text": "🌐 Visit Website", "url": "https://chartora.in"}]
+                [{"text": "🚀 Launch Mini App", "web_app": {"url": get_mini_app_url()}}],
+                [{"text": "💬 Support Channel", "url": "https://t.me/chartora_official"}]
             ]
         }
         self.send_message(chat_id, msg, keyboard)
         return {"status": "help_handled"}
 
     # ==========================================
-    # CALLBACK QUERY HANDLER
+    # 5. INLINE CALLBACK QUERY DISPATCHER
     # ==========================================
-
-    def handle_callback_query(self, cb: dict, conn) -> dict:
-        cb_id = cb.get("id")
-        from_user = cb.get("from", {})
-        message = cb.get("message", {})
+    def handle_callback_query(self, query: dict, conn) -> dict:
+        query_id = query.get("id")
+        data = query.get("data", "")
+        message = query.get("message", {})
         chat_id = message.get("chat", {}).get("id")
-        msg_id = message.get("message_id")
-        data = cb.get("data", "")
+        message_id = message.get("message_id")
+        from_user = query.get("from", {})
+
+        if not chat_id or not data:
+            self.answer_callback_query(query_id)
+            return {"status": "ignored"}
 
         linked_user_id = self.sync_telegram_user(from_user, conn)
 
-        if data == "v1:mkt:list":
-            self.answer_callback_query(cb_id)
-            return self.handle_markets_command(chat_id, conn)
+        # 1. Main Menu
+        if data == "v1:menu:main":
+            self.answer_callback_query(query_id, "Main Menu")
+            welcome_text = "👋 <b>Chartora Trading Intelligence Core</b>\n\nSelect a tool or launch the Mini App:"
+            self.edit_message_text(chat_id, message_id, welcome_text, self.get_main_menu_keyboard())
+            return {"status": "menu_main"}
 
+        # 2. Markets List & View
+        elif data == "v1:mkt:list":
+            self.answer_callback_query(query_id)
+            quotes = realtime_market_engine.get_all_quotes()
+            msg = ["📈 <b>Live Market Overview:</b>\n"]
+            for q in quotes[:6]:
+                chg = q.get("change_percent_24h", 0.0)
+                sign = "+" if chg >= 0 else ""
+                msg.append(f"• <b>{q['symbol']}</b>: <code>{q['bid']}</code> ({sign}{chg:.2f}%)")
+            
+            keyboard = {
+                "inline_keyboard": [
+                    [{"text": "🟡 XAUUSD", "callback_data": "v1:mkt:view:XAUUSD"}, {"text": "🟣 US100", "callback_data": "v1:mkt:view:US100"}],
+                    [{"text": "🔙 Back", "callback_data": "v1:menu:main"}]
+                ]
+            }
+            self.edit_message_text(chat_id, message_id, "\n".join(msg), keyboard)
+            return {"status": "mkt_list"}
+
+        elif data.startswith("v1:mkt:view:"):
+            sym = data.replace("v1:mkt:view:", "").upper().strip()
+            self.answer_callback_query(query_id, f"Loading {sym}...")
+            quote = realtime_market_engine.get_quote(sym)
+            if quote:
+                msg = (
+                    f"📈 <b>{sym} Market Intelligence</b>\n\n"
+                    f"• Bid: <code>{quote['bid']}</code> | Ask: <code>{quote['ask']}</code>\n"
+                    f"• Spread: <code>{quote['spread']}</code>\n"
+                    f"• 24h Change: <code>{quote['change_percent_24h']:+.2f}%</code>\n"
+                    f"• Status: 🟢 {quote.get('freshness', 'LIVE')}"
+                )
+            else:
+                msg = f"Market data for {sym} is currently syncing."
+            
+            keyboard = {
+                "inline_keyboard": [
+                    [{"text": f"📊 View {sym} Chart", "web_app": {"url": f"{get_mini_app_url()}#markets/{sym}"}}],
+                    [{"text": "🔙 Markets", "callback_data": "v1:mkt:list"}]
+                ]
+            }
+            self.edit_message_text(chat_id, message_id, msg, keyboard)
+            return {"status": "mkt_view"}
+
+        # 3. Setups
         elif data == "v1:sig:list":
-            self.answer_callback_query(cb_id, "Setups refreshed")
-            return self.handle_signals_command(chat_id, conn)
+            self.answer_callback_query(query_id, "Refreshing setups...")
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM signals ORDER BY created_at DESC LIMIT 3")
+            signals = [dict(r) for r in cursor.fetchall()]
+            msg = ["⚡ <b>Latest Active Setups:</b>\n"]
+            for s in signals:
+                emoji = "🟢 BUY" if s["direction"] == "BUY" else "🔴 SELL"
+                msg.append(f"• <b>{s['instrument']}</b> {emoji} @ <code>{s['entry_price']}</code> | 1:{s['rr_ratio']}R")
+            
+            keyboard = {
+                "inline_keyboard": [
+                    [{"text": "⚡ Open Mini App", "web_app": {"url": f"{get_mini_app_url()}#signals"}}],
+                    [{"text": "🔙 Back", "callback_data": "v1:menu:main"}]
+                ]
+            }
+            self.edit_message_text(chat_id, message_id, "\n".join(msg), keyboard)
+            return {"status": "sig_list"}
 
-        elif data == "v1:news:list":
-            self.answer_callback_query(cb_id)
-            return self.handle_news_command(chat_id)
-
-        elif data == "v1:str:list":
-            self.answer_callback_query(cb_id)
-            return self.handle_strength_command(chat_id)
-
-        elif data == "v1:wch:view":
-            self.answer_callback_query(cb_id)
-            return self.handle_watchlist_command(chat_id, linked_user_id, conn)
-
-        elif data == "v1:acc:info":
-            self.answer_callback_query(cb_id)
-            return self.handle_account_command(chat_id, from_user, linked_user_id, conn)
-
+        # 4. Settings Toggles
         elif data == "v1:set:main":
-            self.answer_callback_query(cb_id)
+            self.answer_callback_query(query_id)
             return self.handle_settings_command(chat_id, from_user, linked_user_id, conn)
 
-        elif data.startswith("v1:wch:add:"):
-            sym = data.replace("v1:wch:add:", "").strip()
+        elif data.startswith("v1:set:toggle:"):
+            field = data.replace("v1:set:toggle:", "")
             cursor = conn.cursor()
             if linked_user_id:
-                cursor.execute("INSERT OR IGNORE INTO user_watchlists (user_id, symbol, category) VALUES (?, ?, 'General')", (linked_user_id, sym))
+                if field == "signals":
+                    cursor.execute("UPDATE user_preferences SET signal_alerts = NOT signal_alerts WHERE user_id = ?", (linked_user_id,))
+                elif field == "news":
+                    cursor.execute("UPDATE user_preferences SET news_alerts = NOT news_alerts WHERE user_id = ?", (linked_user_id,))
                 conn.commit()
-            self.answer_callback_query(cb_id, f"⭐ {sym} added to Watchlist!", show_alert=False)
+            self.answer_callback_query(query_id, "Preference updated!")
+            return self.handle_settings_command(chat_id, from_user, linked_user_id, conn)
+
+        elif data == "v1:set:cycle:score":
+            cursor = conn.cursor()
+            if linked_user_id:
+                cursor.execute("SELECT min_condition_score FROM user_alert_settings WHERE user_id = ?", (linked_user_id,))
+                row = cursor.fetchone()
+                current = row[0] if row else 75
+                next_score = 60 if current >= 90 else current + 10
+                cursor.execute("""
+                    INSERT INTO user_alert_settings (user_id, min_condition_score) VALUES (?, ?)
+                    ON CONFLICT(user_id) DO UPDATE SET min_condition_score = excluded.min_condition_score
+                """, (linked_user_id, next_score))
+                conn.commit()
+            self.answer_callback_query(query_id, "Minimum score updated!")
+            return self.handle_settings_command(chat_id, from_user, linked_user_id, conn)
+
+        # 5. Currency Strength Timeframes
+        elif data.startswith("v1:str:tf:"):
+            tf = data.replace("v1:str:tf:", "")
+            self.answer_callback_query(query_id, f"Calculating {tf} matrix...")
+            matrix = currency_strength_engine.calculate_matrix(tf)
+            sorted_c = sorted(matrix, key=lambda x: x["score"], reverse=True)
+            msg = [f"💪 <b>Currency Strength Matrix ({tf})</b>\n"]
+            for idx, c in enumerate(sorted_c[:5]):
+                msg.append(f"#{idx+1} <b>{c['code']}</b>: {c['score']}/100 ({c['change']})")
+            
+            keyboard = {
+                "inline_keyboard": [
+                    [
+                        {"text": "1H", "callback_data": "v1:str:tf:1H"},
+                        {"text": "4H", "callback_data": "v1:str:tf:4H"},
+                        {"text": "1D", "callback_data": "v1:str:tf:1D"}
+                    ],
+                    [{"text": "🔙 Back", "callback_data": "v1:menu:main"}]
+                ]
+            }
+            self.edit_message_text(chat_id, message_id, "\n".join(msg), keyboard)
+            return {"status": "str_tf"}
+
+        # 6. Watchlist Callbacks
+        elif data == "v1:wch:view":
+            self.answer_callback_query(query_id)
+            return self.handle_watchlist_command(chat_id, linked_user_id, conn)
+
+        elif data.startswith("v1:wch:add:"):
+            sym = data.replace("v1:wch:add:", "").upper().strip()
+            cursor = conn.cursor()
+            if linked_user_id:
+                cursor.execute("INSERT OR REPLACE INTO user_watchlists (user_id, symbol, category) VALUES (?, ?, 'Asset')", (linked_user_id, sym))
+                conn.commit()
+            self.answer_callback_query(query_id, f"Added {sym} to watchlist!")
             return {"status": "watchlist_added", "symbol": sym}
 
-        elif data.startswith("v1:wch:rm:"):
-            sym = data.replace("v1:wch:rm:", "").strip()
+        elif data.startswith("v1:wch:rm:") or data.startswith("v1:wch:del:"):
+            sym = data.replace("v1:wch:rm:", "").replace("v1:wch:del:", "").upper().strip()
             cursor = conn.cursor()
             if linked_user_id:
                 cursor.execute("DELETE FROM user_watchlists WHERE user_id = ? AND symbol = ?", (linked_user_id, sym))
                 conn.commit()
-            self.answer_callback_query(cb_id, f"❌ {sym} removed from Watchlist", show_alert=False)
+            self.answer_callback_query(query_id, f"Removed {sym} from watchlist!")
             return {"status": "watchlist_removed", "symbol": sym}
 
-        elif data.startswith("v1:mkt:view:"):
-            sym = data.replace("v1:mkt:view:", "").strip()
-            cursor = conn.cursor()
-            cursor.execute("SELECT * FROM user_watchlists WHERE user_id = ? AND symbol = ?", (linked_user_id, sym))
-            is_in_wch = cursor.fetchone() is not None
+        # 7. Account Info Callback
+        elif data == "v1:acc:info":
+            self.answer_callback_query(query_id)
+            return self.handle_account_command(chat_id, from_user, linked_user_id, conn)
 
-            app_url = f"{get_mini_app_url()}#markets/{sym}"
-            wch_btn_text = "❌ Remove from Watchlist" if is_in_wch else "⭐ Add to Watchlist"
-            wch_action = f"v1:wch:rm:{sym}" if is_in_wch else f"v1:wch:add:{sym}"
-
-            kb = {
-                "inline_keyboard": [
-                    [
-                        {"text": "📊 Open in Mini App", "web_app": {"url": app_url}},
-                        {"text": wch_btn_text, "callback_data": wch_action}
-                    ],
-                    [
-                        {"text": "🔙 Markets", "callback_data": "v1:mkt:list"}
-                    ]
-                ]
-            }
-            txt = f"📊 <b>Market Intelligence: {sym}</b>\n\nReal-time quote, institutional structure, and active scanner alerts available in terminal."
-            self.send_message(chat_id, txt, kb)
-            self.answer_callback_query(cb_id)
-            return {"status": "market_viewed", "symbol": sym}
-
-        self.answer_callback_query(cb_id)
-        return {"status": "callback_acknowledged"}
+        # Fallback
+        self.answer_callback_query(query_id)
+        return {"status": "unhandled_callback"}

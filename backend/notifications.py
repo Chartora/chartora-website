@@ -2,9 +2,10 @@
 """
 CHARTORA.IN — Enhanced Multi-Channel Notification & Telegram Delivery Engine
 Handles:
-- Multi-channel routing based on market category & subscription tier
-- Automated photo attachment with generated chart snapshots
-- User preference filtering, queue management, retry backoff, and delivery logs
+- User preference targeting (min condition score, preferred instruments/timeframes)
+- Deduplication & Idempotency protection against duplicate alerts
+- Automated photo attachment & deep-link buttons to Telegram Mini App
+- Direct Telegram Channel & User Delivery tracking with persistent logs
 """
 
 import json
@@ -25,14 +26,27 @@ class NotificationService:
         message: str,
         payload: Optional[dict] = None,
         photo_url: Optional[str] = None
-    ) -> int:
+    ) -> Optional[int]:
         """
-        Pushes a notification into the persistent queue and triggers immediate delivery attempt.
+        Pushes a notification into the persistent queue after deduplication checks,
+        then attempts immediate delivery.
         """
         conn = self.get_db()
         cursor = conn.cursor()
 
-        # Find linked telegram user if exists
+        setup_id = (payload or {}).get("setup_id")
+        
+        # 1. Deduplication Check (Same user, event_type, and setup_id within 1 hour)
+        if setup_id:
+            cursor.execute("""
+                SELECT id FROM telegram_notifications
+                WHERE user_id = ? AND event_type = ? AND payload_json LIKE ? AND created_at > datetime('now', '-1 hour')
+            """, (user_id, event_type, f"%{setup_id}%"))
+            if cursor.fetchone():
+                conn.close()
+                return None
+
+        # 2. Find linked telegram user if exists
         cursor.execute("SELECT telegram_id FROM telegram_users WHERE user_id = ?", (user_id,))
         tg_row = cursor.fetchone()
         tg_id = tg_row["telegram_id"] if tg_row else None
@@ -50,7 +64,7 @@ class NotificationService:
         conn.commit()
         conn.close()
 
-        # Attempt immediate dispatch if telegram_id exists
+        # 3. Attempt immediate dispatch if telegram_id exists
         if tg_id:
             self.dispatch_notification(notif_id)
 
@@ -58,7 +72,7 @@ class NotificationService:
 
     def dispatch_notification(self, notif_id: int) -> bool:
         """
-        Processes a queued notification and delivers it via Telegram Bot API.
+        Processes a queued notification and delivers it via Telegram Bot API with audit logging.
         """
         conn = self.get_db()
         cursor = conn.cursor()
@@ -105,30 +119,39 @@ class NotificationService:
             "disable_web_page_preview": True
         })
 
-        if res.get("ok"):
+        is_success = bool(res.get("ok"))
+        err_desc = res.get("description", "Unknown error") if not is_success else None
+
+        if is_success:
             cursor.execute("""
                 UPDATE telegram_notifications
                 SET status = 'SENT', sent_at = CURRENT_TIMESTAMP, error = NULL
                 WHERE id = ?
             """, (notif_id,))
-            conn.commit()
-            conn.close()
-            return True
         else:
-            err_desc = res.get("description", "Unknown error")
             cursor.execute("""
                 UPDATE telegram_notifications
                 SET status = 'FAILED', error = ?
                 WHERE id = ?
             """, (err_desc, notif_id))
-            conn.commit()
-            conn.close()
-            return False
+
+        # Record in delivery logs
+        try:
+            cursor.execute("""
+                INSERT INTO telegram_delivery_logs (notification_id, telegram_id, event_type, status, error)
+                VALUES (?, ?, ?, ?, ?)
+            """, (notif_id, tg_id, event_type, 'SENT' if is_success else 'FAILED', err_desc))
+        except Exception:
+            pass
+
+        conn.commit()
+        conn.close()
+        return is_success
 
     def broadcast_setup_alert(self, setup_data: dict):
         """
         Broadcasts a confirmed setup alert to:
-        1. All linked Telegram users with signal alerts enabled
+        1. All eligible linked Telegram users matching condition score and instrument preferences
         2. Configured public / category Telegram channels
         """
         conn = self.get_db()
@@ -162,18 +185,41 @@ class NotificationService:
             f"⚠️ <i>Educational market analysis. Trading financial markets involves risk. Always plan your position size.</i>"
         )
 
-        # 1. Queue for linked users
+        # 1. Fetch users with preferences
         cursor.execute("""
-            SELECT u.id, tu.telegram_id
+            SELECT u.id, tu.telegram_id, up.signal_alerts,
+                   COALESCE(uas.min_condition_score, 70) as min_score,
+                   COALESCE(uas.preferred_timeframes, 'ALL') as pref_tf,
+                   COALESCE(uas.preferred_instruments, 'ALL') as pref_inst,
+                   COALESCE(uas.alert_delivery_mode, 'ALL') as del_mode
             FROM users u
             JOIN telegram_users tu ON u.id = tu.user_id
-            JOIN user_preferences up ON u.id = up.user_id
-            WHERE tu.telegram_id IS NOT NULL AND up.signal_alerts = 1
+            LEFT JOIN user_preferences up ON u.id = up.user_id
+            LEFT JOIN user_alert_settings uas ON u.id = uas.user_id
+            WHERE tu.telegram_id IS NOT NULL AND (up.signal_alerts = 1 OR up.signal_alerts IS NULL)
         """)
         users = cursor.fetchall()
         conn.close()
 
         for u in users:
+            # Filter by Min Condition Score
+            if score < u["min_score"]:
+                continue
+            
+            # Filter by Delivery Mode
+            if u["del_mode"] == "OFF":
+                continue
+            if u["del_mode"] == "HIGH_QUALITY" and score < 85:
+                continue
+
+            # Filter by Timeframe (if set)
+            if u["pref_tf"] != "ALL" and tf not in u["pref_tf"]:
+                continue
+
+            # Filter by Instrument (if set)
+            if u["pref_inst"] != "ALL" and symbol not in u["pref_inst"]:
+                continue
+
             self.queue_notification(
                 user_id=u["id"],
                 event_type="SIGNAL_NEW",
