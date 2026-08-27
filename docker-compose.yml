@@ -15,6 +15,9 @@ services:
       - API_URL=https://api.chartora.in
       - PORT=8080
       - JWT_SECRET=${JWT_SECRET:-chartora_production_jwt_secret_change_me_2026}
+      - DATA_MODE=${DATA_MODE:-live}
+      - MT5_GATEWAY_SECRET_KEY=${MT5_GATEWAY_SECRET_KEY:-}
+      - EXTERNAL_MARKET_API_KEY=${EXTERNAL_MARKET_API_KEY:-}
       - DATABASE_URL=${DATABASE_URL:-}
       - STRIPE_MODE=${STRIPE_MODE:-disabled}
       - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET:-whsec_sample_chartora}
@@ -27,7 +30,7 @@ services:
     volumes:
       - chartora_data:/app/data
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/v1/health"]
       interval: 30s
       timeout: 5s
       retries: 3

@@ -97,7 +97,10 @@ class MT5DataProvider(MarketDataProvider):
         q_copy = dict(q)
         q_copy["age_seconds"] = round(age, 2)
         
-        if age > LIVE_DATA_MAX_AGE_SECONDS:
+        if age > 300.0:
+            q_copy["status"] = "OFFLINE"
+            q_copy["is_live"] = False
+        elif age > LIVE_DATA_MAX_AGE_SECONDS:
             q_copy["status"] = "DATA_STALE"
             q_copy["is_live"] = False
         else:
@@ -252,8 +255,8 @@ class MarketDataRouter:
         if q:
             return q
 
-        # 4. Mode-based decision (Test / Mock / Pytest runner)
-        if self.mode in ["test", "mock", "development"] or os.getenv("PYTEST_CURRENT_TEST"):
+        # 4. Mode-based decision (Test / Mock / Pytest runner when not explicitly live)
+        if self.mode in ["test", "mock", "development"] or (os.getenv("PYTEST_CURRENT_TEST") and self.mode != "live"):
             return self.test_mock_provider.get_quote(canonical_sym)
 
         # 5. Production Fallback: Explicit UNAVAILABLE state (NO fake prices)

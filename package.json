@@ -5,7 +5,7 @@
   "private": true,
   "scripts": {
     "dev": "python3 -m http.server 8080",
-    "build": "mkdir -p dist && cp -r index.html styles js public legal README.md DEPLOYMENT.md dist/ && cp public/_redirects dist/",
+    "build": "mkdir -p dist && cp -r index.html styles js public legal README.md DEPLOYMENT.md dist/ && cp public/_redirects public/_headers dist/",
     "preview": "python3 -m http.server 8080 --directory dist"
   },
   "keywords": [
