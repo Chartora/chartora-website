@@ -382,13 +382,14 @@ class ChartoraSaaSHandler(http.server.SimpleHTTPRequestHandler):
         path = parsed.path
 
         # Health & Readiness Endpoints
-        if path == '/health' or path == '/api/v1/health':
+        if path == '/health' or path == '/api/v1/health' or path == '/api/health':
             return self.send_json({
                 "status": "UP",
                 "timestamp": datetime.now(timezone.utc).isoformat(),
                 "service": "Chartora.in Intelligence Core",
                 "version": "3.2.0",
                 "concurrency": "Multi-Threaded (ThreadingServer)",
+                "data_mode": market_data_router.mode.upper(),
                 "modules": {
                     "market_data": "ACTIVE",
                     "realtime_engine": "ACTIVE",
@@ -400,6 +401,48 @@ class ChartoraSaaSHandler(http.server.SimpleHTTPRequestHandler):
                     "event_bus": "ACTIVE"
                 }
             })
+            
+        if path in ['/health/market-data', '/api/health/market-data', '/api/v1/health/market-data']:
+            return self.send_json({
+                "status": "UP",
+                "data_mode": market_data_router.mode.upper(),
+                "router_health": market_data_router.get_health_matrix(),
+                "canonical_symbols_count": len(SymbolRegistry.get_all_canonical_symbols()),
+                "timestamp": time.time()
+            })
+            
+        if path in ['/health/scanner', '/api/health/scanner', '/api/v1/health/scanner']:
+            return self.send_json({
+                "status": "UP",
+                "strategy": "EMA 9/21/200 Pullback Continuation",
+                "execution_timeframe": "5M",
+                "trend_timeframe": "1H",
+                "scoring_range": "0-100",
+                "min_score_threshold": 70,
+                "active_setups_count": len(strategy_engine.get_active_setups()),
+                "timestamp": time.time()
+            })
+            
+        if path in ['/health/telegram', '/api/health/telegram', '/api/v1/health/telegram']:
+            return self.send_json({
+                "status": "UP",
+                "mode": TELEGRAM_MODE,
+                "bot_configured": bool(os.getenv("TELEGRAM_BOT_TOKEN")),
+                "webhook_configured": bool(os.getenv("TELEGRAM_WEBHOOK_URL")),
+                "timestamp": time.time()
+            })
+            
+        if path in ['/health/mt5', '/api/health/mt5', '/api/v1/health/mt5']:
+            return self.send_json({
+                "status": "UP",
+                "gateway_status": mt5_gateway_service.get_ea_status("EA_DEMO_01"),
+                "registered_eas_count": len(mt5_gateway_service._ea_registry),
+                "heartbeat_window_sec": 30,
+                "hmac_authentication": "ENFORCED",
+                "replay_protection": "ACTIVE",
+                "timestamp": time.time()
+            })
+            
         if path == '/ready':
             return self.send_json({"status": "READY", "database": "connected", "telegram": TELEGRAM_MODE, "server_time_utc": datetime.now(timezone.utc).isoformat()})
 
