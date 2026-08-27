@@ -1,7 +1,7 @@
 # CHARTORA.IN — Production V3 Deployment Guide
 
 **Target Domain**: `https://chartora.in`  
-**GitHub Repository**: `hemanthranam/chartora.in`  
+**GitHub Repository**: `Chartora/chartora-website`  
 **Hosting Provider**: Cloudflare Pages  
 **Registrar**: OrangeHosting (DNS delegated to Cloudflare)  
 
@@ -19,7 +19,7 @@ git add .
 git commit -m "Chartora.in V3 Production Release"
 
 # Add remote and push
-git remote add origin https://github.com/hemanthranam/chartora.in.git
+git remote add origin https://github.com/Chartora/chartora-website.git
 git branch -M main
 git push -u origin main
 ```
@@ -29,8 +29,8 @@ git push -u origin main
 ### STEP 2: Connect Cloudflare Pages to GitHub
 1. Log into your [Cloudflare Dashboard](https://dash.cloudflare.com/).
 2. Navigate to **Workers & Pages** $\rightarrow$ Click **Create Application** $\rightarrow$ **Pages** tab.
-3. Select **Connect to Git** and authorize your GitHub account (`hemanthranam`).
-4. Select the `chartora.in` repository.
+3. Select **Connect to Git** and authorize your GitHub account (`Chartora`).
+4. Select the `Chartora/chartora-website` repository.
 
 ---
 

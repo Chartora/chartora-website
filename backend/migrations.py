@@ -462,6 +462,8 @@ MIGRATIONS = [
             primary_platform TEXT,
             telegram_username TEXT,
             strategy TEXT,
+            revenue_share REAL DEFAULT 20.0,
+            status TEXT DEFAULT 'pending',
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         );
 
@@ -480,6 +482,22 @@ MIGRATIONS = [
             event_id TEXT UNIQUE NOT NULL,
             event_type TEXT NOT NULL,
             processed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+
+        CREATE TABLE IF NOT EXISTS telegram_connections (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            telegram_user_id INTEGER NOT NULL,
+            telegram_username TEXT,
+            connected_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        );
+
+        CREATE TABLE IF NOT EXISTS telegram_access_logs (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            telegram_user_id INTEGER NOT NULL,
+            action TEXT NOT NULL,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         );
 
         CREATE TABLE IF NOT EXISTS community_posts (

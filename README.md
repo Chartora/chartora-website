@@ -5,7 +5,7 @@
 **Core Problem**: A trader cannot watch every market at the same time. Chartora organizes the systematic scanning, identification, risk planning, and educational workflow.  
 **Primary Business Objective**: Grow Monthly Recurring Revenue (MRR) through high volume, low-friction subscriptions ($14.99–$19.99/mo individual market systems; $79/mo All Access ecosystem).  
 **Production Domain**: `https://chartora.in`  
-**GitHub Repository**: `hemanthranam/chartora.in`  
+**GitHub Repository**: `Chartora/chartora-website`  
 **Hosting Architecture**: Cloudflare Pages + Cloudflare DNS  
 
 ---
@@ -89,13 +89,13 @@ python3 -m http.server 8080 --directory dist
    git init
    git add .
    git commit -m "Chartora.in V4 Master Production Release"
-   git remote add origin https://github.com/hemanthranam/chartora.in.git
+   git remote add origin https://github.com/Chartora/chartora-website.git
    git push -u origin main
    ```
 
 2. **Connect to Cloudflare Pages**:
    - Go to **Workers & Pages** $\rightarrow$ **Create Application** $\rightarrow$ **Pages** $\rightarrow$ **Connect to Git**.
-   - Select repository: `hemanthranam/chartora.in`.
+   - Select repository: `Chartora/chartora-website`.
    - Build command: `npm run build` (or Python build script).
    - Build output directory: `dist`.
 
