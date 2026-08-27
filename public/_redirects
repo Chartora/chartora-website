@@ -1,2 +1,5 @@
 /api/* https://api.chartora.in/api/:splat 200
+/tma /public/telegram-app/index.html 200
+/tma/ /public/telegram-app/index.html 200
+/tma/* /public/telegram-app/:splat 200
 /* /index.html 200
