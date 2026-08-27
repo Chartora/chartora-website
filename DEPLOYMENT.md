@@ -1,81 +1,88 @@
-# CHARTORA.IN — Production V3 Deployment Guide
+# CHARTORA.IN — Production Deployment Guide & Architecture Blueprint
 
-**Target Domain**: `https://chartora.in`  
+**Frontend Target**: `https://chartora.in` (Cloudflare Pages)  
+**API Target**: `https://api.chartora.in` (Container Runtime on Railway / Render / Fly.io / VPS)  
+**Telegram Mini App**: `https://chartora.in/tma/` (Cloudflare Pages)  
 **GitHub Repository**: `Chartora/chartora-website`  
-**Hosting Provider**: Cloudflare Pages  
-**Registrar**: OrangeHosting (DNS delegated to Cloudflare)  
 
 ---
 
-## 📋 Step-by-Step Deployment Instructions
+## 🚨 CLOUDFLARE PAGES DEPLOYMENT FIX
 
-### STEP 1: Initialize Git & Push Repository
+### Why the previous deployment failed:
+Cloudflare reported: `"It seems that you have run wrangler deploy on a Pages project, wrangler pages deploy should be used instead."`
+
+* `npx wrangler deploy` $\rightarrow$ Cloudflare **Workers** deployment command (fails on Pages).
+* `npx wrangler pages deploy dist --project-name=chartora-website` $\rightarrow$ Cloudflare **Pages** deployment command.
+
+---
+
+## 🏗️ 2-TIER PRODUCTION ARCHITECTURE
+
+```
+[Browser / TMA Client] ─── HTTPS ───▶ [Cloudflare Pages: chartora.in]
+                                                  │
+                                       _redirects (/api/*)
+                                                  │
+                                                  ▼
+[FastAPI Backend / SSE / MT5 Bridge] ◀── [api.chartora.in (Docker Container)]
+```
+
+1. **Frontend Tier (Cloudflare Pages)**:
+   * Serves static SPA bundle (`index.html`, `js/`, `styles/`, `public/`, `legal/`).
+   * Edge caching, DDoS protection, and SSL termination.
+   * `_redirects` proxies `/api/*` requests to `https://api.chartora.in/api/:splat 200`.
+
+2. **Backend Tier (Container Runtime: Railway / Render / Fly.io / VPS)**:
+   * Runs `server.py` with Python 3.12, SQLite WAL mode.
+   * Handles persistent MT5 WebRequests, Server-Sent Events (SSE), and background scanner events.
+
+---
+
+## 📋 CLOUDFLARE PAGES CONFIGURATION
+
+### Option A: Cloudflare Dashboard Git Integration (Recommended)
+1. Go to **Cloudflare Dashboard** $\rightarrow$ **Workers & Pages** $\rightarrow$ **Pages** $\rightarrow$ **Connect to Git**.
+2. Select repository: `Chartora/chartora-website` (Branch: `main`).
+3. Set **Build Settings**:
+   * **Framework Preset**: `None`
+   * **Build Command**: `npm run build`
+   * **Build Output Directory**: `dist`
+   * **Root Directory**: `/`
+4. Click **Save and Deploy**.
+
+### Option B: Direct CLI Deployment via Wrangler
 ```bash
-cd /Users/rh/.gemini/antigravity/scratch/chartora.in
+# 1. Build the production distribution bundle
+npm run build
 
-# Initialize repository
-git init
-git add .
-git commit -m "Chartora.in V3 Production Release"
-
-# Add remote and push
-git remote add origin https://github.com/Chartora/chartora-website.git
-git branch -M main
-git push -u origin main
+# 2. Deploy directly to Cloudflare Pages
+npx wrangler pages deploy dist --project-name=chartora-website
 ```
 
 ---
 
-### STEP 2: Connect Cloudflare Pages to GitHub
-1. Log into your [Cloudflare Dashboard](https://dash.cloudflare.com/).
-2. Navigate to **Workers & Pages** $\rightarrow$ Click **Create Application** $\rightarrow$ **Pages** tab.
-3. Select **Connect to Git** and authorize your GitHub account (`Chartora`).
-4. Select the `Chartora/chartora-website` repository.
+## 🐳 BACKEND CONTAINER DEPLOYMENT (`api.chartora.in`)
+
+### Deploy to Railway / Render / VPS
+1. Connect `Chartora/chartora-website` as a Docker web service.
+2. Set Environment Variables:
+   ```bash
+   APP_ENV=production
+   PORT=8080
+   DATA_MODE=live
+   JWT_SECRET=<your-jwt-secret>
+   MT5_GATEWAY_SECRET_KEY=<your-mt5-hmac-key>
+   TELEGRAM_BOT_TOKEN=<your-telegram-token>
+   ```
+3. Map Custom Domain: `api.chartora.in` $\rightarrow$ Container Service endpoint.
+4. Verify Health Endpoint: `https://api.chartora.in/api/v1/health`
 
 ---
 
-### STEP 3: Configure Build Settings
-Configure the build parameters in Cloudflare Pages:
+## 🌐 DOMAIN & DNS SETUP
 
-- **Framework Preset**: `None / Static`
-- **Build Command**: `npm run build`
-- **Build Output Directory**: `dist`
-- **Root Directory**: `/` (Leave default)
-
-#### Environment Variables (Optional / Future API Integration):
-- `STRIPE_PUBLISHABLE_KEY` = `pk_live_...`
-- `TELEGRAM_BOT_TOKEN` = `bot_token_...`
-- `GOOGLE_SHEETS_ID` = `sheets_id_...`
-
-Click **Save and Deploy**.
-
----
-
-### STEP 4: Attach Custom Domain (`chartora.in`)
-1. Once deployed, click **Custom Domains** inside your Cloudflare Pages project.
-2. Click **Set up a custom domain**.
-3. Type `chartora.in` and click **Continue**.
-4. Repeat for `www.chartora.in`.
-5. Cloudflare will automatically configure the CNAME DNS records and issue an SSL/TLS HTTPS certificate within 2 minutes.
-
----
-
-### STEP 5: OrangeHosting DNS Nameserver Update
-If your domain `chartora.in` was registered via OrangeHosting:
-1. Log into your OrangeHosting Client Area.
-2. Go to **Domains** $\rightarrow$ **Manage Domain** (`chartora.in`) $\rightarrow$ **Nameservers**.
-3. Select **Custom Nameservers** and enter the 2 Cloudflare Nameservers provided during setup (e.g. `nora.ns.cloudflare.com` and `sam.ns.cloudflare.com`).
-4. Save changes. DNS propagation takes between 5 to 30 minutes.
-
----
-
-### STEP 6: Verify Production Site & SPA Routes
-Verify that all routes render cleanly without 404 errors:
-- `https://chartora.in/`
-- `https://chartora.in/#pricing`
-- `https://chartora.in/#academy`
-- `https://chartora.in/#community`
-- `https://chartora.in/#contact`
-- `https://chartora.in/#services`
-- `https://chartora.in/#journal`
-- `https://chartora.in/#risk-calculator`
+In your DNS provider (Cloudflare / OrangeHosting):
+* `chartora.in` $\rightarrow$ CNAME to `<project>.pages.dev`
+* `www.chartora.in` $\rightarrow$ CNAME to `chartora.in`
+* `api.chartora.in` $\rightarrow$ CNAME/A to Backend Container IP or Railway/Render domain
