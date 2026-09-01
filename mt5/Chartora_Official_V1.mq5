@@ -1278,14 +1278,39 @@ public:
       }
 
       ArrayResize(g_tradeJournal, count);
-      ArrayCopy(g_tradeJournal, temp);
+      for(int i = 0; i < count; i++)
+      {
+         g_tradeJournal[i] = temp[i];
+      }
       g_totalJournalTrades = count;
    }
 
    static SPerformanceMetrics CalculateMetrics(datetime fromTime)
    {
       SPerformanceMetrics m;
-      ZeroMemory(m);
+      m.totalTrades        = 0;
+      m.winCount           = 0;
+      m.lossCount          = 0;
+      m.winRatePct         = 0.0;
+      m.grossProfitUSD     = 0.0;
+      m.grossLossUSD       = 0.0;
+      m.netProfitUSD       = 0.0;
+      m.totalR             = 0.0;
+      m.avgR               = 0.0;
+      m.bestTradeUSD       = 0.0;
+      m.worstTradeUSD      = 0.0;
+      m.bestTradeR         = 0.0;
+      m.worstTradeR        = 0.0;
+      m.avgScore           = 0.0;
+      m.maxDrawdownUSD     = 0.0;
+      m.maxDrawdownPct     = 0.0;
+      m.consecutiveWins    = 0;
+      m.consecutiveLosses  = 0;
+      m.choppyAvoidedCount = 0;
+      m.bestSymbol         = "";
+      m.worstSymbol        = "";
+      m.bestSetupName      = "";
+      m.worstSetupName     = "";
 
       for(int i = 0; i < ArraySize(g_tradeJournal); i++)
       {
