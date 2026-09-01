@@ -9,6 +9,7 @@ Renders high-resolution institutional trading charts with:
 - Pure Python SVG generation with optional PNG converter
 """
 
+import os
 import time
 import math
 from typing import Dict, Any, List, Optional
@@ -184,6 +185,106 @@ class SnapshotEngine:
 
         return "\n".join(svg_parts)
 
+    def generate_chart_png(self, setup_data: Dict[str, Any], output_path: Optional[str] = None) -> str:
+        """
+        Renders a high-resolution institutional chart PNG using matplotlib.
+        """
+        import os
+        import matplotlib
+        matplotlib.use('Agg')
+        import matplotlib.pyplot as plt
+        import matplotlib.patches as patches
+
+        symbol = setup_data.get("symbol", "XAUUSD")
+        timeframe = setup_data.get("timeframe", "5M")
+        direction = setup_data.get("direction", "BUY")
+        entry = float(setup_data.get("entry_price", setup_data.get("entry", 3342.50)))
+        sl = float(setup_data.get("stop_loss", setup_data.get("sl", 3336.10)))
+        tp1 = float(setup_data.get("target_1", setup_data.get("tp1", 3351.50)))
+        tp2 = float(setup_data.get("target_2", setup_data.get("tp2", 3357.90)))
+        score = setup_data.get("condition_score", setup_data.get("score", 82))
+        strategy = setup_data.get("strategy_name", setup_data.get("strategy", "EMA Trend Pullback"))
+        setup_id = setup_data.get("setup_id", f"set_{symbol}_{int(time.time())}")
+
+        if not output_path:
+            os.makedirs(self.storage_dir, exist_ok=True)
+            output_path = os.path.join(self.storage_dir, f"{setup_id}.png")
+
+        candles = market_data_engine.get_candles(symbol, timeframe, count=35)
+        
+        fig, ax = plt.subplots(figsize=(10, 5.5), facecolor='#0B0F19', dpi=130)
+        ax.set_facecolor('#080D1A')
+
+        # Plot Candlesticks
+        close_prices = []
+        for i, c in enumerate(candles):
+            is_up = c['close'] >= c['open']
+            color = '#10B981' if is_up else '#EF4444'
+            close_prices.append(c['close'])
+            
+            # Wicks
+            ax.plot([i, i], [c['low'], c['high']], color=color, linewidth=1.2, zorder=2)
+            # Candle Body
+            bottom = min(c['open'], c['close'])
+            height = max(abs(c['close'] - c['open']), (c['high'] - c['low']) * 0.05)
+            rect = patches.Rectangle((i - 0.3, bottom), 0.6, height, facecolor=color, edgecolor=color, zorder=3)
+            ax.add_patch(rect)
+
+        # Plot Dynamic EMA 9 & EMA 21
+        if len(close_prices) >= 9:
+            ema9 = [sum(close_prices[max(0, k-8):k+1])/len(close_prices[max(0, k-8):k+1]) for k in range(len(close_prices))]
+            ax.plot(range(len(close_prices)), ema9, color='#06B6D4', linewidth=1.8, label='EMA 9', alpha=0.9, zorder=4)
+        if len(close_prices) >= 21:
+            ema21 = [sum(close_prices[max(0, k-20):k+1])/len(close_prices[max(0, k-20):k+1]) for k in range(len(close_prices))]
+            ax.plot(range(len(close_prices)), ema21, color='#F59E0B', linewidth=1.6, label='EMA 21', alpha=0.9, zorder=4)
+
+        # Horizontal Setup Benchmark Lines
+        xmin, xmax = -1, len(candles) + 4
+        ax.axhline(tp2, color='#10B981', linestyle='--', linewidth=1.4, label=f'TP2 ({tp2:.2f})', zorder=5)
+        ax.axhline(tp1, color='#10B981', linestyle='-', linewidth=1.8, label=f'TP1 ({tp1:.2f})', zorder=5)
+        ax.axhline(entry, color='#FBBF24', linestyle='-', linewidth=1.8, label=f'ENTRY ({entry:.2f})', zorder=5)
+        ax.axhline(sl, color='#EF4444', linestyle='-', linewidth=1.8, label=f'SL ({sl:.2f})', zorder=5)
+
+        # Text Annotations on right edge
+        x_text = len(candles) - 0.5
+        ax.text(x_text, tp2, f"  TP2: {tp2:.2f}", color='#34D399', fontsize=9, fontweight='bold', va='center')
+        ax.text(x_text, tp1, f"  TP1: {tp1:.2f}", color='#10B981', fontsize=9, fontweight='bold', va='center')
+        ax.text(x_text, entry, f"  ENTRY: {entry:.2f}", color='#FBBF24', fontsize=9, fontweight='bold', va='center')
+        ax.text(x_text, sl, f"  SL: {sl:.2f}", color='#EF4444', fontsize=9, fontweight='bold', va='center')
+
+        # Title & Subtitle
+        dir_badge = "[BUY]" if direction == "BUY" else "[SELL]"
+        plt.title(f"CHARTORA  |  {symbol} ({timeframe}) — {dir_badge}  |  Quality: {score}/100", 
+                  color='white', fontsize=12, fontweight='bold', pad=15, loc='left')
+        ax.text(0.99, 1.03, f"Strategy: {strategy}", transform=ax.transAxes, color='#94A3B8', 
+                fontsize=9, ha='right', va='bottom')
+
+        # Styling
+        ax.set_xlim(-1, len(candles) + 4)
+        ax.grid(True, color='#FFFFFF', alpha=0.05, linestyle=':', linewidth=0.8)
+        ax.tick_params(colors='#64748B', labelsize=8)
+        for spine in ax.spines.values():
+            spine.set_color('#FFFFFF')
+            spine.set_alpha(0.08)
+
+        # Watermark / Disclaimer
+        fig.text(0.12, 0.02, "Chartora Educational Setup • Not Financial Advice • 1% Max Risk Rule", 
+                 color='#475569', fontsize=8)
+
+        os.makedirs(os.path.dirname(os.path.abspath(output_path)), exist_ok=True)
+        plt.savefig(output_path, dpi=130, bbox_inches='tight', facecolor=fig.get_facecolor(), edgecolor='none')
+        plt.close(fig)
+
+        return output_path
+
+    def get_or_render_png(self, setup_data: Dict[str, Any]) -> str:
+        symbol = setup_data.get("symbol", "ASSET")
+        setup_id = setup_data.get("setup_id", f"set_{symbol}_{int(time.time())}")
+        output_path = os.path.join(self.storage_dir, f"{setup_id}.png")
+        if os.path.exists(output_path):
+            return output_path
+        return self.generate_chart_png(setup_data, output_path)
+
     def get_or_render_svg(self, setup_data: Dict[str, Any]) -> str:
         setup_id = setup_data.get("setup_id", f"set_{int(time.time())}")
         if setup_id in self._snapshots:
@@ -200,3 +301,4 @@ class SnapshotEngine:
 
 # Global Snapshot Engine Singleton
 snapshot_engine = SnapshotEngine()
+

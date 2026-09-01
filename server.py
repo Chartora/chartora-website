@@ -65,6 +65,14 @@ from backend.core import (
     global_session_engine
 )
 from backend.core.stripe_manager import StripeWebhookManager
+from backend.core.payment_service import (
+    SubscriptionService,
+    EntitlementService,
+    TelegramAccessService,
+    StripeProvider,
+    RazorpayProvider,
+    PLANS_DEFINITION
+)
 
 PORT = int(os.environ.get('PORT', 8080))
 DB_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'chartora.db')
@@ -245,6 +253,11 @@ account_service = AccountService(get_db)
 google_auth_service = GoogleAuthService(get_db)
 support_service = SupportService(get_db)
 stripe_manager = StripeWebhookManager(get_db)
+subscription_service = SubscriptionService(get_db)
+entitlement_service = EntitlementService(subscription_service)
+telegram_access_service = TelegramAccessService(entitlement_service)
+stripe_provider = StripeProvider()
+razorpay_provider = RazorpayProvider()
 
 def is_employee_role(role: str) -> bool:
     if not role:
@@ -648,7 +661,75 @@ class ChartoraSaaSHandler(http.server.SimpleHTTPRequestHandler):
                     "server_time": datetime.now(timezone.utc).isoformat()
                 })
 
-            # 7. SIGNALS & SETUPS
+            # 7. SUBSCRIPTIONS & PLANS
+            elif path in ['/api/plans', '/api/v1/plans']:
+                plans_data = [
+                    {
+                        "id": 1,
+                        "name": "Chartora Free",
+                        "slug": "free",
+                        "price_usd": 0.0,
+                        "billing_cycle": "monthly",
+                        "badge": "COMMUNITY",
+                        "description": "Official community & trading education.",
+                        "features": [
+                            "Official CHARTORA Telegram Channel",
+                            "Full Trading Academy Access",
+                            "Public Market Overview & Morning Briefs",
+                            "Basic Mini App Dashboard"
+                        ]
+                    },
+                    {
+                        "id": 2,
+                        "name": "Chartora Pro",
+                        "slug": "pro",
+                        "price_usd": 19.99,
+                        "billing_cycle": "monthly",
+                        "badge": "MOST POPULAR",
+                        "description": "High-probability scalp & intraday setups across major markets.",
+                        "features": [
+                            "Everything in Free Tier",
+                            "Chartora Pro Setups Channel",
+                            "Scalping (5M/15M) & Intraday (1H/4H) Setups",
+                            "Forex, Metals & Indices Coverage",
+                            "Condition Scored Setups (75+ Quality Filter)",
+                            "0–2 High-Probability Setups / Day"
+                        ]
+                    },
+                    {
+                        "id": 3,
+                        "name": "Chartora All Access",
+                        "slug": "all-access",
+                        "price_usd": 49.99,
+                        "billing_cycle": "monthly",
+                        "badge": "INSTITUTIONAL",
+                        "description": "Complete multi-asset scanner, VIP intelligence & custom algorithms.",
+                        "features": [
+                            "Everything in Pro Tier",
+                            "All Access VIP Telegram Channel",
+                            "All Market Categories (including US Equities & Crypto)",
+                            "Multi-Strategy V1 Algorithm Scanner",
+                            "MetaTrader 5 Bridge Integration",
+                            "Interactive Trade Journal & Risk Calculator"
+                        ]
+                    }
+                ]
+                custom_tech = [
+                    {"name": "TradingView Indicator", "price_usd": 19.99, "cycle": "monthly"},
+                    {"name": "Multi-Asset Scanner", "price_usd": 36.99, "cycle": "monthly"},
+                    {"name": "MT5 Scanner EA", "price_usd": 49.99, "cycle": "monthly"},
+                    {"name": "MT5 Automated Execution Bot", "price_usd": 99.00, "cycle": "monthly"}
+                ]
+                return self.send_json({"plans": plans_data, "custom_tech_services": custom_tech})
+
+            elif path in ['/api/subscriptions/current', '/api/v1/subscriptions/current']:
+                user = self.get_auth_user()
+                if not user:
+                    return self.send_json({"tier": "FREE", "plan_name": "Chartora Free", "plan_slug": "free", "status": "ACTIVE", "price": 0.0})
+                plan_info = subscription_service.get_user_plan(user["id"])
+                return self.send_json(plan_info)
+
+            # 8. SIGNALS & SETUPS
             elif path in ['/api/signals', '/api/v1/signals', '/api/setups', '/api/v1/setups']:
                 cursor.execute('SELECT * FROM signals ORDER BY created_at DESC')
                 signals = [dict(r) for r in cursor.fetchall()]
@@ -1067,10 +1148,28 @@ class ChartoraSaaSHandler(http.server.SimpleHTTPRequestHandler):
                 ingested = mt5_gateway_service.process_ticks_batch(ea_id, ticks)
                 return self.send_json({"ok": True, "ingested_ticks": ingested})
 
-            elif path == '/api/v1/mt5/events' or path == '/api/mt5/events':
+            elif path in ['/api/v1/mt5/tick', '/api/mt5/tick']:
+                ea_id = body.get('ea_id', 'EA_DEMO_01')
+                sym = body.get('symbol', 'XAUUSD')
+                bid = float(body.get('bid', 0.0))
+                ask = float(body.get('ask', 0.0))
+                spread = float(body.get('spread', 0.0)) if 'spread' in body else None
+                quote = mt5_gateway_service.market_data_engine.mt5_provider.ingest_tick(sym, bid, ask, spread, ea_id)
+                return self.send_json({"ok": True, "quote": quote})
+
+            elif path == '/api/v1/mt5/events' or path == '/api/mt5/events' or path in ['/api/v1/mt5/signal', '/api/mt5/signal', '/api/v1/signals/ingest']:
                 ea_id = body.get('ea_id', 'EA_DEMO_01')
                 setup = mt5_gateway_service.process_setup_event(ea_id, body)
-                return self.send_json({"ok": True, "setup": setup})
+                from backend.core.telegram_service import telegram_router
+                routing_res = telegram_router.route_setup_alert(setup or body)
+                return self.send_json({"ok": True, "setup": setup, "routing": routing_res})
+
+            elif path in ['/api/v1/ai/query', '/api/ai/query']:
+                q_text = body.get('query', '')
+                q_plan = body.get('plan', 'FREE')
+                from backend.core.ai_engine import ai_assistant
+                ai_res = ai_assistant.process_query(q_text, q_plan)
+                return self.send_json({"ok": True, "response": ai_res})
 
             # ==========================================
             # 3. TELEGRAM WEBHOOK ENDPOINT
@@ -1483,12 +1582,39 @@ class ChartoraSaaSHandler(http.server.SimpleHTTPRequestHandler):
                 return self.send_json({"success": True, "message": "Profile updated successfully"})
 
             # ==========================================
-            # 15. STRIPE WEBHOOK LISTENER
+            # 15. PAYMENT WEBHOOKS & CHECKOUT
             # ==========================================
             elif path in ['/api/stripe/webhook', '/api/v1/stripe/webhook']:
                 event_id = body.get('id', f"evt_{int(time.time())}")
                 event_type = body.get('type', 'unknown')
                 res = stripe_manager.process_webhook_event(event_id, event_type, body)
+                return self.send_json(res)
+
+            elif path in ['/api/razorpay/webhook', '/api/v1/razorpay/webhook']:
+                sig = self.headers.get('X-Razorpay-Signature', '')
+                try:
+                    event_id, event_type, data = razorpay_provider.parse_webhook_event(raw_body, sig)
+                    if event_type in ['payment.captured', 'subscription.activated']:
+                        notes = data.get('payload', {}).get('payment', {}).get('entity', {}).get('notes', {})
+                        uid = notes.get('user_id')
+                        tier = notes.get('tier', 'PRO')
+                        if uid:
+                            subscription_service.activate_subscription(int(uid), tier, 'razorpay', event_id)
+                    return self.send_json({"status": "SUCCESS", "event_id": event_id})
+                except Exception as e:
+                    return self.send_json({"status": "FAILED", "error": str(e)}, 400)
+
+            elif path in ['/api/checkout/session', '/api/v1/checkout/session']:
+                user = self.get_auth_user()
+                plan_slug = body.get('plan_slug', 'pro')
+                provider = body.get('provider', 'stripe')
+                return_url = body.get('return_url', 'https://chartora.in/account')
+                user_id = user['id'] if user else 0
+
+                if provider == 'razorpay':
+                    res = razorpay_provider.create_checkout_session(user_id, plan_slug, return_url)
+                else:
+                    res = stripe_provider.create_checkout_session(user_id, plan_slug, return_url)
                 return self.send_json(res)
 
             # ==========================================

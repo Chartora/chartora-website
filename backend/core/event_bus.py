@@ -68,6 +68,10 @@ class EventBus:
 
         return executed_count
 
+    def publish(self, event_type: str, payload: Optional[Dict[str, Any]] = None) -> int:
+        """Alias for emit."""
+        return self.emit(event_type, payload)
+
     def get_history(self, event_type: Optional[str] = None, limit: int = 50) -> List[Dict[str, Any]]:
         """Retrieves recent event records for auditing/testing."""
         if event_type:

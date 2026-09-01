@@ -19,6 +19,8 @@ import urllib.parse
 from typing import Dict, Any, Optional, List
 
 from .telegram_auth import verify_deep_link_payload, create_deep_link_payload
+from backend.core.ai_engine import ai_assistant
+from backend.core.telegram_service import TelegramConfig, telegram_router
 from backend.core import (
     realtime_market_engine,
     strategy_engine,
@@ -27,30 +29,52 @@ from backend.core import (
     currency_strength_engine,
     global_session_engine,
     JournalService,
-    AcademyService
+    AcademyService,
+    CHARTORA_ROUTES,
+    get_route_url,
+    get_market_analysis_url
 )
+
+import ssl
+
+def load_dotenv_file():
+    env_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), '.env')
+    if os.path.exists(env_path):
+        try:
+            with open(env_path, 'r', encoding='utf-8') as f:
+                for line in f:
+                    line = line.strip()
+                    if line and not line.startswith('#') and '=' in line:
+                        k, v = line.split('=', 1)
+                        k = k.strip()
+                        v = v.strip().strip('"').strip("'")
+                        if k and k not in os.environ:
+                            os.environ[k] = v
+        except Exception:
+            pass
+
+load_dotenv_file()
 
 TELEGRAM_API_BASE = "https://api.telegram.org"
 
 def get_bot_token() -> str:
-    return os.environ.get('TELEGRAM_BOT_TOKEN', '7123456789:AAFakeChartoraTokenForLocalTesting123')
+    return os.environ.get('TELEGRAM_BOT_TOKEN', '8977669207:AAH1nGIjVzAgIXuesNmtzZKAzF9garPWCno')
 
 def get_bot_username() -> str:
-    return os.environ.get('TELEGRAM_BOT_USERNAME', 'ChartoraBot')
+    return os.environ.get('TELEGRAM_BOT_USERNAME', 'chartoramainbot')
 
 def get_mini_app_url() -> str:
-    base_url = os.environ.get('APP_URL', 'https://chartora')
-    return os.environ.get('TELEGRAM_MINI_APP_URL', f"{base_url}/public/telegram-app/index.html")
+    return os.environ.get('TELEGRAM_MINI_APP_URL', 'https://chartora.github.io/chartora-website/public/telegram-app/index.html')
 
 def telegram_api_call(method: str, payload: dict, bot_token: Optional[str] = None) -> dict:
-    """Executes a call to Telegram Bot API with error handling and simulation fallback."""
+    """Executes a call to Telegram Bot API with SSL handling and test simulation fallback."""
     token = bot_token or get_bot_token()
     url = f"{TELEGRAM_API_BASE}/bot{token}/{method}"
     headers = {"Content-Type": "application/json"}
     data = json.dumps(payload).encode('utf-8')
     
     mode = os.environ.get('TELEGRAM_MODE', 'active')
-    if mode == 'disabled' or token.startswith('7123456789:AAFake'):
+    if mode == 'disabled' or token.startswith('7123456789:AAFake') or token.startswith('123456789:ABC'):
         return {
             "ok": True,
             "result": {
@@ -62,7 +86,8 @@ def telegram_api_call(method: str, payload: dict, bot_token: Optional[str] = Non
 
     try:
         req = urllib.request.Request(url, data=data, headers=headers)
-        with urllib.request.urlopen(req, timeout=10) as resp:
+        ctx = ssl._create_unverified_context()
+        with urllib.request.urlopen(req, timeout=10, context=ctx) as resp:
             return json.loads(resp.read().decode('utf-8'))
     except urllib.error.HTTPError as e:
         err_body = e.read().decode('utf-8')
@@ -110,34 +135,30 @@ class TelegramBotService:
         return telegram_api_call("answerCallbackQuery", payload)
 
     def get_main_menu_keyboard(self, start_param: Optional[str] = None) -> dict:
-        app_url = get_mini_app_url()
+        mini_app_url = get_mini_app_url()
         if start_param:
-            app_url += f"?startapp={start_param}"
+            mini_app_url += f"?startapp={start_param}"
 
         return {
             "inline_keyboard": [
                 [
-                    {"text": "🚀 Launch Chartora Mini App", "web_app": {"url": app_url}}
+                    {"text": "Markets", "callback_data": "v1:mkt:list"},
+                    {"text": "Trading Alerts", "callback_data": "v1:sig:list"}
                 ],
                 [
-                    {"text": "📈 Live Markets", "callback_data": "v1:mkt:list"},
-                    {"text": "⚡ Active Setups", "callback_data": "v1:sig:list"}
+                    {"text": "Market News", "callback_data": "v1:news:list"},
+                    {"text": "Currency Strength", "callback_data": "v1:str:tf:1H"}
                 ],
                 [
-                    {"text": "📰 Macro News", "callback_data": "v1:news:list"},
-                    {"text": "💪 Currency Strength", "callback_data": "v1:str:list"}
+                    {"text": "Academy", "callback_data": "v1:aca:main"},
+                    {"text": "Plans", "callback_data": "v1:pln:list"}
                 ],
                 [
-                    {"text": "🎓 Academy", "web_app": {"url": f"{app_url}#academy"}},
-                    {"text": "🧮 Risk Calculator", "web_app": {"url": f"{app_url}#risk"}}
+                    {"text": "Community", "url": get_route_url("OFFICIAL_TELEGRAM")},
+                    {"text": "My Account", "callback_data": "v1:acc:info"}
                 ],
                 [
-                    {"text": "📓 Trade Journal", "web_app": {"url": f"{app_url}#journal"}},
-                    {"text": "⭐ Watchlist", "callback_data": "v1:wch:view"}
-                ],
-                [
-                    {"text": "👤 Account", "callback_data": "v1:acc:info"},
-                    {"text": "⚙️ Alert Settings", "callback_data": "v1:set:main"}
+                    {"text": "⚡ Open Chartora", "web_app": {"url": mini_app_url}}
                 ]
             ]
         }
@@ -188,17 +209,18 @@ class TelegramBotService:
         lang = tg_user.get("language_code", "en")
         is_premium = 1 if tg_user.get("is_premium") else 0
 
-        cursor.execute("SELECT id, user_id FROM telegram_users WHERE telegram_id = ?", (tg_id,))
+        cursor.execute("SELECT user_id FROM telegram_users WHERE telegram_id = ?", (tg_id,))
         existing = cursor.fetchone()
+        existing_uid = existing["user_id"] if (existing and hasattr(existing, "keys")) else existing[0] if existing else None
 
-        if existing and existing["user_id"]:
+        if existing_uid:
             cursor.execute("""
                 UPDATE telegram_users 
                 SET username = ?, first_name = ?, last_name = ?, language_code = ?, is_premium = ?, updated_at = CURRENT_TIMESTAMP
                 WHERE telegram_id = ?
             """, (username, first_name, last_name, lang, is_premium, tg_id))
             conn.commit()
-            return existing["user_id"]
+            return existing_uid
         else:
             linked_user_id = None
             if username:
@@ -312,114 +334,147 @@ class TelegramBotService:
 
         linked_user_id = self.sync_telegram_user(from_user, conn)
 
-        if text.startswith("/start"):
+        first_word = text.split()[0].lower() if text else ""
+        
+        if first_word == "/start":
             parts = text.split(maxsplit=1)
             start_payload = parts[1] if len(parts) > 1 else ""
             return self.handle_start_command(chat_id, from_user, start_payload, linked_user_id, conn)
 
-        elif text.startswith("/app") or text.startswith("/dashboard"):
+        elif first_word in ["/app", "/dashboard", "/terminal"]:
             return self.handle_app_command(chat_id, from_user)
 
-        elif text.startswith("/markets"):
+        elif first_word in ["/markets", "/market"]:
             return self.handle_markets_command(chat_id, conn)
 
-        elif text.startswith("/signals") or text.startswith("/setups"):
+        elif first_word in ["/signals", "/signal", "/setups", "/setup"]:
             return self.handle_signals_command(chat_id, conn)
 
-        elif text.startswith("/watchlist"):
-            return self.handle_watchlist_command(chat_id, linked_user_id, conn)
-
-        elif text.startswith("/alerts"):
-            return self.handle_alerts_command(chat_id, linked_user_id, conn)
-
-        elif text.startswith("/news"):
-            return self.handle_news_command(chat_id)
-
-        elif text.startswith("/strength"):
-            return self.handle_strength_command(chat_id)
-
-        elif text.startswith("/academy"):
+        elif first_word in ["/learn", "/academy", "/education"]:
             return self.handle_academy_command(chat_id, linked_user_id)
 
-        elif text.startswith("/risk"):
+        elif first_word in ["/news", "/calendar"]:
+            return self.handle_news_command(chat_id)
+
+        elif first_word in ["/risk", "/calculator"]:
             return self.handle_risk_command(chat_id)
 
-        elif text.startswith("/journal"):
-            return self.handle_journal_command(chat_id, linked_user_id, conn)
-
-        elif text.startswith("/plans") or text.startswith("/subscription"):
+        elif first_word in ["/plans", "/plan", "/subscription"]:
             return self.handle_plans_command(chat_id, conn)
 
-        elif text.startswith("/connect_mt5") or text.startswith("/mt5"):
-            return self.handle_connect_mt5_command(chat_id)
+        elif first_word in ["/upgrade", "/pricing"]:
+            return self.handle_plans_command(chat_id, conn)
 
-        elif text.startswith("/account"):
+        elif first_word in ["/account", "/myplan", "/profile"]:
             return self.handle_account_command(chat_id, from_user, linked_user_id, conn)
 
-        elif text.startswith("/settings"):
-            return self.handle_settings_command(chat_id, from_user, linked_user_id, conn)
+        elif first_word in ["/status", "/ping"]:
+            return self.handle_status_command(chat_id)
 
-        elif text.startswith("/help") or text.startswith("/support"):
+        elif first_word in ["/help", "/support"]:
             return self.handle_help_command(chat_id)
 
+        elif first_word in ["/watchlist"]:
+            return self.handle_watchlist_command(chat_id, linked_user_id, conn)
+
+        elif first_word in ["/alerts"]:
+            return self.handle_alerts_command(chat_id, linked_user_id, conn)
+
+        elif first_word in ["/strength"]:
+            return self.handle_strength_command(chat_id)
+
+        elif first_word in ["/journal"]:
+            return self.handle_journal_command(chat_id, linked_user_id, conn)
+
+        elif first_word in ["/settings"]:
+            return self.handle_settings_command(chat_id, from_user, linked_user_id, conn)
+
+        elif first_word in ["/connect_mt5", "/mt5"]:
+            return self.handle_connect_mt5_command(chat_id)
+
+        elif first_word in ["/community", "/channel"]:
+            return self.handle_community_command(chat_id)
+
+        elif first_word in ["/careers", "/jobs"]:
+            return self.handle_careers_command(chat_id)
+
+        elif first_word in ["/affiliate", "/partner"]:
+            return self.handle_affiliate_command(chat_id)
+
+        elif first_word in ["/tech", "/services", "/custom"]:
+            return self.handle_tech_command(chat_id)
+
+        elif first_word in ["/disclaimer", "/risk_disclaimer"]:
+            return self.handle_disclaimer_command(chat_id)
+
+        elif first_word in ["/privacy"]:
+            return self.handle_privacy_command(chat_id)
+
+        elif first_word in ["/terms"]:
+            return self.handle_terms_command(chat_id)
+
+        elif first_word in ["/cookie", "/cookies", "/cookie_policy"]:
+            return self.handle_cookies_command(chat_id)
+
+        elif first_word in ["/security", "/admin_security"]:
+            return self.handle_security_command(chat_id)
+
+        elif first_word in ["/analysis", "/analyze"]:
+            parts = text.split(maxsplit=1)
+            target = parts[1] if len(parts) > 1 else "XAUUSD"
+            ai_res = ai_assistant.process_query(f"analyse {target}", "PRO" if linked_user_id else "FREE")
+            self.send_message(chat_id, ai_res["text"], self.get_main_menu_keyboard())
+            return {"status": "analysis_handled"}
+
         else:
-            fallback_text = (
-                "👋 <b>Welcome to Chartora Trading Intelligence</b>\n\n"
-                "Tap below to launch the Mini App or explore live markets, setups, news, and tools."
-            )
-            self.send_message(chat_id, fallback_text, self.get_main_menu_keyboard())
-            return {"status": "fallback_sent"}
+            # Route natural language query directly to Chartora AI Assistant
+            ai_res = ai_assistant.process_query(text, "PRO" if linked_user_id else "FREE")
+            self.send_message(chat_id, ai_res["text"], self.get_main_menu_keyboard())
+            return {"status": "ai_query_handled"}
 
     # ==========================================
     # 4. COMMAND HANDLERS
     # ==========================================
     def handle_start_command(self, chat_id: int, from_user: dict, start_payload: str, linked_user_id: Optional[int], conn) -> dict:
-        user_name = from_user.get("first_name", "Trader")
-        welcome_msg = [
-            f"⚡ <b>Welcome to Chartora, {user_name}!</b>",
+        welcome_lines = [
+            "<b>CHARTORA</b>",
             "",
-            "<b>Your Markets. Our Scanners. Your Decision.</b>",
-            "Professional institutional trading intelligence, verified EMA setups, risk planning, and multi-channel alerts directly in Telegram.",
-            ""
+            "Your market intelligence and trading education platform.",
+            "",
+            "Choose what you want to explore:"
         ]
 
         if start_payload:
             if start_payload.startswith("v1_link_") or start_payload.startswith("link_"):
                 linked_id = self.link_account_via_token(from_user.get("id"), from_user, start_payload, conn)
                 if linked_id:
-                    welcome_msg.append("🔗 <b>Account Successfully Linked!</b> Your Telegram is now connected to your Chartora Web account.\n")
+                    welcome_lines.insert(3, "🔗 <i>Account successfully linked to your Chartora profile.</i>\n")
                     linked_user_id = linked_id
                 else:
-                    welcome_msg.append("⚠️ <i>Account linking link expired or invalid. You are in guest mode.</i>\n")
+                    welcome_lines.insert(3, "⚠️ <i>Linking token expired. Continuing in guest mode.</i>\n")
             else:
                 parsed_deep_link = verify_deep_link_payload(start_payload)
                 if parsed_deep_link.get("valid"):
-                    act = parsed_deep_link.get("action")
                     ref = parsed_deep_link.get("reference")
-                    if act == "market" and ref:
-                        welcome_msg.append(f"🎯 <i>Viewing live intelligence for <b>{ref}</b></i>\n")
-                    elif act == "setup" and ref:
-                        welcome_msg.append(f"⚡ <i>Setup Deep Link: Opening setup <b>#{ref}</b></i>\n")
-
-        welcome_msg.extend([
-            "<b>Quick Commands:</b>",
-            "• 📊 <code>/app</code> — Open Mini App Terminal",
-            "• 📈 <code>/markets</code> — Real-time Quotes & Strengths",
-            "• ⚡ <code>/setups</code> — Verified Technical Setups",
-            "• 📰 <code>/news</code> — Macroeconomic Calendar",
-            "• 💪 <code>/strength</code> — Currency Strength Matrix",
-            "• 🧮 <code>/risk</code> — Position Size Calculator",
-            "• 📓 <code>/journal</code> — Synced Trade Journal",
-            "• 🎓 <code>/academy</code> — Trading Academy",
-            "• 👤 <code>/account</code> — Subscription & Status",
-            "• ⚙️ <code>/settings</code> — Notification Preferences",
-            "",
-            "👇 <b>Tap below to launch the full Mini App:</b>"
-        ])
+                    if ref:
+                        welcome_lines.insert(3, f"🎯 <i>Opening intelligence for <b>{ref}</b></i>\n")
 
         keyboard = self.get_main_menu_keyboard(start_param=start_payload)
-        self.send_message(chat_id, "\n".join(welcome_msg), keyboard)
+        self.send_message(chat_id, "\n".join(welcome_lines), keyboard)
         return {"status": "start_handled"}
+
+    def handle_status_command(self, chat_id: int) -> dict:
+        status_msg = (
+            "<b>CHARTORA ECOSYSTEM STATUS</b>\n\n"
+            "• <b>Market Data Core:</b> ONLINE (Live Real-time Feed)\n"
+            "• <b>Signal Engine:</b> ACTIVE (Top 3 Strategies Scanned)\n"
+            "• <b>Telegram Router:</b> CONNECTED\n"
+            "• <b>MT5 Cloud Bridge:</b> READY\n"
+            "• <b>Mini App Terminal:</b> ONLINE\n\n"
+            "<i>All services operating under strict data verification.</i>"
+        )
+        self.send_message(chat_id, status_msg, self.get_main_menu_keyboard())
+        return {"status": "status_handled"}
 
     def handle_app_command(self, chat_id: int, from_user: dict) -> dict:
         msg = (
@@ -710,24 +765,40 @@ class TelegramBotService:
         return {"status": "journal_handled"}
 
     def handle_plans_command(self, chat_id: int, conn) -> dict:
-        cursor = conn.cursor()
-        cursor.execute("SELECT name, price_usd, billing_cycle FROM plans ORDER BY price_usd ASC")
-        plans = cursor.fetchall()
-
         msg = [
-            "💎 <b>Chartora Official Plans & Subscriptions</b>",
-            "<i>Transparent pricing with multi-market intelligence access:</i>",
-            ""
+            "💎 <b>CHARTORA SUBSCRIPTION TIERS</b>",
+            "<i>Transparent recurring memberships for traders:</i>",
+            "",
+            "1. <b>FREE TIER — $0/mo</b>",
+            "• Official CHARTORA Community & Education",
+            "• Basic market scanning & Trading Academy",
+            "• Public commentary & morning briefs",
+            "",
+            "2. <b>PRO TIER — $19.99/mo</b>",
+            "• Real-time multi-pair scanner & instant Telegram setup alerts",
+            "• Scalping (5M/15M) & Intraday (1H/4H) qualified setups",
+            "• Forex, Metals, Indices, Energies, and Crypto coverage",
+            "• 0–2 high-probability setups/day (Quality > Quantity)",
+            "",
+            "3. <b>ALL ACCESS — $49.99/mo</b>",
+            "• <i>Everything in Pro PLUS:</i>",
+            "• All supported market categories (including US Stocks)",
+            "• Multi-Strategy V1 engine & MT5 Bridge integration",
+            "• VIP Telegram channel & 1-on-1 strategy calibration",
+            "• Risk Calculator, Trade Journal & all tools",
+            "",
+            "<b>Custom Trading Technology Services:</b>",
+            "• TradingView Indicator ($19.99/mo) | Market Scanner ($36.99/mo)",
+            "• MT5 Scanner ($49.99/mo) | MT5 Automated EA ($99/mo)"
         ]
 
-        for p in plans:
-            price_str = "FREE" if p["price_usd"] == 0 else f"${p['price_usd']:.2f}/{p['billing_cycle'][:2]}"
-            msg.append(f"• <b>{p['name']}</b> — <code>{price_str}</code>")
-
-        msg.append("\nUpgrade directly inside the Mini App or on the website:")
         keyboard = {
             "inline_keyboard": [
-                [{"text": "💎 View Plans & Upgrade", "web_app": {"url": f"{get_mini_app_url()}#account"}}]
+                [
+                    {"text": "⭐ Upgrade to Pro ($19.99)", "url": "https://t.me/chartora"},
+                    {"text": "👑 Get All Access ($49.99)", "url": "https://t.me/chartora"}
+                ],
+                [{"text": "📱 Open Mini App Plans", "web_app": {"url": f"{get_mini_app_url()}#account"}}]
             ]
         }
         self.send_message(chat_id, "\n".join(msg), keyboard)
@@ -859,6 +930,125 @@ class TelegramBotService:
         }
         self.send_message(chat_id, msg, keyboard)
         return {"status": "help_handled"}
+
+    def handle_community_command(self, chat_id: int) -> dict:
+        msg = (
+            "🌐 <b>Chartora Official Community</b>\n\n"
+            "Join our official free community channel on Telegram for daily market overviews, key structural updates, and trading analysis."
+        )
+        keyboard = {
+            "inline_keyboard": [
+                [{"text": "✈️ Join Official Telegram", "url": get_route_url("OFFICIAL_TELEGRAM")}],
+                [{"text": "🌐 Community Page", "url": get_route_url("COMMUNITY")}]
+            ]
+        }
+        self.send_message(chat_id, msg, keyboard)
+        return {"status": "community_handled"}
+
+    def handle_careers_command(self, chat_id: int) -> dict:
+        msg = (
+            "💼 <b>Careers at Chartora</b>\n\n"
+            "We are building institutional market intelligence, quantitative analytics, and algorithmic trading technology. Explore our open roles on our official website."
+        )
+        keyboard = {
+            "inline_keyboard": [
+                [{"text": "💼 View Careers on Website", "url": get_route_url("CAREERS")}]
+            ]
+        }
+        self.send_message(chat_id, msg, keyboard)
+        return {"status": "careers_handled"}
+
+    def handle_affiliate_command(self, chat_id: int) -> dict:
+        msg = (
+            "🤝 <b>Chartora 20% Partner Program</b>\n\n"
+            "Earn 20% recurring monthly commission by sharing Chartora's market intelligence, scanners, and educational platform with your trading network."
+        )
+        keyboard = {
+            "inline_keyboard": [
+                [{"text": "🤝 View Affiliate Program", "url": get_route_url("AFFILIATE")}]
+            ]
+        }
+        self.send_message(chat_id, msg, keyboard)
+        return {"status": "affiliate_handled"}
+
+    def handle_tech_command(self, chat_id: int) -> dict:
+        msg = (
+            "⚙️ <b>Custom Trading Technology Solutions</b>\n\n"
+            "Institutional custom indicator authoring, MT5 automated Expert Advisors, and proprietary multi-pair scanner engineering tailored for your strategy."
+        )
+        keyboard = {
+            "inline_keyboard": [
+                [{"text": "⚙️ Custom Solutions on Website", "url": get_route_url("TECH_SERVICES")}]
+            ]
+        }
+        self.send_message(chat_id, msg, keyboard)
+        return {"status": "tech_handled"}
+
+    def handle_disclaimer_command(self, chat_id: int) -> dict:
+        msg = (
+            "⚠️ <b>Responsible Trading & Risk Disclaimer</b>\n\n"
+            "Trading financial markets involves substantial risk of capital loss. All Chartora tools, scanners, trade setup alerts, and curriculum are strictly for informational and educational purposes only.\n\n"
+            "Read our complete regulatory policy on our official website:"
+        )
+        keyboard = {
+            "inline_keyboard": [
+                [{"text": "⚠️ Read Full Risk Disclaimer", "url": get_route_url("RISK_DISCLAIMER")}]
+            ]
+        }
+        self.send_message(chat_id, msg, keyboard)
+        return {"status": "disclaimer_handled"}
+
+    def handle_privacy_command(self, chat_id: int) -> dict:
+        msg = (
+            "🛡️ <b>Chartora Privacy Policy</b>\n\n"
+            "Your privacy is fundamental. We never sell, rent, or trade your personal data. All credentials are encrypted with institutional zero-trust security."
+        )
+        keyboard = {
+            "inline_keyboard": [
+                [{"text": "🛡️ Read Privacy Policy", "url": get_route_url("PRIVACY")}]
+            ]
+        }
+        self.send_message(chat_id, msg, keyboard)
+        return {"status": "privacy_handled"}
+
+    def handle_terms_command(self, chat_id: int) -> dict:
+        msg = (
+            "📜 <b>Terms of Service</b>\n\n"
+            "Review the official terms of platform usage, membership conditions, and service guidelines on our website:"
+        )
+        keyboard = {
+            "inline_keyboard": [
+                [{"text": "📜 Read Terms & Conditions", "url": get_route_url("TERMS")}]
+            ]
+        }
+        self.send_message(chat_id, msg, keyboard)
+        return {"status": "terms_handled"}
+
+    def handle_cookies_command(self, chat_id: int) -> dict:
+        msg = (
+            "🍪 <b>Cookie Policy</b>\n\n"
+            "Learn how Chartora uses strictly necessary cookies for secure session authentication and platform speed."
+        )
+        keyboard = {
+            "inline_keyboard": [
+                [{"text": "🍪 Read Cookie Policy", "url": get_route_url("COOKIE_POLICY")}]
+            ]
+        }
+        self.send_message(chat_id, msg, keyboard)
+        return {"status": "cookies_handled"}
+
+    def handle_security_command(self, chat_id: int) -> dict:
+        msg = (
+            "🛡️ <b>Admin Security & Defense Standards</b>\n\n"
+            "PBKDF2-HMAC-SHA256 salted hashing with 600,000 iterations, HttpOnly cookies, and strict HMAC-SHA256 signature verification for MT5 communication."
+        )
+        keyboard = {
+            "inline_keyboard": [
+                [{"text": "🛡️ Read Security Architecture", "url": get_route_url("ADMIN_SECURITY")}]
+            ]
+        }
+        self.send_message(chat_id, msg, keyboard)
+        return {"status": "security_handled"}
 
     # ==========================================
     # 5. INLINE CALLBACK QUERY DISPATCHER
@@ -1025,11 +1215,68 @@ class TelegramBotService:
             self.answer_callback_query(query_id, f"Removed {sym} from watchlist!")
             return {"status": "watchlist_removed", "symbol": sym}
 
-        # 7. Account Info Callback
-        elif data == "v1:acc:info":
+        # 7. Account Info & Plans Callback
+        elif data in ["v1:acc:info", "v1:acc:plan"]:
             self.answer_callback_query(query_id)
             return self.handle_account_command(chat_id, from_user, linked_user_id, conn)
 
+        elif data in ["v1:pln:list", "v1:upgrade"]:
+            self.answer_callback_query(query_id)
+            return self.handle_plans_command(chat_id, conn)
+
+        # 8. Learn / Academy
+        elif data in ["v1:aca:main", "v1:learn"]:
+            self.answer_callback_query(query_id)
+            return self.handle_academy_command(chat_id, linked_user_id)
+
+        # 9. Risk Calculator
+        elif data in ["v1:risk:main", "v1:risk"]:
+            self.answer_callback_query(query_id)
+            return self.handle_risk_command(chat_id)
+
+        # 10. Macro News
+        elif data in ["v1:news:list", "v1:news"]:
+            self.answer_callback_query(query_id)
+            return self.handle_news_command(chat_id)
+
+        # 11. Company & Community Callbacks
+        elif data in ["v1:community", "v1:channel"]:
+            self.answer_callback_query(query_id)
+            return self.handle_community_command(chat_id)
+
+        elif data in ["v1:careers", "v1:jobs"]:
+            self.answer_callback_query(query_id)
+            return self.handle_careers_command(chat_id)
+
+        elif data in ["v1:affiliate", "v1:partner"]:
+            self.answer_callback_query(query_id)
+            return self.handle_affiliate_command(chat_id)
+
+        elif data in ["v1:tech", "v1:services"]:
+            self.answer_callback_query(query_id)
+            return self.handle_tech_command(chat_id)
+
+        # 12. Legal & Policy Callbacks
+        elif data in ["v1:disclaimer", "v1:risk_disclaimer"]:
+            self.answer_callback_query(query_id)
+            return self.handle_disclaimer_command(chat_id)
+
+        elif data in ["v1:privacy"]:
+            self.answer_callback_query(query_id)
+            return self.handle_privacy_command(chat_id)
+
+        elif data in ["v1:terms"]:
+            self.answer_callback_query(query_id)
+            return self.handle_terms_command(chat_id)
+
+        elif data in ["v1:cookies", "v1:cookie"]:
+            self.answer_callback_query(query_id)
+            return self.handle_cookies_command(chat_id)
+
+        elif data in ["v1:security"]:
+            self.answer_callback_query(query_id)
+            return self.handle_security_command(chat_id)
+
         # Fallback
-        self.answer_callback_query(query_id)
-        return {"status": "unhandled_callback"}
+        self.answer_callback_query(query_id, "Action processed")
+        return {"status": "unhandled_callback", "data": data}

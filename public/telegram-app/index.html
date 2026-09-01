@@ -4,10 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>CHARTORA — Telegram Trading Terminal</title>
-    <!-- Telegram WebApp SDK (Must be loaded first) -->
+    <!-- Telegram WebApp SDK & Route Map -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="../../js/routes.js"></script>
     <link rel="stylesheet" href="tma.css">
-    <link rel="icon" href="/public/favicon.svg" type="image/svg+xml">
+    <link rel="icon" href="../favicon.svg" type="image/svg+xml">
 </head>
 <body class="tma-body">
     <div id="tma-app" class="tma-container">
@@ -467,6 +468,19 @@
                 <button class="btn btn-primary btn-block" onclick="ChartoraTMA.saveTrade()">SAVE TRADE RECORD</button>
             </div>
         </div>
+
+        <!-- 13. ERROR BOUNDARY SCREEN -->
+        <section id="view-error-boundary" class="tma-screen" style="display:none;">
+            <div class="empty-state" style="padding: 40px 20px; text-align: center;">
+                <div style="font-size: 48px; margin-bottom: 16px;">⚡</div>
+                <h2 style="font-size: 20px; font-weight: 800; color: #FFFFFF; margin-bottom: 8px;">CHARTORA TERMINAL</h2>
+                <p id="error-boundary-msg" style="color: #94A3B8; font-size: 14px; margin-bottom: 24px;">Unable to synchronize real-time market data right now.</p>
+                <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
+                    <button class="btn btn-primary" onclick="ChartoraTMA.retryInit()">Retry</button>
+                    <button class="btn btn-secondary" onclick="ChartoraTMA.openWebsitePage('HOME')">Open Chartora Website</button>
+                </div>
+            </div>
+        </section>
 
         <!-- BOTTOM NAVIGATION BAR -->
         <nav class="tma-bottom-nav">

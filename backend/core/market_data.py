@@ -175,7 +175,8 @@ class MarketDataEngine:
         """Returns all market quotes with freshness metadata."""
         return [self.get_quote(s) for s in self._quotes.keys() if self.get_quote(s) is not None]
 
-    def get_candles(self, symbol: str, timeframe: str = "5M", count: int = 50) -> List[Dict[str, Any]]:
+    def get_candles(self, symbol: str, timeframe: str = "5M", count: int = 50, limit: Optional[int] = None) -> List[Dict[str, Any]]:
+        actual_count = limit if limit is not None else count
         """Returns candles for a symbol/timeframe, synthesizing realistic historical sequence if empty."""
         symbol = symbol.upper().strip()
         timeframe = timeframe.upper().strip()

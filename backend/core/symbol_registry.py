@@ -418,31 +418,60 @@ class SymbolRegistry:
         norm = SymbolRegistry.normalize_symbol(symbol)
         return CANONICAL_MARKET_REGISTRY.get(norm)
 
-    @staticmethod
-    def normalize_symbol(raw_symbol: str) -> str:
-        clean = raw_symbol.upper().replace("/", "").replace(".", "").replace("-", "").strip()
+    @classmethod
+    def get_by_category(cls, category: str) -> List[Dict[str, Any]]:
+        cat_lower = category.lower().rstrip('s')
+        return [
+            info for info in CANONICAL_MARKET_REGISTRY.values()
+            if info["category"].lower().rstrip('s') == cat_lower or 
+               (cat_lower in ["stock", "equity", "equitie"] and info["category"].lower() in ["equities", "stocks"]) or
+               (cat_lower in ["energie", "energy", "commoditie", "commodity"] and info["category"].lower() in ["commodities", "energies"])
+        ]
+
+    @classmethod
+    def get_symbols_by_category(cls, category: str) -> List[Dict[str, Any]]:
+        return cls.get_by_category(category)
+
+    @classmethod
+    def normalize_symbol(cls, raw_symbol: str) -> str:
+        clean = raw_symbol.upper().replace("/", "").replace("-", "").strip()
+        # Direct alias check first
+        if clean in ["GOLD", "XAU"]:
+            return "XAUUSD"
+        if clean in ["SILVER", "XAG"]:
+            return "XAGUSD"
+        if clean in ["NAS100", "NQ"]:
+            return "US100"
+        if clean in ["SPX500", "SP500", "SPX"]:
+            return "US500"
+        if clean in ["DJ30", "DOW"]:
+            return "US30"
+        if clean in ["WTI", "CRUDE"]:
+            return "USOIL"
+
+        # Strip broker suffixes
+        suffixes = [".RAW", ".PRO", ".ECN", ".SB", "_SB", "_I", ".M", ".US", "M", "C"]
+        for suf in suffixes:
+            if clean.endswith(suf) and len(clean) > len(suf):
+                base = clean[:-len(suf)].replace(".", "").replace("_", "")
+                if base in CANONICAL_MARKET_REGISTRY or base == "USOIL" or base == "XAUUSD":
+                    return base
+
+        clean_flat = clean.replace(".", "").replace("_", "")
+        if clean_flat in CANONICAL_MARKET_REGISTRY:
+            return clean_flat
+        if clean_flat == "USOIL":
+            return "USOIL"
+
         for canonical, info in CANONICAL_MARKET_REGISTRY.items():
-            if clean == canonical:
+            if clean_flat == canonical:
                 return canonical
-            # Check mappings
             for provider, aliases in info.get("provider_mappings", {}).items():
                 if isinstance(aliases, list):
                     for alias in aliases:
-                        if clean == alias.upper().replace("/", "").replace(".", "").replace("-", "").strip():
+                        if clean_flat == alias.upper().replace("/", "").replace(".", "").replace("_", "").replace("-", "").strip():
                             return canonical
                 elif isinstance(aliases, str):
-                    if clean == aliases.upper().replace("/", "").replace(".", "").replace("-", "").strip():
+                    if clean_flat == aliases.upper().replace("/", "").replace(".", "").replace("_", "").replace("-", "").strip():
                         return canonical
-        return clean
-
-    @staticmethod
-    def get_all_canonical_symbols() -> List[str]:
-        return list(CANONICAL_MARKET_REGISTRY.keys())
-
-    @staticmethod
-    def get_by_category(category: str) -> List[Dict[str, Any]]:
-        cat_lower = category.lower()
-        return [
-            info for info in CANONICAL_MARKET_REGISTRY.values()
-            if info["category"].lower() == cat_lower
-        ]
+        return clean_flat
