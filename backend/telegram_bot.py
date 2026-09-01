@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-CHARTORA.IN — Telegram Bot API Engine & Webhook Controller (Production Hardened)
+CHARTORA — Telegram Bot API Engine & Webhook Controller (Production Hardened)
 Implements:
 - Webhook Secret Validation & Deduplication (X-Telegram-Bot-Api-Secret-Token)
 - Unified Chartora User Identity & Secure Account Linking (v1_link_* tokens)
@@ -39,7 +39,7 @@ def get_bot_username() -> str:
     return os.environ.get('TELEGRAM_BOT_USERNAME', 'ChartoraBot')
 
 def get_mini_app_url() -> str:
-    base_url = os.environ.get('APP_URL', 'https://chartora.in')
+    base_url = os.environ.get('APP_URL', 'https://chartora')
     return os.environ.get('TELEGRAM_MINI_APP_URL', f"{base_url}/public/telegram-app/index.html")
 
 def telegram_api_call(method: str, payload: dict, bot_token: Optional[str] = None) -> dict:
@@ -209,7 +209,7 @@ class TelegramBotService:
 
             if not linked_user_id:
                 # Auto-provision user record
-                rand_email = f"tg_{tg_id}@chartora.in"
+                rand_email = f"tg_{tg_id}@chartora"
                 gen_pass = hashlib.sha256(secrets.token_hex(16).encode()).hexdigest()
                 full_name = f"{first_name} {last_name}".strip() or "Telegram Trader"
                 u_name = username or f"tg_user_{tg_id}"
@@ -423,7 +423,7 @@ class TelegramBotService:
 
     def handle_app_command(self, chat_id: int, from_user: dict) -> dict:
         msg = (
-            "🚀 <b>Chartora.in Trading Intelligence Mini App</b>\n\n"
+            "🚀 <b>CHARTORA Trading Intelligence Mini App</b>\n\n"
             "• Real-time Scanner Setups with Condition Quality (0-100)\n"
             "• Multi-Market Watchlists & Smart Price Alerts\n"
             "• Position Sizing Risk Calculator & Synced Journal\n"
@@ -738,14 +738,14 @@ class TelegramBotService:
             "🔌 <b>Chartora MetaTrader 5 (MT5) Institutional Bridge</b>\n\n"
             "• Download the official Expert Advisor: <code>ChartoraBridge.mq5</code>\n"
             "• Install into MT5: <code>MQL5/Experts/</code>\n"
-            "• Enable WebRequest to <code>https://chartora.in</code>\n"
+            "• Enable WebRequest to <code>https://chartora</code>\n"
             "• Configure HMAC Secret Key in EA properties\n\n"
             "Real-time technical alerts stream directly into Chartora scanner engines."
         )
         keyboard = {
             "inline_keyboard": [
                 [{"text": "📊 Open Mini App Terminal", "web_app": {"url": get_mini_app_url()}}],
-                [{"text": "📖 Integration Docs", "url": "https://chartora.in#scanner"}]
+                [{"text": "📖 Integration Docs", "url": "https://chartora#scanner"}]
             ]
         }
         self.send_message(chat_id, msg, keyboard)
@@ -769,7 +769,7 @@ class TelegramBotService:
             sub_info = cursor.fetchone()
 
         role = user_info["role"] if user_info else "Free Member"
-        email = user_info["email"] if user_info else f"tg_{from_user.get('id')}@chartora.in"
+        email = user_info["email"] if user_info else f"tg_{from_user.get('id')}@chartora"
         plan_name = sub_info["plan_name"] if sub_info else "Chartora Free"
 
         msg = (
@@ -849,12 +849,12 @@ class TelegramBotService:
             "• <code>/plans</code> — Subscription tiers\n"
             "• <code>/account</code> — Profile & connection status\n"
             "• <code>/settings</code> — Notification preferences\n\n"
-            "Need assistance? Reach our team at <a href='https://t.me/chartora_official'>@chartora_official</a>."
+            "Need assistance? Reach our team at <a href='https://t.me/chartora'>@chartora</a>."
         )
         keyboard = {
             "inline_keyboard": [
                 [{"text": "🚀 Launch Mini App", "web_app": {"url": get_mini_app_url()}}],
-                [{"text": "💬 Support Channel", "url": "https://t.me/chartora_official"}]
+                [{"text": "💬 Support Channel", "url": "https://t.me/chartora"}]
             ]
         }
         self.send_message(chat_id, msg, keyboard)

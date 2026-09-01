@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-CHARTORA.IN — MASTER PRODUCTION AUTOMATED TEST SUITE
+CHARTORA — MASTER PRODUCTION AUTOMATED TEST SUITE
 Validates all 10 architectural phases:
 1. Event Bus Pub/Sub and telemetry
 2. Market Data Engine, tick ingestion, candle bars, session clocks, stale data detector
@@ -378,7 +378,7 @@ class TestChartoraMasterProductionSuite(unittest.TestCase):
         )
         self.assertTrue(login_res["success"])
         self.assertIn("token", login_res)
-        self.assertEqual(login_res["user"]["email"], "google_viptrader@chartora.in")
+        self.assertEqual(login_res["user"]["email"], "google_viptrader@chartora")
 
     def test_rbac_authorization_roles(self):
         """Verifies role validation helpers for Customer, Employee, and Admin"""
@@ -397,7 +397,7 @@ class TestChartoraMasterProductionSuite(unittest.TestCase):
         """Verifies customer ticket submission, employee retrieval, and status updating"""
         ticket_res = self.support_service.create_ticket({
             "name": "Alex Rivers",
-            "email": "trader@chartora.in",
+            "email": "trader@chartora",
             "subject": "MT5 Bridge Connectivity Query",
             "message": "How do I configure HMAC authentication on VPS?",
             "category": "TECHNICAL",

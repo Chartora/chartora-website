@@ -1,8 +1,8 @@
-# CHARTORA.IN — MASTER REST API SPECIFICATION (v3.1.0)
+# CHARTORA — MASTER REST API SPECIFICATION (v3.1.0)
 
 ## Base URLs
 - Local Development: `http://localhost:8080`
-- Production Gateway: `https://api.chartora.in`
+- Production Gateway: `https://api.chartora`
 
 ---
 
@@ -12,7 +12,7 @@
   {
     "status": "UP",
     "timestamp": "2026-08-22T23:50:00Z",
-    "service": "Chartora.in Intelligence Core",
+    "service": "CHARTORA Intelligence Core",
     "version": "3.1.0",
     "modules": {
       "market_data": "ACTIVE",

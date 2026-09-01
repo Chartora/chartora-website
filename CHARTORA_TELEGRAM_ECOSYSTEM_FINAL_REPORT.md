@@ -1,4 +1,4 @@
-# CHARTORA.IN — TELEGRAM BOT & MINI APP ECOSYSTEM FINAL ARCHITECTURE & OPERATIONS REPORT
+# CHARTORA — TELEGRAM BOT & MINI APP ECOSYSTEM FINAL ARCHITECTURE & OPERATIONS REPORT
 
 ---
 
@@ -289,20 +289,20 @@ OK
 
 1. **Bot Creation**: Create bot on Telegram via [@BotFather](https://t.me/BotFather) and obtain `TELEGRAM_BOT_TOKEN`.
 2. **Mini App URL Registration**:
-   - In BotFather: `/newapp` -> Select bot -> Set Title to `Chartora Terminal` -> Set WebApp URL to `https://chartora.in/public/telegram-app/index.html` (or `https://chartora.in/telegram-app/index.html`).
+   - In BotFather: `/newapp` -> Select bot -> Set Title to `Chartora Terminal` -> Set WebApp URL to `https://chartora/public/telegram-app/index.html` (or `https://chartora/telegram-app/index.html`).
 3. **Environment Setup**:
    ```env
    TELEGRAM_MODE=active
    TELEGRAM_BOT_TOKEN=your_live_bot_token_from_botfather
    TELEGRAM_BOT_USERNAME=ChartoraBot
    TELEGRAM_WEBHOOK_SECRET=your_high_entropy_random_secret_token
-   TELEGRAM_WEBHOOK_URL=https://api.chartora.in/api/telegram/webhook
-   TELEGRAM_MINI_APP_URL=https://chartora.in/public/telegram-app/index.html
+   TELEGRAM_WEBHOOK_URL=https://api.chartora/api/telegram/webhook
+   TELEGRAM_MINI_APP_URL=https://chartora/public/telegram-app/index.html
    ```
 4. **Register Webhook & Menu**:
    ```bash
    python3 scripts/telegram_bot_manager.py --action set-menu
-   python3 scripts/telegram_bot_manager.py --action set-webhook --url https://api.chartora.in/api/telegram/webhook --secret your_high_entropy_random_secret_token
+   python3 scripts/telegram_bot_manager.py --action set-webhook --url https://api.chartora/api/telegram/webhook --secret your_high_entropy_random_secret_token
    ```
 5. **Verify Webhook Status**:
    ```bash

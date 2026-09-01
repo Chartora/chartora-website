@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-CHARTORA.IN — Enhanced Multi-Channel Notification & Telegram Delivery Engine
+CHARTORA — Enhanced Multi-Channel Notification & Telegram Delivery Engine
 Handles:
 - User preference targeting (min condition score, preferred instruments/timeframes)
 - Deduplication & Idempotency protection against duplicate alerts
@@ -17,6 +17,32 @@ from .telegram_bot import telegram_api_call, get_bot_token, get_mini_app_url
 class NotificationService:
     def __init__(self, db_getter):
         self.get_db = db_getter
+        self._ensure_tables()
+
+    def _ensure_tables(self):
+        try:
+            conn = self.get_db()
+            cursor = conn.cursor()
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS telegram_notifications (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    user_id INTEGER,
+                    telegram_id INTEGER,
+                    event_type TEXT,
+                    title TEXT,
+                    message TEXT,
+                    payload_json TEXT,
+                    photo_url TEXT,
+                    status TEXT DEFAULT 'PENDING',
+                    retry_count INTEGER DEFAULT 0,
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    delivered_at DATETIME
+                );
+            """)
+            conn.commit()
+            conn.close()
+        except Exception:
+            pass
 
     def queue_notification(
         self,

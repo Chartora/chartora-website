@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-CHARTORA.IN — Automated Chart Snapshot Engine
+CHARTORA — Automated Chart Snapshot Engine
 Renders high-resolution institutional trading charts with:
 - Dark theme styling (#0B0F19 background, #10B981 bullish candles, #EF4444 bearish candles)
 - Dynamic EMA overlays (EMA 9 cyan, EMA 21 amber, EMA 200 purple)

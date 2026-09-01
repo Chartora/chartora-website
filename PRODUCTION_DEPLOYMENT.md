@@ -1,14 +1,14 @@
-# CHARTORA.IN — PRODUCTION DEPLOYMENT GUIDE
+# CHARTORA — PRODUCTION DEPLOYMENT GUIDE
 
 ## 1. Overview
-Chartora.in is configured for flexible production deployment across Docker containers, Cloudflare Pages + VPS/Cloud server, Railway, Render, or AWS/GCP instances.
+CHARTORA is configured for flexible production deployment across Docker containers, Cloudflare Pages + VPS/Cloud server, Railway, Render, or AWS/GCP instances.
 
 ---
 
 ## 2. Production Architecture
 
 ```
-                    https://chartora.in
+                    https://chartora
                              │
             ┌────────────────┴────────────────┐
             ▼                                 ▼
@@ -33,8 +33,8 @@ cp .env.example .env
 Populate production values:
 ```env
 APP_ENV=production
-APP_URL=https://chartora.in
-API_URL=https://api.chartora.in
+APP_URL=https://chartora
+API_URL=https://api.chartora
 DATABASE_URL=postgresql://chartora_user:password@localhost:5432/chartora_db
 PORT=8080
 
@@ -62,7 +62,7 @@ docker run -d -p 8080:8080 --env-file .env --name chartora-app chartora-saas
 ### Step 4: Verify System Health
 Execute readiness check:
 ```bash
-curl -f https://api.chartora.in/health || exit 1
+curl -f https://api.chartora/health || exit 1
 ```
 
 ---

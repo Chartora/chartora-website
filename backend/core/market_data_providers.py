@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-CHARTORA.IN — Production Market Data Provider Abstraction & Strict Data Policy
+CHARTORA — Production Market Data Provider Abstraction & Strict Data Policy
 Enforces:
 1. Explicit Environment DATA_MODE ('live', 'staging', 'test', 'mock')
 2. Real-data prioritized routing (MT5 Gateway -> Verified External API -> Cache)

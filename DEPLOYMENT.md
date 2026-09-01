@@ -1,8 +1,8 @@
-# CHARTORA.IN — Production Deployment Guide & Architecture Blueprint
+# CHARTORA — Production Deployment Guide & Architecture Blueprint
 
-**Frontend Target**: `https://chartora.in` (Cloudflare Pages)  
-**API Target**: `https://api.chartora.in` (Container Runtime on Railway / Render / Fly.io / VPS)  
-**Telegram Mini App**: `https://chartora.in/tma/` (Cloudflare Pages)  
+**Frontend Target**: `https://chartora` (Cloudflare Pages)  
+**API Target**: `https://api.chartora` (Container Runtime on Railway / Render / Fly.io / VPS)  
+**Telegram Mini App**: `https://chartora/tma/` (Cloudflare Pages)  
 **GitHub Repository**: `Chartora/chartora-website`  
 
 ---
@@ -20,18 +20,18 @@ Cloudflare reported: `"It seems that you have run wrangler deploy on a Pages pro
 ## 🏗️ 2-TIER PRODUCTION ARCHITECTURE
 
 ```
-[Browser / TMA Client] ─── HTTPS ───▶ [Cloudflare Pages: chartora.in]
+[Browser / TMA Client] ─── HTTPS ───▶ [Cloudflare Pages: chartora]
                                                   │
                                        _redirects (/api/*)
                                                   │
                                                   ▼
-[FastAPI Backend / SSE / MT5 Bridge] ◀── [api.chartora.in (Docker Container)]
+[FastAPI Backend / SSE / MT5 Bridge] ◀── [api.chartora (Docker Container)]
 ```
 
 1. **Frontend Tier (Cloudflare Pages)**:
    * Serves static SPA bundle (`index.html`, `js/`, `styles/`, `public/`, `legal/`).
    * Edge caching, DDoS protection, and SSL termination.
-   * `_redirects` proxies `/api/*` requests to `https://api.chartora.in/api/:splat 200`.
+   * `_redirects` proxies `/api/*` requests to `https://api.chartora/api/:splat 200`.
 
 2. **Backend Tier (Container Runtime: Railway / Render / Fly.io / VPS)**:
    * Runs `server.py` with Python 3.12, SQLite WAL mode.
@@ -62,7 +62,7 @@ npx wrangler pages deploy dist --project-name=chartora-website
 
 ---
 
-## 🐳 BACKEND CONTAINER DEPLOYMENT (`api.chartora.in`)
+## 🐳 BACKEND CONTAINER DEPLOYMENT (`api.chartora`)
 
 ### Deploy to Railway / Render / VPS
 1. Connect `Chartora/chartora-website` as a Docker web service.
@@ -75,14 +75,14 @@ npx wrangler pages deploy dist --project-name=chartora-website
    MT5_GATEWAY_SECRET_KEY=<your-mt5-hmac-key>
    TELEGRAM_BOT_TOKEN=<your-telegram-token>
    ```
-3. Map Custom Domain: `api.chartora.in` $\rightarrow$ Container Service endpoint.
-4. Verify Health Endpoint: `https://api.chartora.in/api/v1/health`
+3. Map Custom Domain: `api.chartora` $\rightarrow$ Container Service endpoint.
+4. Verify Health Endpoint: `https://api.chartora/api/v1/health`
 
 ---
 
 ## 🌐 DOMAIN & DNS SETUP
 
 In your DNS provider (Cloudflare / OrangeHosting):
-* `chartora.in` $\rightarrow$ CNAME to `<project>.pages.dev`
-* `www.chartora.in` $\rightarrow$ CNAME to `chartora.in`
-* `api.chartora.in` $\rightarrow$ CNAME/A to Backend Container IP or Railway/Render domain
+* `chartora` $\rightarrow$ CNAME to `<project>.pages.dev`
+* `www.chartora` $\rightarrow$ CNAME to `chartora`
+* `api.chartora` $\rightarrow$ CNAME/A to Backend Container IP or Railway/Render domain

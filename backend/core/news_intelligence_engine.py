@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-CHARTORA.IN — News Intelligence Engine & Educational Explanation Generator
+CHARTORA — News Intelligence Engine & Educational Explanation Generator
 Handles:
 - Multi-source financial news ingestion & deduplication (headline similarity & canonical URL hashing)
 - News category classification (CENTRAL_BANK, INFLATION, EMPLOYMENT, GDP, GEOPOLITICS, EQUITIES, FOREX, CRYPTO)
@@ -32,7 +32,7 @@ INITIAL_NEWS_STREAM = [
         "impact": "HIGH",
         "urgency": "HIGH",
         "published_at": "2026-08-23T00:45:00Z",
-        "canonical_url": "https://chartora.in/news/fomc-rate-outlook",
+        "canonical_url": "https://chartora/news/fomc-rate-outlook",
         "entities": ["Federal Reserve", "Jerome Powell", "US Labor Market"],
         "affected_assets": ["USD", "XAUUSD", "US500", "US100", "EURUSD"],
         "summary": "FOMC policy commentary highlights caution regarding future rate reductions, prioritizing inflation convergence toward the 2% objective.",
@@ -51,7 +51,7 @@ INITIAL_NEWS_STREAM = [
         "impact": "MEDIUM",
         "urgency": "MEDIUM",
         "published_at": "2026-08-23T00:15:00Z",
-        "canonical_url": "https://chartora.in/news/ecb-core-inflation",
+        "canonical_url": "https://chartora/news/ecb-core-inflation",
         "entities": ["ECB", "Christine Lagarde", "Eurozone"],
         "affected_assets": ["EUR", "EURUSD", "EURJPY", "GER40"],
         "summary": "Core Eurozone price indices remain steady, supporting current monetary policy baseline assumptions.",
@@ -70,7 +70,7 @@ INITIAL_NEWS_STREAM = [
         "impact": "HIGH",
         "urgency": "MEDIUM",
         "published_at": "2026-08-22T23:30:00Z",
-        "canonical_url": "https://chartora.in/news/gold-sovereign-reserves",
+        "canonical_url": "https://chartora/news/gold-sovereign-reserves",
         "entities": ["Central Banks", "Gold Reserves", "XAUUSD"],
         "affected_assets": ["XAUUSD", "XAGUSD", "USD"],
         "summary": "Physical bullion allocations and institutional sovereign purchases provide strong structural demand floors for precious metals.",
@@ -130,7 +130,7 @@ class NewsIntelligenceEngine:
             "impact": impact,
             "urgency": raw_item.get("urgency", "MEDIUM"),
             "published_at": raw_item.get("published_at", datetime.now(timezone.utc).isoformat()),
-            "canonical_url": raw_item.get("canonical_url", "https://chartora.in"),
+            "canonical_url": raw_item.get("canonical_url", "https://chartora"),
             "entities": raw_item.get("entities", []),
             "affected_assets": affected,
             "summary": raw_item.get("summary", headline),

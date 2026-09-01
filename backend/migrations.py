@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-CHARTORA.IN — Database Migration & Persistence Engine
+CHARTORA — Database Migration & Persistence Engine
 Supports versioned SQL migrations, index creation, constraints,
 foreign keys, SQLite and PostgreSQL dual compatibility, and automatic version tracking.
 """

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-CHARTORA.IN — Virtual Trading Account & Multi-Account Portfolio Service
+CHARTORA — Virtual Trading Account & Multi-Account Portfolio Service
 Handles:
 - Multiple isolated virtual/evaluation accounts per user
 - Auditable balance transactions ledger (Deposits, Withdrawals, Trade PnL, Adjustments)

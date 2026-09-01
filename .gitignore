@@ -1,8 +1,42 @@
+# Dependencies
 node_modules/
 dist/
+build/
+.cache/
+
+# System & OS
 .DS_Store
+Thumbs.db
+
+# Secrets & Environment Variables
 .env
-.env.local
+.env.*
+!.env.example
+*.key
+*.pem
+*.token
+*.secret
+credentials.json
+service_account.json
+
+# Logs & Databases
 *.log
-__pycache__/
+*.sqlite
+*.sqlite3
 *.db
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+venv/
+ENV/
+.pytest_cache/
+
+# Local IDE & Editor
+.vscode/
+.idea/
+*.swp
+*.swo

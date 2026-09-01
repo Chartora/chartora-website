@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Chartora.in — Automated Market Scanner & Confirmation Engine Simulator
+CHARTORA — Automated Market Scanner & Confirmation Engine Simulator
 Simulates scanning 100+ instruments (Forex, Metals, Indices, Stocks), applying multi-condition confirmation filters,
 broadcasting qualified setup alerts, and appending entries to archive.json.
 """
@@ -34,7 +34,7 @@ STRATEGIES = [
 
 def run_scanner_cycle():
     print("=" * 60)
-    print("⚡ CHARTORA.IN AUTOMATED SCANNER ENGINE RUNNING...")
+    print("⚡ CHARTORA AUTOMATED SCANNER ENGINE RUNNING...")
     print(f"Scanning {len(MARKET_UNIVERSE)} sample instruments against technical filters...")
     print("=" * 60)
 
@@ -92,8 +92,8 @@ def run_scanner_cycle():
         "technical_setup": strategy,
         "status": "TP HIT" if random.random() > 0.35 else "SL HIT",
         "r_multiple": 2.0 if random.random() > 0.35 else -1.0,
-        "chart_before": f"https://chartora.in/charts/{signal_id}-before.png",
-        "chart_after": f"https://chartora.in/charts/{signal_id}-after.png"
+        "chart_before": f"https://chartora/charts/{signal_id}-before.png",
+        "chart_after": f"https://chartora/charts/{signal_id}-after.png"
     }
 
     print(f"\n🟢 QUALIFIED SETUP DETECTED:")

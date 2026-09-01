@@ -3,7 +3,7 @@
 **Release Date:** 2026-08-23 01:03 UTC  
 **Environment:** Live Production (`https://chartora.up.railway.app`)  
 **Deployment Platform:** Railway (SFO Region, 1 Replica, Auto-Deploy from GitHub `main`)  
-**Repository:** `hemanthranam/chartora.in`  
+**Repository:** `hemanthranam/chartora`  
 **Automated Tests:** 48 / 48 PASSED (100% Success Rate)
 
 ---

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-CHARTORA.IN — Canonical Symbol Registry & Multi-Asset Universe
+CHARTORA — Canonical Symbol Registry & Multi-Asset Universe
 Manages normalized instrument definitions across:
 - Forex (Majors, Minors, Crosses)
 - Metals (Gold, Silver, Platinum, Palladium)

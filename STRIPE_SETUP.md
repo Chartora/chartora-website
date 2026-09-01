@@ -1,7 +1,7 @@
-# CHARTORA.IN — STRIPE INTEGRATION & TEST MODE SETUP GUIDE
+# CHARTORA — STRIPE INTEGRATION & TEST MODE SETUP GUIDE
 
 ## 1. Overview
-Chartora.in relies on **Stripe** as the single source of truth for billing, payments, and subscription states.
+CHARTORA relies on **Stripe** as the single source of truth for billing, payments, and subscription states.
 
 When production Stripe credentials are not present, the system operates in **`STRIPE_MODE=disabled`** or **`STRIPE_MODE=test`** mode. This prevents server crashes and provides structured diagnostic status messages to admins.
 
@@ -31,7 +31,7 @@ STRIPE_PRICE_ALLACCESS=price_1P...
 
 ## 3. Webhook Endpoint & Signature Verification
 
-- **Production Endpoint**: `https://api.chartora.in/api/stripe/webhook` (or `https://chartora.in/api/stripe/webhook`)
+- **Production Endpoint**: `https://api.chartora/api/stripe/webhook` (or `https://chartora/api/stripe/webhook`)
 - **Required Events**:
   - `checkout.session.completed`
   - `customer.subscription.created`

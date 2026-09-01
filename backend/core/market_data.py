@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-CHARTORA.IN — Market Data Engine & Provider Abstraction
+CHARTORA — Market Data Engine & Provider Abstraction
 Handles:
 - Provider abstraction (MT5, Broker feeds, Fallback simulator)
 - Real-time tick ingestion & candle aggregation

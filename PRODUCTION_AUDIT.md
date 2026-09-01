@@ -1,7 +1,7 @@
-# CHARTORA.IN — DEEP PRODUCTION AUDIT REPORT
+# CHARTORA — DEEP PRODUCTION AUDIT REPORT
 
 **Audit Timestamp**: 2026-08-09T23:18:00+01:00  
-**Target Repository**: `hemanthranam/chartora.in` (`main` branch)  
+**Target Repository**: `hemanthranam/chartora` (`main` branch)  
 **Auditor**: Lead SaaS Product Architect & Security Engineer  
 
 ---
@@ -79,4 +79,4 @@
 
 ---
 
-**Audit Summary**: The application foundation is solid. Completing Phases 2 through 9 will bring Chartora.in to a fully production-ready configuration state.
+**Audit Summary**: The application foundation is solid. Completing Phases 2 through 9 will bring CHARTORA to a fully production-ready configuration state.

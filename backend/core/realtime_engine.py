@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-CHARTORA.IN — Real-Time Market Engine & Price Streaming
+CHARTORA — Real-Time Market Engine & Price Streaming
 Handles:
 - Central multi-provider ingestion
 - Data quality validation (non-null, positive price, spread anomalies, jump filters)

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-CHARTORA.IN — Real Currency Strength & Macroeconomic News Providers
+CHARTORA — Real Currency Strength & Macroeconomic News Providers
 1. CurrencyStrengthCalculator: Calculates true 0-100 normalized basket return momentum across 8 major currencies (USD, EUR, GBP, JPY, AUD, NZD, CAD, CHF)
 2. MacroNewsProvider: Real macroeconomic calendar provider with strict N/A fallback (no fabricated forecast numbers)
 """

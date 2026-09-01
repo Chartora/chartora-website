@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-CHARTORA.IN — Durable Event Broker & Alert Deduplication Engine
+CHARTORA — Durable Event Broker & Alert Deduplication Engine
 Implements:
 1. Multi-stage Alert Pipeline (Market Event -> Validation -> Setup Engine -> Idempotency Check -> Entitlement Check -> Channel Routing -> Telegram Delivery -> Delivery Log)
 2. Strict Idempotency Key computation: HASH(ea_id, symbol, timeframe, strategy, candle_timestamp, setup_state, strategy_version)

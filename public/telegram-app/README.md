@@ -1,6 +1,6 @@
-# Chartora.in — Telegram Bot & Telegram Mini App (TMA) Suite
+# CHARTORA — Telegram Bot & Telegram Mini App (TMA) Suite
 
-This directory contains the production-ready Telegram Mini App (TMA) client and backend integration services for **Chartora.in**.
+This directory contains the production-ready Telegram Mini App (TMA) client and backend integration services for **CHARTORA**.
 
 ---
 
@@ -50,13 +50,13 @@ Chartora uses a **Unified Monorepo Architecture** where the Telegram Bot, Telegr
    - Command: `/setmenubutton`
    - Select your bot.
    - Set Button Title: `⚡ Open Terminal`
-   - Set Web App URL: `https://chartora.in/public/telegram-app/index.html` (or `https://your-domain.com/public/telegram-app/index.html`).
+   - Set Web App URL: `https://chartora/public/telegram-app/index.html` (or `https://your-domain.com/public/telegram-app/index.html`).
 
 5. Configure Short Name / Direct Mini App Link:
    - Command: `/newapp`
    - Select your bot.
    - Short name: `app` or `terminal`
-   - URL: `https://chartora.in/public/telegram-app/index.html`
+   - URL: `https://chartora/public/telegram-app/index.html`
    - Direct Link: `https://t.me/ChartoraBot/app`
 
 ---
@@ -68,7 +68,7 @@ Configure these keys in your `.env` or cloud deployment environment:
 ```bash
 # Server & Domain
 PORT=8080
-APP_URL=https://chartora.in
+APP_URL=https://chartora
 DATABASE_PATH=chartora.db
 JWT_SECRET=your_production_jwt_secret_key_2026
 
@@ -77,7 +77,7 @@ TELEGRAM_MODE=active
 TELEGRAM_BOT_TOKEN=1234567890:ABCdefGHIjklMNOpqrSTUvwxYZ
 TELEGRAM_BOT_USERNAME=ChartoraBot
 TELEGRAM_WEBHOOK_SECRET=your_telegram_webhook_secret_token
-TELEGRAM_MINI_APP_URL=https://chartora.in/public/telegram-app/index.html
+TELEGRAM_MINI_APP_URL=https://chartora/public/telegram-app/index.html
 
 # Telegram Channels (Optional for Broadcasts)
 TELEGRAM_FREE_CHANNEL_ID=-1001234567890
@@ -99,7 +99,7 @@ STRIPE_WEBHOOK_SECRET=whsec_...
 Register your webhook with Telegram:
 
 ```bash
-curl -F "url=https://chartora.in/api/telegram/webhook" \
+curl -F "url=https://chartora/api/telegram/webhook" \
      -F "secret_token=your_telegram_webhook_secret_token" \
      https://api.telegram.org/bot<YOUR_BOT_TOKEN>/setWebhook
 ```

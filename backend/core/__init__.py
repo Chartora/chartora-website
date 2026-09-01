@@ -1,5 +1,5 @@
 """
-CHARTORA.IN — Central Intelligence Core Package
+CHARTORA — Central Intelligence Core Package
 """
 
 from .event_bus import event_bus, EventBus

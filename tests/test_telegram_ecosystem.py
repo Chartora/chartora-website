@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-CHARTORA.IN — Telegram Mini App & Bot Ecosystem Automated Test Suite
+CHARTORA — Telegram Mini App & Bot Ecosystem Automated Test Suite
 Validates HMAC-SHA256 initData validation, deep linking, webhook routing,
 callback queries, watchlist/alerts/notifications APIs, and security boundaries.
 """

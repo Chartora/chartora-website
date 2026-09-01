@@ -45,17 +45,9 @@
     --neon-shadow-cyan: 0 0 25px rgba(0, 229, 255, 0.35);
 }
 
-/* Light Theme Variables */
-[data-theme="light"], .theme-light {
-    --bg-dark: #F8FAFC;
-    --bg-card: rgba(255, 255, 255, 0.96);
-    --bg-card-hover: rgba(241, 245, 249, 0.98);
-    --border-color: rgba(16, 185, 129, 0.30);
-    --border-hover: rgba(16, 185, 129, 0.70);
-    --text-main: #0F172A;
-    --text-muted: #475569;
-    --text-dim: #64748B;
-    --glass-shadow: 0 10px 30px rgba(0, 0, 0, 0.07);
+/* Permanent Dark Mode Enforcement - No Light Theme */
+[data-theme="dark"], body, html {
+    color-scheme: dark;
 }
 
 * {
@@ -194,40 +186,88 @@ html, body {
     color: var(--brand-emerald);
 }
 
-/* Nav Dropdown Fix */
+/* Nav Dropdown Fix & Accessibility */
 .nav-dropdown {
     position: relative;
     display: inline-block;
 }
 .dropdown-trigger {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    font-family: inherit;
+    font-size: 0.95rem;
+    font-weight: 500;
     cursor: pointer;
+    padding: 6px 10px;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+}
+.dropdown-trigger:hover, .dropdown-trigger[aria-expanded="true"] {
+    color: var(--brand-emerald);
+    background: rgba(16, 185, 129, 0.08);
+}
+.dropdown-chevron {
+    transition: transform 0.25s ease;
+}
+.dropdown-trigger[aria-expanded="true"] .dropdown-chevron {
+    transform: rotate(180deg);
 }
 .dropdown-menu {
     display: none;
     position: absolute;
-    top: 100%;
+    top: calc(100% + 8px);
     right: 0;
-    background: #0e1420;
+    background: #0d131f;
     border: 1px solid var(--border-color);
-    border-radius: 8px;
-    padding: 8px 0;
-    min-width: 210px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+    border-radius: 12px;
+    padding: 8px;
+    min-width: 230px;
+    box-shadow: 0 16px 40px rgba(0,0,0,0.85);
     z-index: 2000;
+    opacity: 0;
+    transform: translateY(6px);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    pointer-events: none;
+}
+.dropdown-menu.show {
+    display: block;
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
 }
 .dropdown-menu a {
-    display: block;
-    padding: 10px 18px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
     font-size: 0.88rem;
     color: var(--text-muted);
     text-decoration: none;
+    border-radius: 8px;
+    transition: all 0.2s ease;
 }
 .dropdown-menu a:hover {
-    background: rgba(0, 176, 116, 0.15);
-    color: var(--brand-emerald);
+    background: rgba(16, 185, 129, 0.12);
+    color: #fff;
+    transform: translateX(3px);
 }
-.dropdown-menu.show, .nav-dropdown:hover .dropdown-menu {
-    display: block;
+.dd-icon {
+    font-size: 1rem;
+    display: inline-flex;
+    align-items: center;
+}
+.dd-divider {
+    height: 1px;
+    background: rgba(255, 255, 255, 0.08);
+    margin: 6px 0;
+}
+.dd-telegram-link {
+    color: var(--brand-emerald-mint) !important;
+    font-weight: 600;
 }
 
 /* Mobile Hamburger Button (☰ -> ✕) */
@@ -1832,6 +1872,305 @@ html, body {
     color: #34D399;
     border: 1px solid rgba(16, 185, 129, 0.4);
 }
+
+/* ==========================================
+   LIVE MARKET DATA DASHBOARD & TABLE STYLES
+   ========================================== */
+.market-dashboard-wrap {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: var(--glass-shadow);
+    margin-top: 24px;
+}
+
+.market-cat-tabs {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    padding-bottom: 12px;
+}
+
+.cat-tab-btn {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: var(--text-muted);
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.cat-tab-btn:hover, .cat-tab-btn.active {
+    background: rgba(16, 185, 129, 0.15);
+    border-color: var(--brand-emerald);
+    color: #fff;
+}
+
+.market-live-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.92rem;
+}
+
+.market-live-table th {
+    text-align: left;
+    padding: 12px 14px;
+    color: var(--text-dim);
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.market-live-table td {
+    padding: 14px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    vertical-align: middle;
+}
+
+.market-live-table tr:hover td {
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.symbol-badge-box {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.symbol-icon-circle {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.8rem;
+    background: rgba(16, 185, 129, 0.15);
+    color: var(--brand-emerald);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.price-cell {
+    font-family: var(--font-mono);
+    font-weight: 700;
+    font-size: 1.05rem;
+    transition: background 0.3s ease;
+}
+
+.price-flash-up {
+    animation: flashGreen 1.2s ease;
+}
+
+.price-flash-down {
+    animation: flashRed 1.2s ease;
+}
+
+@keyframes flashGreen {
+    0% { color: #34D399; text-shadow: 0 0 12px rgba(52, 211, 153, 0.8); }
+    100% { color: var(--text-main); text-shadow: none; }
+}
+
+@keyframes flashRed {
+    0% { color: #F87171; text-shadow: 0 0 12px rgba(248, 113, 113, 0.8); }
+    100% { color: var(--text-main); text-shadow: none; }
+}
+
+.trend-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.trend-bullish {
+    background: rgba(16, 185, 129, 0.15);
+    color: #34D399;
+    border: 1px solid rgba(16, 185, 129, 0.35);
+}
+
+.trend-bearish {
+    background: rgba(239, 68, 68, 0.15);
+    color: #F87171;
+    border: 1px solid rgba(239, 68, 68, 0.35);
+}
+
+.trend-range {
+    background: rgba(245, 158, 11, 0.15);
+    color: #FBBF24;
+    border: 1px solid rgba(245, 158, 11, 0.35);
+}
+
+.signal-status-pill {
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.status-active-setup {
+    background: rgba(16, 185, 129, 0.2);
+    color: #10B981;
+    border: 1px solid #10B981;
+}
+
+.status-scanning {
+    background: rgba(56, 189, 248, 0.15);
+    color: #38BDF8;
+    border: 1px solid rgba(56, 189, 248, 0.3);
+}
+
+.status-watch {
+    background: rgba(245, 158, 11, 0.15);
+    color: #FBBF24;
+    border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+/* ==========================================
+   INTERACTIVE CANDLESTICK CHART VISUALIZER
+   ========================================== */
+.chart-viewer-card {
+    background: #080D18;
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    padding: 20px;
+    margin-top: 24px;
+}
+
+.chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.chart-title-area {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.chart-tf-buttons {
+    display: flex;
+    gap: 6px;
+}
+
+.tf-btn {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--text-muted);
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.tf-btn.active {
+    background: var(--brand-emerald);
+    color: #000;
+    border-color: var(--brand-emerald);
+}
+
+.chart-canvas-container {
+    width: 100%;
+    height: 380px;
+    position: relative;
+    background: #060912;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+#chartora-chart-canvas {
+    width: 100%;
+    height: 100%;
+}
+
+.chart-legend {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-top: 12px;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.legend-color {
+    width: 12px;
+    height: 3px;
+    border-radius: 2px;
+}
+
+/* ==========================================
+   EDUCATION PROCESS FLOWCHART STYLES
+   ========================================== */
+.flowchart-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin: 28px 0;
+}
+
+.flowchart-step-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    background: rgba(18, 26, 42, 0.7);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 16px 20px;
+    position: relative;
+    transition: all 0.2s ease;
+}
+
+.flowchart-step-card:hover {
+    border-color: var(--brand-emerald);
+    transform: translateX(4px);
+    background: rgba(26, 38, 62, 0.85);
+}
+
+.step-num-badge {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: rgba(16, 185, 129, 0.15);
+    color: var(--brand-emerald);
+    border: 1px solid var(--brand-emerald);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 0.9rem;
+    flex-shrink: 0;
+}
+
+.flowchart-connector {
+    width: 2px;
+    height: 16px;
+    background: linear-gradient(180deg, var(--brand-emerald) 0%, rgba(16, 185, 129, 0.2) 100%);
+    margin-left: 36px;
+}
+
 
 
 

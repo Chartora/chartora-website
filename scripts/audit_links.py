@@ -9,7 +9,7 @@ def audit_links():
     app_js_path = os.path.join(base_dir, 'js', 'app.js')
     redirects_path = os.path.join(base_dir, 'public', '_redirects')
 
-    print("=== CHARTORA.IN LINK & ROUTE AUDIT ===")
+    print("=== CHARTORA LINK & ROUTE AUDIT ===")
 
     if not os.path.exists(index_path):
         print("❌ Error: index.html not found!")

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-CHARTORA.IN — Trade Journal & Academy Learning Service (Production Hardened)
+CHARTORA — Trade Journal & Academy Learning Service (Production Hardened)
 Handles:
 - User -> Trading Account -> Trade Journal hierarchy
 - Real-time performance calculations (Win rate, Profit factor, Drawdowns, Avg R, Consecutive streaks)

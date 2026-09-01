@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-CHARTORA.IN — Global Real-Time Market & News Intelligence Engine Test Suite
+CHARTORA — Global Real-Time Market & News Intelligence Engine Test Suite
 Tests:
 1. Canonical Symbol Registry & Multi-Asset Normalization
 2. Real-Time Price Ingestion, Spread Anomaly Validation & Freshness Calculation

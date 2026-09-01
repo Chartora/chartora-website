@@ -1,7 +1,7 @@
-# CHARTORA.IN — AUTOMATED TESTING & VERIFICATION SUITE
+# CHARTORA — AUTOMATED TESTING & VERIFICATION SUITE
 
 ## 1. Overview
-Chartora.in features a comprehensive Python test suite (`tests/test_saas_platform.py`) validating authentication security, Stripe webhook idempotency, Telegram invite limits, deterministic R calculations, and API entitlement enforcement.
+CHARTORA features a comprehensive Python test suite (`tests/test_saas_platform.py`) validating authentication security, Stripe webhook idempotency, Telegram invite limits, deterministic R calculations, and API entitlement enforcement.
 
 ---
 

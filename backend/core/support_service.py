@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-CHARTORA.IN — Customer Support & Inquiry Service
+CHARTORA — Customer Support & Inquiry Service
 Handles:
 - Customer Support Ticket submission and lifecycle tracking (OPEN, IN_PROGRESS, RESOLVED, CLOSED)
 - Employee Portal assignment, internal notes, and customer communication

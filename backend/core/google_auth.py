@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-CHARTORA.IN — Secure Google OAuth 2.0 Authentication Service
+CHARTORA — Secure Google OAuth 2.0 Authentication Service
 Handles:
 - Server-side OAuth 2.0 flow with CSRF state validation
 - Token exchange & Google profile verification (OpenID Connect / userinfo)
@@ -167,9 +167,9 @@ class GoogleAuthService:
             clean_name = code.replace("mock_google_code_", "") if code.startswith("mock_google_code_") else "Trader"
             return {
                 "sub": f"google_sub_{secrets.token_hex(8)}",
-                "email": f"google_{clean_name.lower()}@chartora.in" if clean_name != "Trader" else "google_user@chartora.in",
+                "email": f"google_{clean_name.lower()}@chartora" if clean_name != "Trader" else "google_user@chartora",
                 "name": f"Google {clean_name}",
-                "picture": "https://chartora.in/public/avatars/default.png",
+                "picture": "https://chartora/public/avatars/default.png",
                 "email_verified": True
             }
 

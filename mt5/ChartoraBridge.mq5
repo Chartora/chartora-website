@@ -1,10 +1,10 @@
 //+------------------------------------------------------------------+
 //|                                              ChartoraBridge.mq5 |
-//|                                  Copyright 2026, Chartora.in     |
-//|                                      https://chartora.in         |
+//|                                  Copyright 2026, CHARTORA     |
+//|                                      https://chartora         |
 //+------------------------------------------------------------------+
-#property copyright "Copyright 2026, Chartora.in"
-#property link      "https://chartora.in"
+#property copyright "Copyright 2026, CHARTORA"
+#property link      "https://chartora"
 #property version   "3.10"
 #property description "Chartora Institutional Trading Intelligence Bridge EA"
 #property description "Connects MetaTrader 5 terminal securely to Chartora Intelligence Core"

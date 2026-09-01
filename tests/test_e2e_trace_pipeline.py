@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-CHARTORA.IN — End-to-End Production Trace Pipeline Test
+CHARTORA — End-to-End Production Trace Pipeline Test
 Validates the complete lifecycle:
 MT5 Heartbeat -> MT5 Tick Ingest -> Market Data Normalization -> Strategy Scanner ->
 Setup Detection -> Condition Quality Scoring -> Event Bus Dispatch -> Notification Queue ->

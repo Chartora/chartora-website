@@ -1,4 +1,4 @@
-# CHARTORA.IN — TELEGRAM MULTI-CHANNEL & MINI APP ARCHITECTURE
+# CHARTORA — TELEGRAM MULTI-CHANNEL & MINI APP ARCHITECTURE
 
 ## 1. Overview
 The Telegram ecosystem for Chartora comprises three distinct delivery layers:

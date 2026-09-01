@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-CHARTORA.IN — External Tools & Resources Link Health Monitor
+CHARTORA — External Tools & Resources Link Health Monitor
 Audits external tools in external_resources table and validates HTTP availability.
 """
 

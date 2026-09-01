@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-CHARTORA.IN — Production-Hardened Master SaaS Platform Server Engine
+CHARTORA — Production-Hardened Master SaaS Platform Server Engine
 Provides:
 - Multi-Threaded Non-Blocking REST API & Server-Sent Events (SSE) Engine
 - HttpOnly Cookie & Bearer Token Authentication with PBKDF2-HMAC-SHA256 Salted Hashing
@@ -139,7 +139,7 @@ def seed_database(conn):
         # 1. Admin User
         admin_pass = hash_password('AdminPass123!')
         cursor.execute('INSERT INTO users (email, password_hash, role) VALUES (?, ?, ?)',
-                       ('admin@chartora.in', admin_pass, 'Super Admin'))
+                       ('admin@chartora', admin_pass, 'Super Admin'))
         admin_id = cursor.lastrowid
         cursor.execute('INSERT INTO profiles (user_id, full_name, username, trading_experience, trading_level, telegram_username) VALUES (?, ?, ?, ?, ?, ?)',
                        (admin_id, 'Hemanth Ranam', 'hemanth_admin', '5+', 'Advanced', 'hemanth_admin'))
@@ -147,7 +147,7 @@ def seed_database(conn):
         # 2. Demo Member User
         user_pass = hash_password('TraderPass123!')
         cursor.execute('INSERT INTO users (email, password_hash, role) VALUES (?, ?, ?)',
-                       ('trader@chartora.in', user_pass, 'Paid Member'))
+                       ('trader@chartora', user_pass, 'Paid Member'))
         trader_id = cursor.lastrowid
         cursor.execute('INSERT INTO profiles (user_id, full_name, username, trading_experience, trading_level, telegram_username) VALUES (?, ?, ?, ?, ?, ?)',
                        (trader_id, 'Alex Rivers', 'alex_trader', '2', 'Intermediate', 'alex_rivers'))
@@ -232,7 +232,7 @@ def seed_database(conn):
 
         # 7. Seed Initial Community Posts
         cursor.execute('INSERT INTO community_posts (user_id, category, title, content, is_pinned) VALUES (?, ?, ?, ?, ?)',
-                       (admin_id, 'Announcements', 'Welcome to Chartora.in Trading Intelligence Core v3.1', 'Welcome traders! Chartora combines real-time MT5 algorithmic market scanning, 0-100 condition scoring, macroeconomic calendar filters, and transparent trade journaling.', 1))
+                       (admin_id, 'Announcements', 'Welcome to CHARTORA Trading Intelligence Core v3.1', 'Welcome traders! Chartora combines real-time MT5 algorithmic market scanning, 0-100 condition scoring, macroeconomic calendar filters, and transparent trade journaling.', 1))
         
         conn.commit()
 
@@ -386,7 +386,7 @@ class ChartoraSaaSHandler(http.server.SimpleHTTPRequestHandler):
             return self.send_json({
                 "status": "UP",
                 "timestamp": datetime.now(timezone.utc).isoformat(),
-                "service": "Chartora.in Intelligence Core",
+                "service": "CHARTORA Intelligence Core",
                 "version": "3.2.0",
                 "concurrency": "Multi-Threaded (ThreadingServer)",
                 "data_mode": market_data_router.mode.upper(),
@@ -1121,7 +1121,7 @@ class ChartoraSaaSHandler(http.server.SimpleHTTPRequestHandler):
 
                 # Auto-provision account if new user
                 if not user_id:
-                    rand_email = f"tg_{tg_id}@chartora.in"
+                    rand_email = f"tg_{tg_id}@chartora"
                     gen_pass = hash_password(secrets.token_hex(16))
                     full_name = f"{first_name} {last_name}".strip()
                     username = tg_username or f"tg_user_{tg_id}"
@@ -1715,12 +1715,12 @@ class ThreadingServer(socketserver.ThreadingMixIn, http.server.HTTPServer):
     allow_reuse_address = True
 
 if __name__ == '__main__':
-    print("🚀 Initializing Chartora.in Master Production Database with Intelligence Core...")
+    print("🚀 Initializing CHARTORA Master Production Database with Intelligence Core...")
     init_database()
     
     server_address = ('', PORT)
     httpd = ThreadingServer(server_address, ChartoraSaaSHandler)
-    print(f"✅ Chartora.in Multi-Threaded SaaS Engine & Telegram Backend running on http://localhost:{PORT}")
+    print(f"✅ CHARTORA Multi-Threaded SaaS Engine & Telegram Backend running on http://localhost:{PORT}")
     try:
         httpd.serve_forever()
     except KeyboardInterrupt:

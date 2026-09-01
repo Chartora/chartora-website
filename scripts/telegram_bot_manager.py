@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-CHARTORA.IN — Telegram Bot Operations & Webhook Setup Manager
+CHARTORA — Telegram Bot Operations & Webhook Setup Manager
 CLI tool to register webhooks, verify webhook info, configure bot commands,
 and set the persistent Mini App chat menu button.
 """
@@ -60,7 +60,7 @@ def configure_bot_menu_and_commands():
 def main():
     parser = argparse.ArgumentParser(description="Chartora Telegram Bot Manager")
     parser.add_argument('--action', choices=['set-webhook', 'get-webhook', 'delete-webhook', 'set-menu', 'full-setup'], default='full-setup')
-    parser.add_argument('--url', default=os.environ.get('TELEGRAM_WEBHOOK_URL', 'https://api.chartora.in/api/telegram/webhook'))
+    parser.add_argument('--url', default=os.environ.get('TELEGRAM_WEBHOOK_URL', 'https://api.chartora/api/telegram/webhook'))
     parser.add_argument('--secret', default=os.environ.get('TELEGRAM_WEBHOOK_SECRET', ''))
 
     args = parser.parse_args()
@@ -75,7 +75,7 @@ def main():
         configure_bot_menu_and_commands()
     elif args.action == 'full-setup':
         configure_bot_menu_and_commands()
-        if args.url and not args.url.startswith('https://api.chartora.in'):
+        if args.url and not args.url.startswith('https://api.chartora'):
             register_webhook(args.url, args.secret)
 
 if __name__ == '__main__':

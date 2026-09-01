@@ -1,4 +1,4 @@
-# CHARTORA.IN — EVENT-DRIVEN BUS & REAL-TIME STREAMING ARCHITECTURE
+# CHARTORA — EVENT-DRIVEN BUS & REAL-TIME STREAMING ARCHITECTURE
 
 ## 1. Overview
 To decouple high-frequency market inputs, technical scanners, chart snapshot generation, entitlement checks, Telegram broadcasts, and frontend push streams, Chartora employs an **In-Memory / Pub-Sub Event Bus**.

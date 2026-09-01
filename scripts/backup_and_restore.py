@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-CHARTORA.IN — Automated Database Backup & Verification Script
+CHARTORA — Automated Database Backup & Verification Script
 Backs up chartora.db with SQLite Online Backup API, checks file integrity,
 and verifies restoration into a temporary test instance.
 """

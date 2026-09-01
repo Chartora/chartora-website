@@ -1,28 +1,28 @@
-# CHARTORA.IN — MASTER BUSINESS MODEL, OPERATIONS & SAAS PLATFORM DOCUMENTATION
+# CHARTORA — MASTER BUSINESS MODEL, OPERATIONS & SAAS PLATFORM DOCUMENTATION
 **Official Version**: V1.0 (Master Release)  
 **Publication Date**: August 9, 2026  
 **Document Status**: Official Executive & Operational Reference  
-**Author**: Chartora.in Executive Leadership & Engineering Team  
-**Domains**: `https://chartora.in` | `https://app.chartora.in` | `https://api.chartora.in`  
+**Author**: CHARTORA Executive Leadership & Engineering Team  
+**Domains**: `https://chartora` | `https://app.chartora` | `https://api.chartora`  
 
 ---
 
 ## 1. EXECUTIVE SUMMARY & BRAND ARCHITECTURE
 
 ### 1.1 Company Overview
-**Chartora.in** is a trading technology, market intelligence, market scanning, alert automation, and trading education platform. The company is built around a simple, universal market reality:
+**CHARTORA** is a trading technology, market intelligence, market scanning, alert automation, and trading education platform. The company is built around a simple, universal market reality:
 
 > *A trader cannot watch every market at the same time.*
 
 There are hundreds of instruments across Forex, Gold, Silver, Indices, US Stocks, Commodities, and Cryptocurrencies. Chartora solves this problem by systematically scanning markets, identifying technical setup conditions, providing risk planning tools, delivering instant alert notifications, and offering structured trader education.
 
 ### 1.2 Brand Identity & Official Assets
-- **Official Brand Name**: `CHARTORA.IN`
+- **Official Brand Name**: `CHARTORA`
 - **Official Tagline**: `YOUR MARKETS. OUR SCANNERS. YOUR DECISION.`
 - **Final Brand Statement**: *Your markets. Our scanners. Your decision.*
 - **Official Logo Mark**: **CH Bullish Arrow Monogram** (combining a stylized 'C', 'H', and a rising breakout chart arrow).
-- **Production Domain**: `https://chartora.in`
-- **GitHub Repository**: `hemanthranam/chartora.in` (Branch: `main`)
+- **Production Domain**: `https://chartora`
+- **GitHub Repository**: `hemanthranam/chartora` (Branch: `main`)
 
 ### 1.3 Official Hex Color Palette & Design System
 All visual assets, user interfaces, 3D WebGL scenes, charts, and mobile PWA components conform strictly to the official Chartora brand hex palette:
@@ -45,14 +45,14 @@ All visual assets, user interfaces, 3D WebGL scenes, charts, and mobile PWA comp
 Chartora’s core financial objective is to generate **Monthly Recurring Revenue (MRR)** through high-volume, low-friction subscriptions combined with high customer retention.
 
 ```
-                      CHARTORA.IN REVENUE ARCHITECTURE
+                      CHARTORA REVENUE ARCHITECTURE
                                     │
                                     ▼
                          ORGANIC SOCIAL MEDIA
                        (Reels, YouTube, X, TikTok)
                                     │
                                     ▼
-                               CHARTORA.IN
+                               CHARTORA
                                     │
                      ┌──────────────┼──────────────┐
                      ▼              ▼              ▼
@@ -133,11 +133,11 @@ Chartora structures the entire trading decision lifecycle into ten distinct oper
 
 ### 3.2 Customer Onboarding Journey
 1. **Discovery**: Visitor arrives via organic social media (YouTube, X, Instagram Reels).
-2. **Public Website**: Reviews features, market coverage, and free Academy chapters on `https://chartora.in`.
-3. **Free Public Telegram**: Joins public Telegram channel (`https://t.me/chartora_official`) for daily recaps and educational previews.
+2. **Public Website**: Reviews features, market coverage, and free Academy chapters on `https://chartora`.
+3. **Free Public Telegram**: Joins public Telegram channel (`https://t.me/chartora`) for daily recaps and educational previews.
 4. **Subscription Checkout**: Selects plan and completes payment via Stripe Checkout.
 5. **Instant Entitlement Activation**: Server receives verified Stripe webhook, creates user session, and grants plan entitlements.
-6. **Member Command Center**: User logs into `https://app.chartora.in` (`/#dashboard`).
+6. **Member Command Center**: User logs into `https://app.chartora` (`/#dashboard`).
 7. **Telegram Access**: Requests single-use expiring invite link to join private setup alert channels.
 8. **Ongoing Membership**: Enjoys market updates, Academy courses, performance engine logs, and community discussions.
 
@@ -146,7 +146,7 @@ Chartora structures the entire trading decision lifecycle into ten distinct oper
 ## 4. CONTROLLED TELEGRAM ACCESS & SECURITY ARCHITECTURE
 
 ### 4.1 Channel Structure
-- **Public Channel** (`https://t.me/chartora_official`): Open to everyone. Used for announcements, educational recaps, and lead conversion.
+- **Public Channel** (`https://t.me/chartora`): Open to everyone. Used for announcements, educational recaps, and lead conversion.
 - **Private Premium Channels**: Accessible strictly to active paid subscribers.
 
 ### 4.2 Security Protocol: Single-Use Expiring Invites
@@ -191,7 +191,7 @@ All performance views prominently display the required disclaimer:
 
 ### 6.1 Support Infrastructure
 - **In-App Ticket System**: Available in Member Command Center under Support.
-- **Email Support**: `support@chartora.in`
+- **Email Support**: `support@chartora`
 
 ### 6.2 Service Level Agreements (SLAs)
 - **High Priority (Billing & Account Access)**: Initial response within 2 hours.
@@ -241,9 +241,9 @@ Financial market trading involves substantial risk. Chartora provides educationa
 
 1. **Phase 1 (Completed)**: Web UI, 3D Canvas, Academy, Risk Calculator, Trade Journal, Master Business Context.
 2. **Phase 2 (Completed)**: Full-stack server engine, database layer, HttpOnly cookie sessions, Stripe webhook verifier, Telegram bot service, virtual setup performance engine, PWA support, security rate limiting.
-3. **Phase 3 (Next Release)**: Stripe Live Mode credentials configuration, production domain SSL deployment (`chartora.in`), automated marketing email onboarding funnel via Resend/SendGrid.
+3. **Phase 3 (Next Release)**: Stripe Live Mode credentials configuration, production domain SSL deployment (`chartora`), automated marketing email onboarding funnel via Resend/SendGrid.
 4. **Phase 4 (Future Roadmap)**: TradingView Pine Script signal API bridge, MT5 EA automated alert execution receiver.
 
 ---
 
-*Official Chartora.in Master Business Model & Operations Documentation V1.0 — August 9, 2026*
+*Official CHARTORA Master Business Model & Operations Documentation V1.0 — August 9, 2026*

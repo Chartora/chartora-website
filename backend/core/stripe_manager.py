@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-CHARTORA.IN — Stripe Webhook Idempotency & Tier Entitlement Manager
+CHARTORA — Stripe Webhook Idempotency & Tier Entitlement Manager
 1. Verifies Stripe cryptographic webhook signatures
 2. Enforces idempotent processing via stripe_webhook_events table
 3. Automatically updates user subscription status & tier entitlements

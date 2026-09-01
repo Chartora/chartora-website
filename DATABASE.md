@@ -1,7 +1,7 @@
-# CHARTORA.IN — DATABASE ARCHITECTURE & MIGRATION GUIDE
+# CHARTORA — DATABASE ARCHITECTURE & MIGRATION GUIDE
 
 ## 1. Database Overview
-Chartora.in uses a normalized relational database design supporting **SQLite3** for development, local testing, and rapid prototyping, with seamless migration compatibility for **PostgreSQL** in production.
+CHARTORA uses a normalized relational database design supporting **SQLite3** for development, local testing, and rapid prototyping, with seamless migration compatibility for **PostgreSQL** in production.
 
 ---
 

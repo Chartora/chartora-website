@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-CHARTORA.IN — Central Event Bus & Pub/Sub Dispatcher
+CHARTORA — Central Event Bus & Pub/Sub Dispatcher
 Enables decoupled, asynchronous event emission and handler registration for:
 - Market ticks & candle closes
 - Setup state machine transitions

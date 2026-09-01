@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-CHARTORA.IN — Phase 6 Failure Resilience & Safe Degradation Test Suite
+CHARTORA — Phase 6 Failure Resilience & Safe Degradation Test Suite
 Rigorously tests system fault tolerance, failure recovery, security boundaries,
 and verifies zero silent price simulations under error conditions.
 """

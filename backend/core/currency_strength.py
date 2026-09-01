@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-CHARTORA.IN — Multi-Timeframe Currency Strength Engine
+CHARTORA — Multi-Timeframe Currency Strength Engine
 Calculates relative strength index (0-100) across 8 major currencies:
 USD, EUR, GBP, JPY, AUD, NZD, CAD, CHF
 Across multiple timeframes: 5M, 15M, 1H, 4H, 1D

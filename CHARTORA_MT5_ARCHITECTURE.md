@@ -1,4 +1,4 @@
-# CHARTORA.IN — MT5 GATEWAY & EXPERT ADVISOR INTEGRATION ARCHITECTURE
+# CHARTORA — MT5 GATEWAY & EXPERT ADVISOR INTEGRATION ARCHITECTURE
 
 ## 1. Overview
 The MT5 integration transforms MetaTrader 5 into an authenticated, institutional data provider and setup event bridge for the Chartora Intelligence Core.

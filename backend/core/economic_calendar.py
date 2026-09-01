@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-CHARTORA.IN — Real Economic Calendar Engine
+CHARTORA — Real Economic Calendar Engine
 Manages:
 - Institutional macroeconomic event schedule
 - Importance tiers (HIGH, MEDIUM, LOW)

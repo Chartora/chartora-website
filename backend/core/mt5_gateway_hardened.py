@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-CHARTORA.IN — MT5 Gateway & Cryptographic Security Engine
+CHARTORA — MT5 Gateway & Cryptographic Security Engine
 Implements:
 1. HMAC-SHA256 Request Signature Verification over (ea_id:timestamp:nonce:body)
 2. Replay Attack Prevention (Nonce caching & timestamp window validation)

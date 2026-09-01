@@ -1,4 +1,4 @@
-# CHARTORA.IN — DATA ARCHITECTURE & RETENTION POLICY
+# CHARTORA — DATA ARCHITECTURE & RETENTION POLICY
 
 ## 1. Overview
 The Chartora data architecture establishes normalized relational storage across users, subscriptions, market instruments, OHLC candles, setups, alerts, journal entries, academy progress, and audit trails.

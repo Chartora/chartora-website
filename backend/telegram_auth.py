@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-CHARTORA.IN — Telegram Authentication & Deep Link Verification Engine
+CHARTORA — Telegram Authentication & Deep Link Verification Engine
 Implements strict server-side validation for Telegram Mini App initData (HMAC-SHA256)
 and cryptographic signed deep link token generation and validation.
 """

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-CHARTORA.IN — Production SaaS Automated Test Suite
+CHARTORA — Production SaaS Automated Test Suite
 Validates Authentication, Session Cookies, RBAC, Stripe Webhook Idempotency,
 Telegram Single-Use Invites, Directional R Math, and Route Auditing.
 """

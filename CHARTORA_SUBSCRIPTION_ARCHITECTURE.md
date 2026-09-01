@@ -1,4 +1,4 @@
-# CHARTORA.IN — SUBSCRIPTION, ENTITLEMENTS & PAYMENT ARCHITECTURE
+# CHARTORA — SUBSCRIPTION, ENTITLEMENTS & PAYMENT ARCHITECTURE
 
 ## 1. Overview
 The Chartora monetization system enforces strict server-side entitlement checks across Web, Telegram Bot, Telegram Mini App, and Telegram Channels.

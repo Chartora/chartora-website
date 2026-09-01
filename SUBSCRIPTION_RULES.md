@@ -1,7 +1,7 @@
-# CHARTORA.IN — SUBSCRIPTION STATES & ENTITLEMENT RULES
+# CHARTORA — SUBSCRIPTION STATES & ENTITLEMENT RULES
 
 ## 1. Overview
-Chartora.in enforces subscription entitlement rules server-side. Access is governed by subscription state and explicit plan entitlements rather than rely solely on client-side state or user roles.
+CHARTORA enforces subscription entitlement rules server-side. Access is governed by subscription state and explicit plan entitlements rather than rely solely on client-side state or user roles.
 
 ---
 
@@ -30,7 +30,7 @@ Entitlements are granular permission keys stored in plan definitions:
 - **`education.premium`**: Complete access to all 5 Academy courses (75 chapters).
 - **`community.public`**: View public announcement feed.
 - **`community.premium`**: Full access to post, comment, react, and participate in community discussions.
-- **`telegram.free`**: Access to public Telegram channel (`https://t.me/chartora_official`).
+- **`telegram.free`**: Access to public Telegram channel (`https://t.me/chartora`).
 - **`telegram.premium`**: Access to single-use expiring invite links for private setup channels.
 - **`analytics.virtual`**: Access to deterministic virtual setup performance analytics.
 

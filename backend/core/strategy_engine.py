@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-CHARTORA.IN — Technical Trading Strategy & Condition Scoring Engine
+CHARTORA — Technical Trading Strategy & Condition Scoring Engine
 Implements:
 - EMA 9/21/200 Pullback Continuation Strategy
 - Multi-Timeframe Confirmation (5M execution, 1H trend alignment)

@@ -1,10 +1,10 @@
-# Chartora.in — Production V4 Release Documentation
+# CHARTORA — Production V4 Release Documentation
 
-**Brand**: Chartora.in  
+**Brand**: CHARTORA  
 **Tagline**: *YOUR MARKETS. OUR SCANNERS. YOUR DECISION.*  
 **Core Problem**: A trader cannot watch every market at the same time. Chartora organizes the systematic scanning, identification, risk planning, and educational workflow.  
 **Primary Business Objective**: Grow Monthly Recurring Revenue (MRR) through high volume, low-friction subscriptions ($14.99–$19.99/mo individual market systems; $79/mo All Access ecosystem).  
-**Production Domain**: `https://chartora.in`  
+**Production Domain**: `https://chartora`  
 **GitHub Repository**: `Chartora/chartora-website`  
 **Hosting Architecture**: Cloudflare Pages + Cloudflare DNS  
 
@@ -88,7 +88,7 @@ python3 -m http.server 8080 --directory dist
    ```bash
    git init
    git add .
-   git commit -m "Chartora.in V4 Master Production Release"
+   git commit -m "CHARTORA V4 Master Production Release"
    git remote add origin https://github.com/Chartora/chartora-website.git
    git push -u origin main
    ```
@@ -100,5 +100,5 @@ python3 -m http.server 8080 --directory dist
    - Build output directory: `dist`.
 
 3. **Attach Custom Domain**:
-   - Custom Domain: `chartora.in` & `www.chartora.in`.
+   - Custom Domain: `chartora` & `www.chartora`.
    - CNAME DNS records automatically set by Cloudflare.

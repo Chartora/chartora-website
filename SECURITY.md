@@ -1,8 +1,8 @@
-# CHARTORA.IN — SAAS SECURITY ARCHITECTURE & DISCLOSURE
+# CHARTORA — SAAS SECURITY ARCHITECTURE & DISCLOSURE
 
 ## 1. Security Architecture Principles
 
-Chartora.in is built as a financial-adjacent subscription SaaS platform. Security controls are enforced at the server API layer:
+CHARTORA is built as a financial-adjacent subscription SaaS platform. Security controls are enforced at the server API layer:
 
 - **Authentication**: Ephemeral session tokens stored in `HttpOnly`, `Secure`, `SameSite=Lax` cookies. Client-side `localStorage` stores only non-sensitive UI user preferences.
 - **Authorization**: Server-side Role-Based Access Control (RBAC) and Entitlement Engine. Every protected API route evaluates user identity and active subscription state before yielding data.

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-CHARTORA.IN — PHASE 2 INTEGRATION, HARDENING & PRODUCTION VALIDATION TEST SUITE
+CHARTORA — PHASE 2 INTEGRATION, HARDENING & PRODUCTION VALIDATION TEST SUITE
 Validates the complete 10-tier real-world architecture:
 1. Versioned Database Migrations, Table Schemas & Performance Indexes
 2. Decoupled Multi-Provider Market Data Router (MT5, REST, Fallback) & Stale Validation
@@ -67,7 +67,7 @@ class TestPhase2ProductionIntegration(unittest.TestCase):
 
     def setUp(self):
         self.conn = get_db_connection(self.test_db_path)
-        self.router = MarketDataRouter()
+        self.router = MarketDataRouter(mode="test")
         self.mt5_gw = MT5Gateway(lambda: get_db_connection(self.test_db_path))
         self.stripe_mgr = StripeWebhookManager(lambda: get_db_connection(self.test_db_path))
         self.ext_monitor = ExternalResourcesMonitor(lambda: get_db_connection(self.test_db_path))
@@ -219,7 +219,7 @@ class TestPhase2ProductionIntegration(unittest.TestCase):
     def test_stripe_webhook_idempotency_and_entitlements(self):
         """Verifies Stripe checkout webhook entitlement activation and replay protection."""
         cursor = self.conn.cursor()
-        cursor.execute("INSERT INTO users (email, password_hash, role) VALUES ('stripe_trader@chartora.in', 'hash', 'Free Member')")
+        cursor.execute("INSERT INTO users (email, password_hash, role) VALUES ('stripe_trader@chartora', 'hash', 'Free Member')")
         uid = cursor.lastrowid
         cursor.execute("INSERT INTO telegram_users (telegram_id, user_id, username) VALUES (991122, ?, 'stripe_user')", (uid,))
         self.conn.commit()

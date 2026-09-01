@@ -2,7 +2,7 @@
 
 **Verification Date:** 2026-08-23 01:03 UTC  
 **Environment:** Staging / Production Hardened  
-**Repository:** `hemanthranam/chartora.in`
+**Repository:** `hemanthranam/chartora`
 
 ---
 

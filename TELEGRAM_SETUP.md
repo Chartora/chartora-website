@@ -1,7 +1,7 @@
-# CHARTORA.IN — CONTROLLED TELEGRAM BOT & CHANNEL SETUP GUIDE
+# CHARTORA — CONTROLLED TELEGRAM BOT & CHANNEL SETUP GUIDE
 
 ## 1. Overview
-Chartora.in uses an automated Telegram Bot API service layer to deliver single-use expiring invite links for private setup channels.
+CHARTORA uses an automated Telegram Bot API service layer to deliver single-use expiring invite links for private setup channels.
 
 **Security Policy**: Permanent public invite links to premium channels are **never** exposed. Invites are generated dynamically per user, rate-limited, and automatically revoked when subscriptions cancel or expire.
 

@@ -1,22 +1,22 @@
-# CHARTORA.IN — REPOSITORY ARCHITECTURE & GITHUB RELEASE GUIDE
+# CHARTORA — REPOSITORY ARCHITECTURE & GITHUB RELEASE GUIDE
 
-## 1. Recommendation: Keep Everything in ONE Monorepo (`hemanthranam/chartora.in`)
+## 1. Recommendation: Keep Everything in ONE Monorepo (`hemanthranam/chartora`)
 
 ### Why ONE Unified Repository is Strongly Recommended:
 1. **Single Source of Truth**: The Telegram Bot, Telegram Mini App, Web Portal, and MT5 Gateway all share the exact same Intelligence Core (`backend/core/`), database schema, market data feeds, strategy scoring, risk calculations, and trade journal logic. Splitting them into separate repos creates severe code duplication and state desynchronization.
 2. **Instant Cross-Channel Sync**: When a trade is logged or an alert is triggered in the Mini App, it instantly reflects on the Web Portal and Telegram Bot because they share the same database and REST API.
 3. **Single Deployment Pipeline**: Deploying one Docker container or web service host (e.g. Render / Railway / DigitalOcean / Cloudflare Pages) hosts the entire platform:
-   - Web App $\rightarrow$ `https://chartora.in/`
-   - Mini App $\rightarrow$ `https://chartora.in/public/telegram-app/index.html`
-   - REST API & Webhooks $\rightarrow$ `https://chartora.in/api/v1/*` & `https://chartora.in/api/telegram/webhook`
-   - MT5 Gateway $\rightarrow$ `https://chartora.in/api/v1/mt5/*`
+   - Web App $\rightarrow$ `https://chartora/`
+   - Mini App $\rightarrow$ `https://chartora/public/telegram-app/index.html`
+   - REST API & Webhooks $\rightarrow$ `https://chartora/api/v1/*` & `https://chartora/api/telegram/webhook`
+   - MT5 Gateway $\rightarrow$ `https://chartora/api/v1/mt5/*`
 
 ---
 
 ## 2. Repository Structure
 
 ```text
-chartora.in/
+chartora/
 ├── backend/
 │   ├── core/                        # Centralized Intelligence Engine
 │   │   ├── alert_pipeline.py        # Multi-stage alert & idempotency engine
@@ -76,7 +76,7 @@ chartora.in/
 
 ## 3. Pushing All Code to Your GitHub Repository
 
-To commit all files and push to your GitHub repo (`hemanthranam/chartora.in`):
+To commit all files and push to your GitHub repo (`hemanthranam/chartora`):
 
 ```bash
 # 1. Stage all changes and untracked files
@@ -104,4 +104,4 @@ docker compose up -d --build
 ### Option B: Cloudflare Pages (Frontend / Mini App) + Render/Railway (Backend API & Bot)
 - **Frontend / Mini App**: Connect GitHub repo to Cloudflare Pages (Build output directory: `dist` or root).
 - **Backend API & Webhooks**: Connect GitHub repo to Render / Railway / Fly.io with `python3 server.py`.
-- **Set Webhook**: Point Telegram Bot webhook to `https://api.chartora.in/api/telegram/webhook`.
+- **Set Webhook**: Point Telegram Bot webhook to `https://api.chartora/api/telegram/webhook`.

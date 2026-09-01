@@ -1,7 +1,7 @@
 {
   "name": "chartora-in",
   "version": "3.0.0",
-  "description": "Chartora.in — Trading Intelligence, Market Alerts & Trading Education Platform",
+  "description": "CHARTORA — Trading Intelligence, Market Alerts & Trading Education Platform",
   "private": true,
   "scripts": {
     "dev": "python3 -m http.server 8080",
@@ -22,6 +22,6 @@
     "tradingview",
     "mt5"
   ],
-  "author": "Chartora.in",
+  "author": "CHARTORA",
   "license": "MIT"
 }

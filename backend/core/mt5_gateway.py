@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-CHARTORA.IN — MT5 Gateway & Expert Advisor Telemetry Engine
+CHARTORA — MT5 Gateway & Expert Advisor Telemetry Engine
 Implements:
 - HMAC-SHA256 Cryptographic Authentication for MT5 requests
 - Replay attack & Timestamp drift protection

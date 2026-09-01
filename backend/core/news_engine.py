@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-CHARTORA.IN — Macroeconomic News & Economic Calendar Engine
+CHARTORA — Macroeconomic News & Economic Calendar Engine
 Handles:
 - Macroeconomic news normalization (High, Medium, Low impact)
 - Currency to trading instrument mapping (e.g. USD CPI -> XAUUSD, US500, EURUSD)

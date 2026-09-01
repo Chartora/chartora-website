@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-CHARTORA.IN — Global Market Session & Trading Clock Engine
+CHARTORA — Global Market Session & Trading Clock Engine
 Calculates real-time market session states and liquidity overlap windows:
 - Sydney (21:00 - 06:00 UTC)
 - Tokyo / Asian (00:00 - 09:00 UTC)

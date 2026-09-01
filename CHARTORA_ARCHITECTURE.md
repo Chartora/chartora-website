@@ -1,4 +1,4 @@
-# Chartora.in — Master Production Architecture & System Specification
+# CHARTORA — Master Production Architecture & System Specification
 
 ## 1. Executive Summary & Ecosystem Topology
 
@@ -7,8 +7,8 @@ Chartora is an institutional-grade financial analysis, real-time alerting, multi
 ```
                     ┌─────────────────────────────────────────────────────────────┐
                     │                   USERS & CLIENT TERMINALS                  │
-                    │  • Web Application (Cloudflare Pages: https://chartora.in)  │
-                    │  • Telegram Mini App (TMA: https://chartora.in/tma/)        │
+                    │  • Web Application (Cloudflare Pages: https://chartora)  │
+                    │  • Telegram Mini App (TMA: https://chartora/tma/)        │
                     │  • Telegram Alert Bot (@ChartoraBot)                        │
                     └───────────────┬─────────────────────────────┬───────────────┘
                                     │                             │
@@ -74,7 +74,7 @@ Chartora strictly enforces a zero-fake-data policy in production:
 
 ## 4. Cryptographic MT5 Bridge Protocol
 
-The MT5 Bridge communicates with `https://api.chartora.in/api/v1/mt5/` using HMAC-SHA256 authenticated WebRequests:
+The MT5 Bridge communicates with `https://api.chartora/api/v1/mt5/` using HMAC-SHA256 authenticated WebRequests:
 
 * **Payload Signature**: `HMAC-SHA256(secret_key, "ea_id:timestamp:nonce:raw_json_body")`
 * **Anti-Replay**: Every nonce is cached in memory and expired after 120s; replayed nonces are rejected.
@@ -125,12 +125,12 @@ All systems (Scanner, Core API, Telegram Bot, Mini App, Website) share a single 
 
 ## 6. Cloud Deployment Architecture
 
-1. **Frontend (`https://chartora.in`)**:
+1. **Frontend (`https://chartora`)**:
    * Cloudflare Pages connected to `Chartora/chartora-website` (`dist/` folder).
    * Static asset caching (`immutable`, max-age=31536000), SPA fallback route (`/* -> /index.html 200`).
-2. **Mini App (`https://chartora.in/tma/`)**:
+2. **Mini App (`https://chartora/tma/`)**:
    * Cloudflare Pages connected to `Chartora/chartora-telegram-mini-app`.
    * Permissive iframe headers (`X-Frame-Options: ALLOWALL`).
-3. **Backend Intelligence Engine (`https://api.chartora.in`)**:
+3. **Backend Intelligence Engine (`https://api.chartora`)**:
    * Persistent container on Railway, Render, Fly.io, or VPS running `server.py` with Uvicorn.
    * SQLite WAL mode with daily backup snapshots.

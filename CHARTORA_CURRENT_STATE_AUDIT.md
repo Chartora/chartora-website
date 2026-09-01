@@ -1,9 +1,9 @@
-# CHARTORA.IN — COMPREHENSIVE CURRENT STATE AUDIT
+# CHARTORA — COMPREHENSIVE CURRENT STATE AUDIT
 
 **Date:** August 2026  
-**Auditor:** Lead Product & Systems Architect (Chartora.in)  
-**Target Repository:** `hemanthranam/chartora.in`  
-**Production Domain:** `https://chartora.in`  
+**Auditor:** Lead Product & Systems Architect (CHARTORA)  
+**Target Repository:** `hemanthranam/chartora`  
+**Production Domain:** `https://chartora`  
 
 ---
 
